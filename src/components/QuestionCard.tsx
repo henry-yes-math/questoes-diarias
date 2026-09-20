@@ -146,14 +146,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           <span className="font-semibold text-stone-700">{question.exam}</span>
           <span className="text-stone-300">•</span>
           <span className="text-stone-500 font-medium">{question.discipline}</span>
-          {question.difficulty && (
-            <>
-              <span className="text-stone-300">•</span>
-              <span className="text-stone-500 font-medium lowercase first-letter:uppercase text-[11px] bg-stone-100 px-2 py-0.5 rounded">
-                {question.difficulty}
-              </span>
-            </>
-          )}
         </div>
 
         {/* Termômetro da Turma */}
