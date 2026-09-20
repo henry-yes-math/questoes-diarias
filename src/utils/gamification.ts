@@ -1,6 +1,11 @@
 import { MilestoneInfo } from '../types';
 
-export const MILESTONES = [3, 7, 15, 30, 50, 100];
+export const MILESTONES: number[] = [
+  3,
+  5,
+  7,
+  ...Array.from({ length: 199 }, (_, i) => 10 + i * 5), // 10, 15, 20, 25, 30, 35, 40, 45, 50, ..., 1000
+];
 
 /**
  * Retorna a data no formato YYYY-MM-DD no horário local
@@ -31,13 +36,15 @@ export function calculateMilestone(
   const isFirstQuestion = currentTotal === 1;
 
   // Encontra o próximo marco
-  let nextMilestone = MILESTONES.find((m) => m > currentTotal) || currentTotal + 10;
+  let nextMilestone =
+    MILESTONES.find((m) => m > currentTotal) ||
+    (Math.floor(currentTotal / 5) + 1) * 5;
   let target = nextMilestone;
 
-  // Verifica se acabou de desbloquear um marco
-  const justUnlocked = MILESTONES.find(
-    (m) => previousTotal < m && currentTotal >= m
-  );
+  // Verifica se acabou de desbloquear um marco (pega o maior se pulou mais de um)
+  const justUnlocked = [...MILESTONES]
+    .reverse()
+    .find((m) => previousTotal < m && currentTotal >= m);
 
   const isMilestoneJustUnlocked = Boolean(justUnlocked);
   const unlockedTarget = justUnlocked;
@@ -50,7 +57,7 @@ export function calculateMilestone(
     nextTarget =
       nextIdx !== -1 && nextIdx + 1 < MILESTONES.length
         ? MILESTONES[nextIdx + 1]
-        : unlockedTarget + 10;
+        : unlockedTarget + 5;
   }
 
   // Base do cálculo percentual para o marco vigente
@@ -74,12 +81,27 @@ export function calculateMilestone(
     if (unlockedTarget === 3) {
       celebrationMessage =
         'Você começou com o pé direito e está construindo um hábito forte!';
+    } else if (unlockedTarget === 5) {
+      celebrationMessage =
+        '5 questões concluídas! Seu ritmo de estudos está cada dia mais firme!';
     } else if (unlockedTarget === 7) {
       celebrationMessage =
         'Uma semana inteira invicta! Seu foco e constância são admiráveis!';
+    } else if (unlockedTarget === 10) {
+      celebrationMessage =
+        '10 questões no bolso! Você atingiu a casa das dezenas com maestria!';
     } else if (unlockedTarget === 15) {
       celebrationMessage =
         '15 questões resolvidas! Metade de um mês de evolução sólida na matemática!';
+    } else if (unlockedTarget === 20) {
+      celebrationMessage =
+        '20 questões resolvidas! 4 semanas de evolução e disciplina diária!';
+    } else if (unlockedTarget === 25) {
+      celebrationMessage =
+        '25 questões concluídas! Sua dedicação aos estudos é inspiradora!';
+    } else if (unlockedTarget === 30) {
+      celebrationMessage =
+        '30 questões! Um mês inteiro de matemática no seu dia a dia!';
     } else {
       celebrationMessage = `Incrível! Você superou o marco de ${unlockedTarget} questões!`;
     }

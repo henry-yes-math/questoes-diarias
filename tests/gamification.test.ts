@@ -1,0 +1,78 @@
+import { MILESTONES, calculateMilestone } from '../src/utils/gamification';
+
+function assert(condition: boolean, message: string) {
+  if (!condition) {
+    console.error(`❌ FALHA: ${message}`);
+    process.exit(1);
+  } else {
+    console.log(`  \x1b[32m✔\x1b[0m ${message}`);
+  }
+}
+
+console.log('======================================================');
+console.log('  TESTES UNITÁRIOS DE GAMIFICAÇÃO & METAS');
+console.log('======================================================');
+
+// Teste 1: Sequência de Marcos
+console.log('\nTeste 1: Verificação da sequência de marcos');
+assert(MILESTONES[0] === 3, 'Primeiro marco deve ser 3');
+assert(MILESTONES[1] === 5, 'Segundo marco deve ser 5');
+assert(MILESTONES[2] === 7, 'Terceiro marco deve ser 7');
+assert(MILESTONES[3] === 10, 'Quarto marco deve ser 10');
+assert(MILESTONES[4] === 15, 'Quinto marco deve ser 15');
+assert(MILESTONES[5] === 20, 'Sexto marco deve ser 20');
+assert(MILESTONES[6] === 25, 'Sétimo marco deve ser 25');
+assert(MILESTONES[7] === 30, 'Oitavo marco deve ser 30');
+assert(MILESTONES[8] === 35, 'Nono marco deve ser 35');
+assert(MILESTONES[9] === 40, 'Décimo marco deve ser 40');
+assert(MILESTONES[10] === 45, 'Décimo primeiro marco deve ser 45');
+assert(MILESTONES[11] === 50, 'Décimo segundo marco deve ser 50');
+
+// Teste 2: Cálculos de transição
+console.log('\nTeste 2: Transição e desbloqueio de marcos');
+
+// Aluno fez a 1ª questão
+const m1 = calculateMilestone(1, 0);
+assert(m1.isFirstQuestion === true, '1ª questão deve ser identificada como isFirstQuestion');
+assert(m1.target === 3, 'Meta da 1ª questão deve ser 3');
+assert(m1.remaining === 2, 'Restam 2 para a meta de 3');
+
+// Aluno fez a 2ª questão
+const m2 = calculateMilestone(2, 1);
+assert(m2.target === 3, 'Meta da 2ª questão deve continuar 3');
+assert(m2.remaining === 1, 'Resta 1 para bater 3');
+
+// Aluno desbloqueou 3 questões
+const m3 = calculateMilestone(3, 2);
+assert(m3.isMilestoneJustUnlocked === true, 'Deve indicar que marco acabou de ser desbloqueado');
+assert(m3.unlockedTarget === 3, 'Marco desbloqueado deve ser 3');
+assert(m3.nextTarget === 5, 'Próxima meta após 3 deve ser 5');
+
+// Aluno fez a 4ª questão
+const m4 = calculateMilestone(4, 3);
+assert(m4.target === 5, 'Meta atual da 4ª questão deve ser 5');
+assert(m4.remaining === 1, 'Resta 1 para bater 5');
+
+// Aluno desbloqueou 5 questões
+const m5 = calculateMilestone(5, 4);
+assert(m5.isMilestoneJustUnlocked === true, 'Deve indicar desbloqueio ao atingir 5');
+assert(m5.unlockedTarget === 5, 'Marco desbloqueado deve ser 5');
+assert(m5.nextTarget === 7, 'Próxima meta após 5 deve ser 7');
+
+// Aluno desbloqueou 7 questões
+const m7 = calculateMilestone(7, 6);
+assert(m7.unlockedTarget === 7, 'Marco desbloqueado deve ser 7');
+assert(m7.nextTarget === 10, 'Próxima meta após 7 deve ser 10');
+
+// Aluno desbloqueou 10 questões
+const m10 = calculateMilestone(10, 9);
+assert(m10.unlockedTarget === 10, 'Marco desbloqueado deve ser 10');
+assert(m10.nextTarget === 15, 'Próxima meta após 10 deve ser 15');
+
+// Aluno desbloqueou 40 questões
+const m40 = calculateMilestone(40, 39);
+assert(m40.unlockedTarget === 40, 'Marco desbloqueado deve ser 40');
+assert(m40.nextTarget === 45, 'Próxima meta após 40 deve ser 45');
+
+console.log('\n------------------------------------------------------');
+console.log(' \x1b[32m✔ TODOS OS TESTES DE METAS PASSARAM COM SUCESSO!\x1b[0m\n');

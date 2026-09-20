@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "tsx tests/wordpressParser.test.ts"
+    "test": "tsx tests/wordpressParser.test.ts && tsx tests/gamification.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

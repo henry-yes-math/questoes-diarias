@@ -178,7 +178,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                     <div className="flex justify-between items-center text-xs font-bold text-slate-700">
                       <span>🎯 1ª Meta: 3 Questões Feitas</span>
                       <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 text-[11px]">
-                        1 de 3 concluídas (33%)
+                        1 de 3 concluídas
                       </span>
                     </div>
 
@@ -252,7 +252,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                       {target === 3 ? '1ª Meta: 3 Questões Feitas' : `Rumo ao Marco de ${target} Questões`}
                     </span>
                     <span className="text-blue-700 font-extrabold">
-                      {currentTotal}/{target} ({progressPercentage}%)
+                      {currentTotal}/{target}
                     </span>
                   </div>
 
