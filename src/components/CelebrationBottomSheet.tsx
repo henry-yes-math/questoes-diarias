@@ -257,9 +257,14 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                   </div>
 
                   <p className="text-xs text-slate-600 mb-3 leading-relaxed">
-                    {remaining === 1 ? (
+                    {target === 3 && remaining === 1 ? (
                       <>
-                        Falta apenas <strong className="text-blue-700 font-bold">1 questão</strong> para bater a meta de {target} questões!
+                        <span className="font-bold text-blue-700">Falta só 1 para bater a meta de 3!</span>{' '}
+                        <span>Amanhã mando a próxima no WhatsApp. Não perca para fechar suas 3!</span>
+                      </>
+                    ) : remaining === 1 ? (
+                      <>
+                        Falta apenas <strong className="text-blue-700 font-bold">1 questão</strong> para bater a meta de {target} questões! Amanhã tem mais no WhatsApp.
                       </>
                     ) : (
                       <>
