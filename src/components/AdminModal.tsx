@@ -12,11 +12,17 @@ import {
   Users,
   SunMedium,
   RotateCw,
+  Trash2,
 } from 'lucide-react';
 import { fetchWordPressPost, parseWordPressPost } from '../utils/wordpressParser';
 import { QuestionData, DailySubmission, DailyCycleConfig } from '../types';
 import { generateWhatsAppMessages } from '../utils/gamification';
-import { getSubmissionsByCycle, advanceToNextCycle, setActiveQuestionInFirestore } from '../services/studentService';
+import {
+  getSubmissionsByCycle,
+  advanceToNextCycle,
+  setActiveQuestionInFirestore,
+  resetAllTestDataForLaunch,
+} from '../services/studentService';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -39,6 +45,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [urlInput, setUrlInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [advancingCycle, setAdvancingCycle] = useState(false);
+  const [resettingData, setResettingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -86,6 +93,35 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
   };
 
+  const handleResetTestData = async () => {
+    const confirmReset = window.confirm(
+      '⚠️ ATENÇÃO: ZERAR DADOS DE TESTE PARA O LANÇAMENTO OFICIAL?\n\n' +
+      '• Todas as submissões de teste do mural serão apagadas.\n' +
+      '• O ciclo voltará para o "Dia #1" oficial com mural zerado.\n' +
+      '• As ofensivas de teste serão limpas.\n' +
+      '• A questão atual cadastrada será MANTIDA intacta.\n\n' +
+      'Deseja prosseguir com a limpeza oficial?'
+    );
+    if (!confirmReset) return;
+
+    setResettingData(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      await resetAllTestDataForLaunch();
+      setPreviousCycleSubmissions([]);
+      setSuccessMessage('Banco de dados zerado com sucesso! Ciclo pronto no Dia #1 oficial.');
+      // Forçar atualização suave da página para limpar estados residuais do navegador
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
+    } catch (err: any) {
+      setError(err?.message || 'Falha ao resetar dados de teste.');
+      setResettingData(false);
+    }
+  };
+
   const handleLoadPost = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!urlInput.trim()) {
@@ -130,8 +166,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setUrlInput(url);
   };
 
-  // Gerar mensagens
-  const questionUrl = window.location.href.split('#')[0];
+  // Gerar mensagens para WhatsApp (garantindo que o link enviado seja sempre limpo, sem ?admin=1)
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete('admin');
+  const questionUrl = cleanUrl.toString().split('#')[0];
   const { message1, message2, message3 } = generateWhatsAppMessages({
     yesterdayList: previousCycleSubmissions,
     todayList: todaySubmissions,
@@ -196,25 +234,47 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </p>
           </div>
 
-          <button
-            type="button"
-            disabled={advancingCycle}
-            onClick={handleStartNewDay}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition-all shadow-xs shrink-0 cursor-pointer"
-            title="Avançar para o próximo ciclo diário da comunidade"
-          >
-            {advancingCycle ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Virando dia...</span>
-              </>
-            ) : (
-              <>
-                <RotateCw className="w-3.5 h-3.5" />
-                <span>Começar Novo Dia (Dia #{cycleNum + 1})</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              disabled={resettingData || advancingCycle}
+              onClick={handleResetTestData}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-stone-100 hover:bg-red-50 text-stone-600 hover:text-red-700 border border-stone-200 hover:border-red-200 active:bg-red-100 disabled:opacity-50 text-xs font-semibold rounded-xl transition-all shadow-2xs shrink-0 cursor-pointer"
+              title="Apaga as respostas e alunos de teste e reinicia o ciclo no Dia #1 oficial"
+            >
+              {resettingData ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-red-600" />
+                  <span className="text-red-700">Limpando...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Zerar Testes (Dia #1)</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              disabled={advancingCycle || resettingData}
+              onClick={handleStartNewDay}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition-all shadow-xs shrink-0 cursor-pointer"
+              title="Avançar para o próximo ciclo diário da comunidade"
+            >
+              {advancingCycle ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Virando dia...</span>
+                </>
+              ) : (
+                <>
+                  <RotateCw className="w-3.5 h-3.5" />
+                  <span>Começar Novo Dia (Dia #{cycleNum + 1})</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Abas de Navegação */}

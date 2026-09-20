@@ -13,7 +13,7 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { StudentProfile, DailySubmission, DailyCycleConfig } from '../types';
+import { StudentProfile, DailySubmission, DailyCycleConfig, QuestionData } from '../types';
 import {
   getLocalDateString,
   calculateNewStreakByCycle,
@@ -459,3 +459,41 @@ export async function getSubmissionsByDate(
     return [];
   }
 }
+
+/**
+ * Reseta os dados de teste (submissões e alunos) e redefine o ciclo diário para o Dia #1
+ * Mantém intacta a questão ativa.
+ */
+export async function resetAllTestDataForLaunch(): Promise<void> {
+  const { deleteDoc } = await import('firebase/firestore');
+  
+  // 1. Apagar todas as submissões
+  const subsSnap = await getDocs(collection(db, SUBMISSIONS_COLLECTION));
+  for (const docSnap of subsSnap.docs) {
+    await deleteDoc(doc(db, SUBMISSIONS_COLLECTION, docSnap.id));
+  }
+
+  // 2. Apagar perfis de teste de alunos
+  const studentsSnap = await getDocs(collection(db, STUDENTS_COLLECTION));
+  for (const docSnap of studentsSnap.docs) {
+    await deleteDoc(doc(db, STUDENTS_COLLECTION, docSnap.id));
+  }
+
+  // 3. Resetar ciclo diário para o Dia #1 Oficial
+  const cycleRef = doc(db, APP_SETTINGS_COLLECTION, DAILY_CYCLE_DOC_ID);
+  const todayStr = getLocalDateString();
+  await setDoc(cycleRef, {
+    currentCycleNumber: 1,
+    currentCycleDate: todayStr,
+    startedAt: new Date().toISOString(),
+  });
+
+  // 4. Limpar identificador local do professor/testador para não ficar com ofensiva de teste presa
+  try {
+    localStorage.removeItem(LOCAL_STUDENT_ID_KEY);
+    localStorage.removeItem(LOCAL_STUDENT_NICK_KEY);
+  } catch {
+    // ignora em ambientes sem window/localStorage
+  }
+}
+

@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Header } from './components/Header';
 import { QuestionCard } from './components/QuestionCard';
 import { HintsSection } from './components/HintsSection';
 import { AdminModal } from './components/AdminModal';
+import { AdminPasswordModal, ADMIN_AUTH_KEY } from './components/AdminPasswordModal';
 import { StudentIdentificationModal } from './components/StudentIdentificationModal';
 import { CelebrationBottomSheet } from './components/CelebrationBottomSheet';
 import { CommunityMuralModal } from './components/CommunityMuralModal';
@@ -49,6 +50,50 @@ export default function App() {
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
   const celebrationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Controle de visibilidade e autenticação do Painel do Professor
+  // O botão só existe na tela se a URL contiver estritamente ?admin=1 ou ?admin=true
+  const [isAdminVisible, setIsAdminVisible] = useState<boolean>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('admin') === '1' || params.get('admin') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+  // Escuta se a URL mudar
+  useEffect(() => {
+    const checkAdminParam = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        setIsAdminVisible(params.get('admin') === '1' || params.get('admin') === 'true');
+      } catch {}
+    };
+    checkAdminParam();
+    window.addEventListener('popstate', checkAdminParam);
+    return () => window.removeEventListener('popstate', checkAdminParam);
+  }, []);
+
+  const handleAdminButtonClick = () => {
+    // Se o professor já autenticou nesta sessão/dispositivo com a senha mestra
+    try {
+      const isAuth = localStorage.getItem(ADMIN_AUTH_KEY) === 'true';
+      if (isAuth) {
+        setAdminOpen(true);
+        return;
+      }
+    } catch {}
+    // Caso contrário, solicita a senha
+    setIsPasswordModalOpen(true);
+  };
+
+  const handlePasswordSuccess = () => {
+    setIsPasswordModalOpen(false);
+    setAdminOpen(true);
+  };
+
   const handleReset = () => {
     if (celebrationTimeoutRef.current) {
       clearTimeout(celebrationTimeoutRef.current);
@@ -86,7 +131,8 @@ export default function App() {
       <Header
         fontSize={fontSize}
         onToggleFontSize={toggleFontSize}
-        onOpenAdmin={() => setAdminOpen(true)}
+        onOpenAdmin={handleAdminButtonClick}
+        showAdminButton={isAdminVisible}
         studentProfile={profile}
         nickname={nickname}
         onOpenNickModal={() => setIsNickModalOpen(true)}
@@ -157,6 +203,13 @@ export default function App() {
           onScrollToHints={handleScrollToHints}
         />
       )}
+
+      {/* Modal de Senha do Professor */}
+      <AdminPasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onSuccess={handlePasswordSuccess}
+      />
 
       {/* Teacher / Admin Modal */}
       <AdminModal
