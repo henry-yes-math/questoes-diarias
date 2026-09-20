@@ -176,7 +176,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                   {/* Mini Trilha Visual das 3 Primeiras Questões */}
                   <div className="space-y-2 pt-1">
                     <div className="flex justify-between items-center text-xs font-bold text-slate-700">
-                      <span>🎯 1ª Meta: 3 Questões Feitas</span>
+                      <span>🎯 Sua Meta: Bater 3 Questões</span>
                       <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 text-[11px]">
                         1 de 3 concluídas
                       </span>
@@ -223,7 +223,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                     <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5">
                       <span className="flex items-center gap-1">
                         <ArrowRight className="w-3.5 h-3.5 text-blue-600" />
-                        Próxima Meta: Alcançar o Marco de {nextTarget} Questões
+                        Sua Próxima Meta: Bater {nextTarget} Questões
                       </span>
                       <span className="text-blue-700">
                         {currentTotal}/{nextTarget}
@@ -249,7 +249,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                   <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1">
                     <span className="flex items-center gap-1.5">
                       <Target className="w-3.5 h-3.5 text-blue-600" />
-                      {target === 3 ? '1ª Meta: 3 Questões Feitas' : `Rumo ao Marco de ${target} Questões`}
+                      {target === 3 ? 'Sua Meta: Bater 3 Questões' : `Rumo ao Marco de ${target} Questões`}
                     </span>
                     <span className="text-blue-700 font-extrabold">
                       {currentTotal}/{target}
