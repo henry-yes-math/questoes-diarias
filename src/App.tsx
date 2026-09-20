@@ -170,6 +170,7 @@ export default function App() {
         isOpen={isNickModalOpen}
         initialNickname={nickname}
         onSave={updateNickname}
+        onClose={() => setIsNickModalOpen(false)}
       />
 
       {/* Modal do Mural da Turma */}
