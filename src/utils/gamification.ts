@@ -213,41 +213,41 @@ export function generateWhatsAppMessages({
   const countYesterday = yesterdayList.length;
   let muralLinesYesterday = '';
   if (countYesterday === 0) {
-    muralLinesYesterday = '01. Turma Yes Matemática (🔥 1 dia)';
+    muralLinesYesterday = '01. *Turma Yes Matemática* (🔥 1 dia)';
   } else {
     muralLinesYesterday = yesterdayList
       .map((item, idx) => {
         const num = String(idx + 1).padStart(2, '0');
         const badge = item.unlockedMilestone
-          ? ` 🎖️ Marco de ${item.unlockedMilestone} Questões!`
+          ? ` 🎖️ *Marco de ${item.unlockedMilestone} Questões!*`
           : '';
-        return `${num}. ${item.nickname} (🔥 ${item.streakDays} ${item.streakDays === 1 ? 'dia' : 'dias'})${badge}`;
+        return `${num}. *${item.nickname}* (🔥 ${item.streakDays} ${item.streakDays === 1 ? 'dia' : 'dias'})${badge}`;
       })
       .join('\n');
   }
 
-  const message1 = `⚔️ BOM DIA! MURAL DA TURMA — DIA #${previousCycleNum} 🎯
+  const message1 = `⚔️ *BOM DIA! MURAL DA TURMA — DIA #${previousCycleNum}* 🎯
 
-${countYesterday} ${countYesterday === 1 ? 'aluno manteve' : 'alunos mantiveram'} o ritmo firme e garantiram a presença no mural anterior! 🎯
+*${countYesterday} ${countYesterday === 1 ? 'aluno manteve' : 'alunos mantiveram'} o ritmo firme* e garantiram a presença no mural anterior! 🎯
 
-📋 MURAL OFICIAL CONSOLIDADO:
+📋 *MURAL OFICIAL CONSOLIDADO:*
 ${muralLinesYesterday}
 
 👏 Parabéns a todos que mantiveram o ritmo firme!
 Viu seu apelido na lista? Deixa um 👍 aqui!`;
 
   // Mensagem 2 - Questão do Dia
-  const message2 = `🚀 QUESTÃO DO DIA #${cycleNumber} LIBERADA!
-Tema: ${topicTitle}.
+  const message2 = `🚀 *QUESTÃO DO DIA #${cycleNumber} LIBERADA!*
+*Tema:* ${topicTitle}.
 
-🎯 Padrão Clássico do ENEM: Questão de alto peso na TRI. Travou? O app tem dicas passo a passo.
+🎯 *Padrão Clássico do ENEM:* Questão de alto peso na TRI. Travou? O app tem dicas passo a passo.
 
-Quem vai ser o #1 a fazer a questão de hoje? 👀
+Quem vai ser o *#1* a fazer a questão de hoje? 👀
 
-🔗 FAÇA AGORA (3 a 5 min):
+🔗 *FAÇA AGORA (3 a 5 min):*
 👉 ${questionUrl}
 
-💡 Novo na turma? A Ofensiva (🔥) é a sua sequência de dias seguidos resolvendo a questão. Faça a de hoje para acender seu primeiro 🔥 1 dia!
+💡 *Novo na turma?* A Ofensiva (🔥) é a sua sequência de dias seguidos resolvendo a questão. Faça a de hoje para acender seu primeiro *🔥 1 dia*!
 
 👇 Vai fazer a de hoje? Deixa um 👍 para firmar o compromisso!`;
 
@@ -255,29 +255,29 @@ Quem vai ser o #1 a fazer a questão de hoje? 👀
   const countToday = todayList.length;
   let muralLinesToday = '';
   if (countToday === 0) {
-    muralLinesToday = '01. O próximo pode ser você!';
+    muralLinesToday = '01. *O próximo pode ser você!*';
   } else {
     muralLinesToday = todayList
       .map((item, idx) => {
         const num = String(idx + 1).padStart(2, '0');
-        return `${num}. ${item.nickname} (🔥 ${item.streakDays} ${item.streakDays === 1 ? 'dia' : 'dias'})`;
+        return `${num}. *${item.nickname}* (🔥 ${item.streakDays} ${item.streakDays === 1 ? 'dia' : 'dias'})`;
       })
       .join('\n');
   }
 
-  const message3 = `🚨 PRÉVIA DA CHAMADA — QUESTÃO DO DIA #${cycleNumber}! 🚨
+  const message3 = `🚨 *PRÉVIA DA CHAMADA — QUESTÃO DO DIA #${cycleNumber}!* 🚨
 
-Já passamos da metade do dia e ${countToday} guerreiros já garantiram a presença no mural de hoje! 🎯
+Já passamos da metade do dia e *${countToday} guerreiros* já garantiram a presença no mural de hoje! 🎯
 
-🔥 QUEM JÁ FEZ A QUESTÃO DO DIA #${cycleNumber}:
+🔥 *QUEM JÁ FEZ A QUESTÃO DO DIA #${cycleNumber}:*
 ${muralLinesToday}
 
-🌙 TURMA DA NOITE: AINDA DÁ TEMPO!
+🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*
 Se você estuda agora e seu apelido ainda não está aqui, não vá dormir sem fazer a sua!
 
-Mantenha sua ofensiva ativa e garanta sua presença no Mural oficial com a gente! ⏰
+Mantenha sua ofensiva ativa e garanta sua presença no *Mural oficial* com a gente! ⏰
 
-👉 RESOLVA AGORA (3 a 5 min):
+👉 *RESOLVA AGORA (3 a 5 min):*
 ${questionUrl}
 
 Quem vai fechar a lista antes da virada do novo dia? 👀`;

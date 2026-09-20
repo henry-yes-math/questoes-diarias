@@ -1,4 +1,4 @@
-import { MILESTONES, calculateMilestone } from '../src/utils/gamification';
+import { MILESTONES, calculateMilestone, generateWhatsAppMessages } from '../src/utils/gamification';
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
@@ -93,6 +93,28 @@ assert(
 const m40 = calculateMilestone(40, 39);
 assert(m40.unlockedTarget === 40, 'Marco desbloqueado deve ser 40');
 assert(m40.nextTarget === 45, 'Próxima meta após 40 deve ser 45');
+
+// Teste 3: Mensagens de WhatsApp com formatação nativa em negrito
+console.log('\nTeste 3: Mensagens do WhatsApp com formatação *negrito*');
+const messages = generateWhatsAppMessages({
+  yesterdayList: [
+    { nickname: 'Lucas', streakDays: 3, unlockedMilestone: 3 },
+    { nickname: 'Maria', streakDays: 1 },
+  ],
+  todayList: [
+    { nickname: 'Carlos', streakDays: 4 },
+  ],
+  questionUrl: 'https://exemplo.com/q1',
+  topicTitle: 'Geometria Espacial (ENEM)',
+  cycleNumber: 2,
+});
+
+assert(messages.message1.includes('⚔️ *BOM DIA! MURAL DA TURMA — DIA #1* 🎯'), 'Mensagem 1 deve ter título em *negrito*');
+assert(messages.message1.includes('01. *Lucas* (🔥 3 dias) 🎖️ *Marco de 3 Questões!*'), 'Mensagem 1 deve destacar apelido e marco em *negrito*');
+assert(messages.message2.includes('🚀 *QUESTÃO DO DIA #2 LIBERADA!*'), 'Mensagem 2 deve ter cabeçalho em *negrito*');
+assert(messages.message2.includes('🔗 *FAÇA AGORA (3 a 5 min):*'), 'Mensagem 2 deve destacar link de ação em *negrito*');
+assert(messages.message3.includes('🚨 *PRÉVIA DA CHAMADA — QUESTÃO DO DIA #2!* 🚨'), 'Mensagem 3 deve ter título em *negrito*');
+assert(messages.message3.includes('🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*'), 'Mensagem 3 deve destacar chamada da noite em *negrito*');
 
 console.log('\n------------------------------------------------------');
 console.log(' \x1b[32m✔ TODOS OS TESTES DE METAS PASSARAM COM SUCESSO!\x1b[0m\n');
