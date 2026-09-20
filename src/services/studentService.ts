@@ -24,9 +24,61 @@ const STUDENTS_COLLECTION = 'students';
 const SUBMISSIONS_COLLECTION = 'daily_submissions';
 const APP_SETTINGS_COLLECTION = 'app_settings';
 const DAILY_CYCLE_DOC_ID = 'daily_cycle';
+const ACTIVE_QUESTION_DOC_ID = 'active_question';
 
 const LOCAL_STUDENT_ID_KEY = 'yesmatematica_student_id';
 const LOCAL_STUDENT_NICK_KEY = 'yesmatematica_student_nick';
+
+/**
+ * Salva a questão ativa no Firestore para todos os alunos da comunidade
+ */
+export async function setActiveQuestionInFirestore(
+  question: QuestionData
+): Promise<void> {
+  const docRef = doc(db, APP_SETTINGS_COLLECTION, ACTIVE_QUESTION_DOC_ID);
+  await setDoc(docRef, {
+    ...question,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Busca a questão ativa do Firestore (uma vez)
+ */
+export async function getActiveQuestionFromFirestore(): Promise<QuestionData | null> {
+  try {
+    const docRef = doc(db, APP_SETTINGS_COLLECTION, ACTIVE_QUESTION_DOC_ID);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return snap.data() as QuestionData;
+    }
+  } catch (err) {
+    console.warn('Erro ao buscar questão ativa no Firestore:', err);
+  }
+  return null;
+}
+
+/**
+ * Escuta em tempo real atualizações da questão ativa no Firestore
+ */
+export function subscribeToActiveQuestion(
+  callback: (question: QuestionData | null) => void
+) {
+  const docRef = doc(db, APP_SETTINGS_COLLECTION, ACTIVE_QUESTION_DOC_ID);
+  return onSnapshot(
+    docRef,
+    (snap) => {
+      if (snap.exists()) {
+        callback(snap.data() as QuestionData);
+      } else {
+        callback(null);
+      }
+    },
+    (err) => {
+      console.warn('Erro ao escutar questão ativa:', err);
+    }
+  );
+}
 
 /**
  * Obtém ou inicializa a configuração do Ciclo Diário atual

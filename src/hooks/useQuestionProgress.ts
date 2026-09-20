@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { QuestionData } from '../types';
 import { INITIAL_QUESTION } from '../data/fallbackQuestion';
 import { fetchWordPressPost, parseWordPressPost } from '../utils/wordpressParser';
+import { subscribeToActiveQuestion } from '../services/studentService';
 
 const STORAGE_KEY = 'yesmatematica_active_question_v2';
 
@@ -81,20 +82,43 @@ export function useQuestionProgress() {
     }
   }, [question]);
 
-  // Support loading dynamic question from URL param ?url= or ?link=
+  // Escuta em tempo real a questão ativa do Firestore para toda a comunidade
   useEffect(() => {
+    // Se o usuário abriu especificamente com ?url= ou ?link=, a URL tem prioridade para debug
     const params = new URLSearchParams(window.location.search);
     const targetUrl = params.get('url') || params.get('link');
     if (targetUrl) {
       fetchWordPressPost(targetUrl)
         .then((post) => {
           const parsed = parseWordPressPost(post);
-          handleReset(parsed);
+          const sanitized = sanitizeQuestionData(parsed);
+          setQuestion(sanitized);
+          handleReset(sanitized);
         })
         .catch((err) => {
           console.error('Failed to load question from URL param', err);
         });
+      return;
     }
+
+    // Caso normal: escuta a questão publicada pelo professor no Firestore
+    const unsubscribe = subscribeToActiveQuestion((firestoreQuestion) => {
+      if (firestoreQuestion && firestoreQuestion.id && Array.isArray(firestoreQuestion.alternatives)) {
+        const sanitized = sanitizeQuestionData(firestoreQuestion);
+        setQuestion((prev) => {
+          // Só reseta a seleção se for uma questão diferente da que está aberta
+          if (String(prev?.id) !== String(sanitized.id)) {
+            handleReset(sanitized);
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+            } catch (_) {}
+          }
+          return sanitized;
+        });
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleReset = (targetQuestion?: QuestionData) => {

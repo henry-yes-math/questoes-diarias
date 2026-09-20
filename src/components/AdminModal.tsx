@@ -16,7 +16,7 @@ import {
 import { fetchWordPressPost, parseWordPressPost } from '../utils/wordpressParser';
 import { QuestionData, DailySubmission, DailyCycleConfig } from '../types';
 import { generateWhatsAppMessages } from '../utils/gamification';
-import { getSubmissionsByCycle, advanceToNextCycle } from '../services/studentService';
+import { getSubmissionsByCycle, advanceToNextCycle, setActiveQuestionInFirestore } from '../services/studentService';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -100,10 +100,18 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     try {
       const post = await fetchWordPressPost(urlInput.trim());
       const parsed = parseWordPressPost(post);
+      
+      // Salva no Firestore para que todos os alunos vejam instantaneamente
+      try {
+        await setActiveQuestionInFirestore(parsed);
+      } catch (firestoreErr) {
+        console.warn('Aviso: Não foi possível sincronizar no Firestore de imediato:', firestoreErr);
+      }
+
       onQuestionLoaded(parsed);
       const stepsCount = parsed.steps ? parsed.steps.length : 0;
       setSuccessMessage(
-        `Questão "${parsed.title || 'do dia'}" carregada com sucesso! (${stepsCount} etapas)`
+        `Questão publicada para toda a turma! (${stepsCount} etapas)`
       );
       setTimeout(() => {
         onClose();
