@@ -111,26 +111,46 @@ export const CelebrationCard: React.FC<Props> = ({
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5">
         {/* CENÁRIO 1: PRIMEIRA QUESTÃO FEITA */}
         {isFirstQuestion && (
-          <div>
-            <div className="flex items-center gap-2 text-blue-800 font-bold text-sm mb-1.5">
-              <Sparkles className="w-4 h-4 text-amber-500 fill-amber-400" />
-              <span>Sua Primeira Meta na Turma: Chegar a 3 Questões!</span>
-            </div>
-            <p className="text-xs text-slate-600 mb-3 leading-relaxed">
-              Você deu o primeiro passo! Mantenha a sequência: faltam só{' '}
-              <strong className="text-slate-900 font-bold">2 questões</strong> para bater sua primeira meta oficial.
-            </p>
-
-            {/* Barra de Progresso */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs font-semibold text-slate-600">
-                <span>Progresso para a Meta de 3</span>
-                <span>1/3 resolvidas</span>
+          <div className="space-y-3">
+            <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-lg">
+              <div className="flex items-center gap-2 text-amber-900 font-extrabold text-xs sm:text-sm">
+                <Sparkles className="w-4 h-4 text-amber-500 fill-amber-400 shrink-0" />
+                <span>Sensacional! 1ª questão no bolso e chama acesa! 🔥</span>
               </div>
-              <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden p-0.5">
+              <p className="text-xs text-amber-950 font-medium mt-1 leading-relaxed">
+                <strong>Sua primeira missão:</strong> manter a constância nos próximos dias até bater <strong>3 questões resolvidas no total</strong>.
+              </p>
+              <p className="text-[11px] text-amber-800/90 mt-1 font-semibold">
+                📌 Amanhã tem mais uma no grupo do WhatsApp. Não quebre a sequência!
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <div className="flex justify-between items-center text-xs font-bold text-slate-700">
+                <span>🎯 1ª Meta: 3 Questões Feitas</span>
+                <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 text-[11px]">
+                  1 de 3 concluídas (33%)
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1.5 text-center text-[11px]">
+                <div className="bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold py-1.5 px-2 rounded-lg flex items-center justify-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>1ª (Hoje) ✓</span>
+                </div>
+                <div className="bg-white border border-dashed border-slate-300 text-slate-500 font-medium py-1.5 px-2 rounded-lg">
+                  <span>2ª (Amanhã)</span>
+                </div>
+                <div className="bg-white border border-dashed border-slate-300 text-slate-400 font-medium py-1.5 px-2 rounded-lg">
+                  <span>3ª (Em breve)</span>
+                </div>
+              </div>
+
+              {/* Barra de Progresso */}
+              <div className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden p-0.5 mt-1.5">
                 <div
-                  className="h-full bg-linear-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-700"
-                  style={{ width: '33%' }}
+                  className="h-full bg-linear-to-r from-emerald-500 to-blue-600 rounded-full transition-all duration-700"
+                  style={{ width: '33.3%' }}
                 />
               </div>
             </div>

@@ -64,14 +64,23 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
                 {studentProfile && (
                   <span className="inline-flex items-center gap-1.5 text-stone-600 font-semibold shrink-0">
-                    <span className="text-amber-600 inline-flex items-center gap-0.5">
+                    <span className="text-amber-600 inline-flex items-center gap-0.5" title="Sua ofensiva de dias seguidos">
                       <Flame className="w-3 h-3 fill-amber-500" />
                       {studentProfile.streakDays || 0}d
                     </span>
                     <span>•</span>
-                    <span className="text-blue-600 inline-flex items-center gap-0.5">
-                      <Target className="w-3 h-3" />
-                      {studentProfile.totalSolved || 0}
+                    <span
+                      className="text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 rounded text-[10.5px] font-bold inline-flex items-center gap-1"
+                      title={
+                        studentProfile.totalSolved >= 3
+                          ? `Total: ${studentProfile.totalSolved} questões feitas`
+                          : `1ª Meta: ${studentProfile.totalSolved}/3 questões feitas`
+                      }
+                    >
+                      <Target className="w-3 h-3 text-blue-600" />
+                      {studentProfile.totalSolved >= 3
+                        ? `Meta: ${studentProfile.totalSolved} feitas`
+                        : `1ª Meta: ${studentProfile.totalSolved}/3 questões feitas`}
                     </span>
                   </span>
                 )}
