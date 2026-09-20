@@ -49,6 +49,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
     }
   }, [selectedLetter]);
 
+  // Reseta seleção provisória e alternativas eliminadas ao trocar de questão
+  React.useEffect(() => {
+    setTentativeLetter(null);
+    setEliminatedLetters([]);
+  }, [question.id]);
+
   const isConfirmed = selectedLetter !== null;
   const isCorrectAnswer = selectedLetter === question.correctLetter;
 

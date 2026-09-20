@@ -9,8 +9,9 @@ import {
   subscribeToTodaySubmissions,
 } from '../services/studentService';
 import { calculateMilestone, getLocalDateString } from '../utils/gamification';
+import { INITIAL_QUESTION } from '../data/fallbackQuestion';
 
-export function useStudentGamification(currentQuestionId: string = 'enem-2023-geometria') {
+export function useStudentGamification(currentQuestionId: string = String(INITIAL_QUESTION.id)) {
   const [studentId] = useState<string>(() => getLocalStudentId());
   const [nickname, setNicknameState] = useState<string>(() => getLocalStudentNick());
   const [isNickModalOpen, setIsNickModalOpen] = useState<boolean>(() => !getLocalStudentNick());

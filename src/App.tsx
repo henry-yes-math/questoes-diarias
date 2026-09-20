@@ -8,6 +8,7 @@ import { CelebrationBottomSheet } from './components/CelebrationBottomSheet';
 import { CommunityMuralModal } from './components/CommunityMuralModal';
 import { useQuestionProgress } from './hooks/useQuestionProgress';
 import { useStudentGamification } from './hooks/useStudentGamification';
+import { INITIAL_QUESTION } from './data/fallbackQuestion';
 
 export default function App() {
   const {
@@ -29,7 +30,7 @@ export default function App() {
     handleQuestionLoaded,
   } = useQuestionProgress();
 
-  const questionIdStr = String(question.id || 'enem-2023-geometria');
+  const questionIdStr = String(question.id || INITIAL_QUESTION.id);
   const {
     nickname,
     isNickModalOpen,
