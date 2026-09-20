@@ -237,10 +237,10 @@ export function parseWordPressPost(post: any): QuestionData {
   }
 
   // 4. Extract Alternatives from Enunciado
-  // Must accurately match A), B., (C) but NOT Portuguese words like "A intensidade..."
+  // Must accurately match A), B., (C), A - , or A <value/Roman numerals I-X/math>
   const alternatives: Alternative[] = [];
   const foundLetters = new Set<string>();
-  const altRegex = /^(?:\(([A-Ea-e])\)|([A-Ea-e])(?:\)|\.|\s*[-–—]|\s+(?=[0-9\\(])))\s*(.*)$/;
+  const altRegex = /^(?:\(([A-Ea-e])\)|([A-Ea-e])(?:\)|\.|\:|\s*[-–—]|\s+(?=[0-9\\(]|R\$|\$|(?:X|IX|IV|V?I{1,3})\b)))\s*(.+)$/;
 
   for (const el of enunciadoElements) {
     // Clone and replace <br> tags with newlines so textContent preserves line separation
@@ -284,9 +284,27 @@ export function parseWordPressPost(post: any): QuestionData {
     });
   }
 
-  // 5. Build cleaned Enunciado HTML (excluding the elements that contain alternatives)
+  // 5. Build cleaned Enunciado HTML (excluding the elements/lines that contain alternatives)
   const enunciadoContainer = document.createElement('div');
   enunciadoElements.forEach((el) => {
+    // Check if element contains alternatives separated by <br>
+    const innerHtml = el.innerHTML;
+    if (/<br\s*[\/]?>/i.test(innerHtml)) {
+      const parts = innerHtml.split(/<br\s*[\/]?>/gi);
+      const nonAltParts = parts.filter((part) => {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = part;
+        const text = (tempDiv.textContent || '').trim();
+        return !altRegex.test(text);
+      });
+      if (nonAltParts.length > 0) {
+        const newEl = el.cloneNode(false) as HTMLElement;
+        newEl.innerHTML = nonAltParts.join('<br>');
+        enunciadoContainer.appendChild(newEl);
+      }
+      return;
+    }
+
     const text = (el.textContent || '').trim();
     const isSingleAlt = altRegex.test(text);
     const hasMultipleAlts = (text.match(/[A-E](?:\)|\.|\s*[-–—])/g) || []).length >= 2;
