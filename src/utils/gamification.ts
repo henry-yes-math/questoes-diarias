@@ -77,33 +77,52 @@ export function calculateMilestone(
   const remaining = Math.max(0, target - currentTotal);
 
   let celebrationMessage: string | undefined;
+  let nextMilestonePrompt: string | undefined;
   if (isMilestoneJustUnlocked && unlockedTarget) {
     if (unlockedTarget === 3) {
       celebrationMessage =
         'Você começou com o pé direito e está construindo um hábito forte!';
+      nextMilestonePrompt =
+        `Faltam ${remaining} questões para o próximo nível. Amanhã tem questão nova no WhatsApp para você manter o embalo rumo às 5!`;
     } else if (unlockedTarget === 5) {
       celebrationMessage =
         '5 questões concluídas! Seu ritmo de estudos está cada dia mais firme!';
+      nextMilestonePrompt =
+        `Faltam ${remaining} questões para o próximo nível. Amanhã tem mais no WhatsApp para a gente buscar a meta de 7!`;
     } else if (unlockedTarget === 7) {
       celebrationMessage =
-        'Uma semana inteira invicta! Seu foco e constância são admiráveis!';
+        '7 questões concluídas! Você está mostrando uma consistência incrível nos estudos!';
+      nextMilestonePrompt =
+        `Faltam ${remaining} questões para o próximo nível. Amanhã tem mais uma no WhatsApp para você abrir o caminho dos dois dígitos!`;
     } else if (unlockedTarget === 10) {
       celebrationMessage =
-        '10 questões no bolso! Você atingiu a casa das dezenas com maestria!';
+        '10 questões batidas! Você entrou oficialmente no clube dos dois dígitos!';
+      nextMilestonePrompt =
+        `Faltam ${remaining} questões para o próximo nível. Amanhã a gente dá a largada rumo ao marco de 15!`;
     } else if (unlockedTarget === 15) {
       celebrationMessage =
         '15 questões resolvidas! Metade de um mês de evolução sólida na matemática!';
+      nextMilestonePrompt =
+        `Faltam ${remaining} questões para o próximo nível. Amanhã no WhatsApp continuamos firmes rumo ao marco de ${nextTarget}!`;
     } else if (unlockedTarget === 20) {
       celebrationMessage =
         '20 questões resolvidas! 4 semanas de evolução e disciplina diária!';
+      nextMilestonePrompt =
+        `Faltam ${remaining} questões para o próximo nível. Amanhã no WhatsApp continuamos firmes rumo ao marco de ${nextTarget}!`;
     } else if (unlockedTarget === 25) {
       celebrationMessage =
         '25 questões concluídas! Sua dedicação aos estudos é inspiradora!';
+      nextMilestonePrompt =
+        `Faltam ${remaining} questões para o próximo nível. Amanhã no WhatsApp continuamos firmes rumo ao marco de ${nextTarget}!`;
     } else if (unlockedTarget === 30) {
       celebrationMessage =
         '30 questões! Um mês inteiro de matemática no seu dia a dia!';
+      nextMilestonePrompt =
+        `Faltam ${remaining} questões para o próximo nível. Amanhã no WhatsApp continuamos firmes rumo ao marco de ${nextTarget}!`;
     } else {
       celebrationMessage = `Incrível! Você superou o marco de ${unlockedTarget} questões!`;
+      nextMilestonePrompt =
+        `Faltam ${remaining} ${remaining === 1 ? 'questão' : 'questões'} para o próximo nível. Amanhã no WhatsApp continuamos firmes rumo ao marco de ${nextTarget}!`;
     }
   }
 
@@ -117,6 +136,7 @@ export function calculateMilestone(
     progressPercentage,
     remaining,
     celebrationMessage,
+    nextMilestonePrompt,
   };
 }
 

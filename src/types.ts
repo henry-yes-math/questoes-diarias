@@ -71,4 +71,5 @@ export interface MilestoneInfo {
   progressPercentage: number;
   remaining: number;
   celebrationMessage?: string;
+  nextMilestonePrompt?: string;
 }

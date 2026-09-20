@@ -62,6 +62,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
     progressPercentage,
     remaining,
     celebrationMessage,
+    nextMilestonePrompt,
   } = milestoneInfo;
 
   return (
@@ -169,7 +170,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                       <strong>Sua primeira missão:</strong> manter a constância nos próximos dias até bater <strong>3 questões resolvidas no total</strong>.
                     </p>
                     <p className="text-[11px] text-amber-800/90 mt-1 font-semibold flex items-center gap-1">
-                      📌 Amanhã tem mais uma no grupo do WhatsApp. Não quebre a sequência!
+                      📌 Amanhã tem mais uma no grupo do WhatsApp. Venha garantir a sua 2ª!
                     </p>
                   </div>
 
@@ -236,8 +237,8 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                         style={{ width: `${progressPercentage}%` }}
                       />
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-1 text-right font-medium">
-                      Faltam {remaining} {remaining === 1 ? 'questão' : 'questões'} para o próximo nível!
+                    <p className="text-[11px] text-slate-600 mt-1.5 font-medium leading-tight">
+                      {nextMilestonePrompt || `Faltam ${remaining} ${remaining === 1 ? 'questão' : 'questões'} para o próximo nível!`}
                     </p>
                   </div>
                 </div>
