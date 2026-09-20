@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+.font-math {
+  font-family: 'JetBrains Mono', monospace;
+  font-feature-settings: 'tnum' on, 'zero' on;
+}
+
+/* WordPress content styling */
+.question-content img,
+.prose-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Headings in question and hints/steps */
+.question-content h1,
+.prose-content h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #1c1917;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.015em;
+}
+
+.question-content h2,
+.prose-content h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #1c1917;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.question-content h3,
+.prose-content h3,
+.question-content .wp-block-heading,
+.prose-content .wp-block-heading {
+  display: block;
+  font-size: 1.18rem;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #1c1917;
+  margin-top: 1.65rem;
+  margin-bottom: 0.65rem;
+  letter-spacing: -0.01em;
+  border-left: 3.5px solid #d97706; /* Amber accent bar matching Yes Matemática theme */
+  padding-left: 0.65rem;
+  padding-top: 0.1rem;
+  padding-bottom: 0.1rem;
+}
+
+.question-content h3:first-child,
+.prose-content h3:first-child,
+.question-content .wp-block-heading:first-child,
+.prose-content .wp-block-heading:first-child {
+  margin-top: 0.35rem;
+}
+
+.question-content h4,
+.prose-content h4 {
+  display: block;
+  font-size: 1.08rem;
+  font-weight: 650;
+  line-height: 1.45;
+  color: #292524;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.005em;
+}
+
+.question-content h5,
+.question-content h6,
+.prose-content h5,
+.prose-content h6 {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #44403c;
+  margin-top: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+/* Lists formatting */
+.question-content ul,
+.prose-content ul,
+.question-content .wp-block-list,
+.prose-content .wp-block-list {
+  list-style-type: disc;
+  padding-left: 1.4rem;
+  margin-top: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.question-content ol,
+.prose-content ol {
+  list-style-type: decimal;
+  padding-left: 1.4rem;
+  margin-top: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.question-content li,
+.prose-content li {
+  margin-top: 0.3rem;
+  margin-bottom: 0.3rem;
+  line-height: 1.65;
+}
+
+.question-content figure,
+.prose-content figure {
+  margin: 0.75rem 0;
+}
+
+.question-content blockquote,
+.prose-content blockquote {
+  border-left: 3px solid #d6d3d1;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #44403c;
+  background-color: #faf9f6;
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+/* Tables inside question and hints */
+.question-content table,
+.prose-content table {
+  width: 100%;
+  max-width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+  font-size: 0.95em;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.question-content th,
+.question-content td,
+.prose-content th,
+.prose-content td {
+  padding: 0.6rem 0.85rem;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+  font-weight: 400;
+  color: #374151;
+}
+
+.question-content th,
+.prose-content tr:first-child td,
+.prose-content thead th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* KaTeX Mathematical Typography & Tailwind Reset Overrides */
+.katex {
+  font-size: 1.05em;
+  text-rendering: auto;
+  line-height: 1.2;
+}
+
+.katex,
+.katex * {
+  border-color: currentColor;
+}
+
+.katex .frac-line {
+  border-bottom-style: solid !important;
+  border-bottom-color: currentColor !important;
+  display: inline-block !important;
+  width: 100% !important;
+  min-height: 1.5px !important;
+}
+
+.katex .vlist-t {
+  display: inline-table !important;
+}
+
+.katex .vlist-r {
+  display: table-row !important;
+}
+
+.katex .vlist {
+  display: table-cell !important;
+}
+

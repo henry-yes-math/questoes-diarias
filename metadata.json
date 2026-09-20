@@ -1,0 +1,7 @@
+{
+  "name": "Yes Matemática",
+  "description": "Plataforma de questões interativas do ENEM com resolução guiada e dicas pedagógicas por Yes Matemática.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
