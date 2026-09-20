@@ -267,7 +267,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       Mensagem 1 • Manhã
                     </span>
                     <h4 className="text-sm font-bold text-stone-900">
-                      Mural Oficial da Edição #{previousCycleNum} (Reconhecimento)
+                      Mural Oficial da Edição Anterior (Reconhecimento)
                     </h4>
                   </div>
                   <button
@@ -300,7 +300,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       Mensagem 2 • Manhã (5s depois)
                     </span>
                     <h4 className="text-sm font-bold text-stone-900">
-                      Questão do Dia #{cycleNum} (Link e Desafio)
+                      Questão do Dia (Link e Desafio)
                     </h4>
                   </div>
                   <button
@@ -333,7 +333,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       Mensagem 3 • Noite
                     </span>
                     <h4 className="text-sm font-bold text-stone-900">
-                      Prévia da Chamada do Dia #{cycleNum}
+                      Prévia da Chamada da Turma (Noite)
                     </h4>
                   </div>
                   <button

@@ -109,11 +109,17 @@ const messages = generateWhatsAppMessages({
   cycleNumber: 2,
 });
 
-assert(messages.message1.includes('⚔️ *BOM DIA! MURAL DA TURMA — DIA #1* 🎯'), 'Mensagem 1 deve ter título em *negrito*');
+assert(messages.message1.includes('⚔️ *BOM DIA! MURAL OFICIAL DA TURMA* 🎯'), 'Mensagem 1 deve ter título em *negrito* sem identificação de dia');
+assert(!messages.message1.includes('DIA #'), 'Mensagem 1 não deve conter identificador de dia');
 assert(messages.message1.includes('01. *Lucas* (🔥 3 dias) 🎖️ *Marco de 3 Questões!*'), 'Mensagem 1 deve destacar apelido e marco em *negrito*');
-assert(messages.message2.includes('🚀 *QUESTÃO DO DIA #2 LIBERADA!*'), 'Mensagem 2 deve ter cabeçalho em *negrito*');
+
+assert(messages.message2.includes('🚀 *QUESTÃO DO DIA LIBERADA!*'), 'Mensagem 2 deve ter cabeçalho em *negrito* sem identificação de dia');
+assert(!messages.message2.includes('DIA #'), 'Mensagem 2 não deve conter identificador de dia');
 assert(messages.message2.includes('🔗 *FAÇA AGORA (3 a 5 min):*'), 'Mensagem 2 deve destacar link de ação em *negrito*');
-assert(messages.message3.includes('🚨 *PRÉVIA DA CHAMADA — QUESTÃO DO DIA #2!* 🚨'), 'Mensagem 3 deve ter título em *negrito*');
+
+assert(messages.message3.includes('🚨 *PRÉVIA DA CHAMADA — QUESTÃO DO DIA!* 🚨'), 'Mensagem 3 deve ter título em *negrito* sem identificação de dia');
+assert(messages.message3.includes('🔥 *QUEM JÁ FEZ A QUESTÃO DE HOJE:*'), 'Mensagem 3 deve listar quem já fez a de hoje');
+assert(!messages.message3.includes('DIA #'), 'Mensagem 3 não deve conter identificador de dia');
 assert(messages.message3.includes('🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*'), 'Mensagem 3 deve destacar chamada da noite em *negrito*');
 
 console.log('\n------------------------------------------------------');

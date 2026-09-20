@@ -226,7 +226,7 @@ export function generateWhatsAppMessages({
       .join('\n');
   }
 
-  const message1 = `⚔️ *BOM DIA! MURAL DA TURMA — DIA #${previousCycleNum}* 🎯
+  const message1 = `⚔️ *BOM DIA! MURAL OFICIAL DA TURMA* 🎯
 
 *${countYesterday} ${countYesterday === 1 ? 'aluno manteve' : 'alunos mantiveram'} o ritmo firme* e garantiram a presença no mural anterior! 🎯
 
@@ -237,7 +237,7 @@ ${muralLinesYesterday}
 Viu seu apelido na lista? Deixa um 👍 aqui!`;
 
   // Mensagem 2 - Questão do Dia
-  const message2 = `🚀 *QUESTÃO DO DIA #${cycleNumber} LIBERADA!*
+  const message2 = `🚀 *QUESTÃO DO DIA LIBERADA!*
 *Tema:* ${topicTitle}.
 
 🎯 *Padrão Clássico do ENEM:* Questão de alto peso na TRI. Travou? O app tem dicas passo a passo.
@@ -265,11 +265,11 @@ Quem vai ser o *#1* a fazer a questão de hoje? 👀
       .join('\n');
   }
 
-  const message3 = `🚨 *PRÉVIA DA CHAMADA — QUESTÃO DO DIA #${cycleNumber}!* 🚨
+  const message3 = `🚨 *PRÉVIA DA CHAMADA — QUESTÃO DO DIA!* 🚨
 
 Já passamos da metade do dia e *${countToday} guerreiros* já garantiram a presença no mural de hoje! 🎯
 
-🔥 *QUEM JÁ FEZ A QUESTÃO DO DIA #${cycleNumber}:*
+🔥 *QUEM JÁ FEZ A QUESTÃO DE HOJE:*
 ${muralLinesToday}
 
 🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*
@@ -280,7 +280,7 @@ Mantenha sua ofensiva ativa e garanta sua presença no *Mural oficial* com a gen
 👉 *RESOLVA AGORA (3 a 5 min):*
 ${questionUrl}
 
-Quem vai fechar a lista antes da virada do novo dia? 👀`;
+Quem vai fechar a lista antes da virada do dia? 👀`;
 
   return { message1, message2, message3 };
 }
