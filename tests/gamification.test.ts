@@ -114,6 +114,8 @@ assert(!messages.message1.includes('DIA #'), 'Mensagem 1 não deve conter identi
 assert(messages.message1.includes('01. *Lucas* (🔥 3 dias) 🎖️ *Marco de 3 Questões!*'), 'Mensagem 1 deve destacar apelido e marco em *negrito*');
 
 assert(messages.message2.includes('🚀 *QUESTÃO DO DIA LIBERADA!*'), 'Mensagem 2 deve ter cabeçalho em *negrito* sem identificação de dia');
+assert(messages.message2.includes('📌 *ENEM — Matemática*'), 'Mensagem 2 deve conter fixo ENEM — Matemática');
+assert(!messages.message2.includes('*Tema:*'), 'Mensagem 2 não deve conter frase do tema');
 assert(!messages.message2.includes('DIA #'), 'Mensagem 2 não deve conter identificador de dia');
 assert(messages.message2.includes('🔗 *FAÇA AGORA (3 a 5 min):*'), 'Mensagem 2 deve destacar link de ação em *negrito*');
 

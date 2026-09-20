@@ -238,7 +238,7 @@ Viu seu apelido na lista? Deixa um 👍 aqui!`;
 
   // Mensagem 2 - Questão do Dia
   const message2 = `🚀 *QUESTÃO DO DIA LIBERADA!*
-*Tema:* ${topicTitle}.
+📌 *ENEM — Matemática*
 
 🎯 *Padrão Clássico do ENEM:* Questão de alto peso na TRI. Travou? O app tem dicas passo a passo.
 
