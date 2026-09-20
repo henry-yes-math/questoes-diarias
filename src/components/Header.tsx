@@ -54,14 +54,14 @@ export const Header: React.FC<HeaderProps> = ({
                       className="text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 rounded text-[10.5px] font-bold inline-flex items-center gap-1"
                       title={
                         studentProfile.totalSolved >= 3
-                           ? `Total: ${studentProfile.totalSolved} questões feitas`
-                          : `1ª Meta: ${studentProfile.totalSolved}/3 questões feitas`
+                          ? `Total: ${studentProfile.totalSolved} questões feitas`
+                          : `Meta: ${studentProfile.totalSolved}/3 questões feitas`
                       }
                     >
                       <Target className="w-3 h-3 text-blue-600" />
                       {studentProfile.totalSolved >= 3
                         ? `Meta: ${studentProfile.totalSolved} feitas`
-                        : `1ª Meta: ${studentProfile.totalSolved}/3 questões feitas`}
+                        : `Meta: ${studentProfile.totalSolved}/3 questões feitas`}
                     </span>
                   </span>
                 )}
