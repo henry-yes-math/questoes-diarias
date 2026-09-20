@@ -228,12 +228,12 @@ export function generateWhatsAppMessages({
 
   const message1 = `⚔️ *BOM DIA! MURAL OFICIAL DA TURMA* 🎯
 
-*${countYesterday} ${countYesterday === 1 ? 'aluno manteve' : 'alunos mantiveram'} o ritmo firme* e garantiram a presença no mural anterior! 🎯
+*${countYesterday} ${countYesterday === 1 ? 'mente focada manteve' : 'mentes focadas mantiveram'} o ritmo firme* e garantiram a presença no mural anterior! 🎯
 
 📋 *MURAL OFICIAL CONSOLIDADO:*
 ${muralLinesYesterday}
 
-👏 Parabéns a todos que mantiveram o ritmo firme!
+👏 Parabéns a quem manteve o ritmo firme!
 Viu seu apelido na lista? Deixa um 👍 aqui!`;
 
   // Mensagem 2 - Questão do Dia
@@ -242,12 +242,12 @@ Viu seu apelido na lista? Deixa um 👍 aqui!`;
 
 🎯 *Padrão Clássico do ENEM:* Questão de alto peso na TRI. Travou? O app tem dicas passo a passo.
 
-Quem vai ser o *#1* a fazer a questão de hoje? 👀
+Quem vai ser a 1ª pessoa a fazer a de hoje? 👀
 
 🔗 *FAÇA AGORA (3 a 5 min):*
 👉 ${questionUrl}
 
-💡 *Novo na turma?* A Ofensiva (🔥) é a sua sequência de dias seguidos resolvendo a questão. Faça a de hoje para acender seu primeiro *🔥 1 dia*!
+💡 *Entrou na turma agora?* A Ofensiva (🔥) é a sua sequência de dias seguidos resolvendo a questão. Faça a de hoje para acender seu primeiro *🔥 1 dia*!
 
 👇 Vai fazer a de hoje? Deixa um 👍 para firmar o compromisso!`;
 
@@ -267,7 +267,7 @@ Quem vai ser o *#1* a fazer a questão de hoje? 👀
 
   const message3 = `🚨 *PRÉVIA DA CHAMADA — QUESTÃO DO DIA!* 🚨
 
-Já passamos da metade do dia e *${countToday} guerreiros* já garantiram a presença no mural de hoje! 🎯
+Já passamos da metade do dia e *${countToday} ${countToday === 1 ? 'fera já garantiu' : 'feras já garantiram'} a presença* no mural de hoje! 🎯
 
 🔥 *QUEM JÁ FEZ A QUESTÃO DE HOJE:*
 ${muralLinesToday}
