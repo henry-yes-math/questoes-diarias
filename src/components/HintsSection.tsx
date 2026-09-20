@@ -9,7 +9,9 @@ import {
   EyeOff,
   Sparkles,
   ArrowRight,
-  BookOpen
+  BookOpen,
+  Flame,
+  Check
 } from 'lucide-react';
 import { PedagogicalStep } from '../types';
 
@@ -21,6 +23,9 @@ interface DynamicHintsSectionProps {
   onUnlockAll: () => void;
   onCollapseAll: () => void;
   fontSize: 'normal' | 'large';
+  correctLetter?: 'A' | 'B' | 'C' | 'D' | 'E';
+  selectedLetter?: string | null;
+  onConfirmAnswer?: (letter: string) => void;
 }
 
 export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
@@ -30,7 +35,10 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
   onUnlockNext,
   onUnlockAll,
   onCollapseAll,
-  fontSize
+  fontSize,
+  correctLetter,
+  selectedLetter,
+  onConfirmAnswer
 }) => {
   const allUnlocked = steps.length > 0 && steps.every((s) => unlockedStepIds.has(s.id));
   const anyUnlocked = steps.some((s) => unlockedStepIds.has(s.id));
@@ -117,7 +125,11 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
           });
 
           // Style based on step type
-          const isResolution = step.type === 'resolution';
+          const isResolution =
+            step.type === 'resolution' ||
+            step.title?.toLowerCase().includes('resposta') ||
+            step.title?.toLowerCase().includes('conclusão') ||
+            idx === steps.length - 1;
           const isHintRes = step.type === 'hint-resolution';
 
           let iconBg = 'bg-[#f5f4f0] border-[#e7e5df] text-[#1c1917]';
@@ -188,6 +200,43 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
                         className="prose-content space-y-3"
                         dangerouslySetInnerHTML={{ __html: cleanHtml }}
                       />
+
+                      {/* Botão de Validação Direta da Ofensiva no Final da Resolução (Opção 1) */}
+                      {isResolution && correctLetter && onConfirmAnswer && (
+                        <div className="pt-4 mt-2 border-t border-emerald-100">
+                          {selectedLetter === correctLetter ? (
+                            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+                              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <span>Alternativa {correctLetter} confirmada! Sua ofensiva de hoje foi computada com sucesso.</span>
+                            </div>
+                          ) : (
+                            <div className="bg-amber-50/90 border border-amber-200/90 rounded-xl p-4 space-y-3">
+                              <div className="flex items-start gap-2.5">
+                                <span className="p-1 rounded-lg bg-amber-100 text-amber-700 mt-0.5 shrink-0">
+                                  <Flame className="w-4 h-4 fill-amber-500 text-amber-600 animate-pulse" />
+                                </span>
+                                <div>
+                                  <h4 className="text-xs font-bold text-amber-950">
+                                    Não esqueça de validar sua ofensiva!
+                                  </h4>
+                                  <p className="text-xs text-amber-800 leading-relaxed mt-0.5">
+                                    Você acabou de ver a resolução completa. Registre a <strong>Alternativa {correctLetter}</strong> com 1 clique para salvar seu progresso e garantir seu dia de estudo:
+                                  </p>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => onConfirmAnswer(correctLetter)}
+                                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer group"
+                              >
+                                <Flame className="w-4 h-4 fill-amber-400 text-amber-400 group-hover:scale-110 transition-transform" />
+                                <span>Marcar Alternativa {correctLetter} e Validar Ofensiva de Hoje</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* If next step is still locked, show quick next step button */}
                       {idx < steps.length - 1 && !unlockedStepIds.has(steps[idx + 1].id) && (

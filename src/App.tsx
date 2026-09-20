@@ -126,6 +126,9 @@ export default function App() {
               onUnlockAll={handleUnlockAll}
               onCollapseAll={handleCollapseAll}
               fontSize={fontSize}
+              correctLetter={question.correctLetter}
+              selectedLetter={selectedLetter}
+              onConfirmAnswer={handleConfirmAnswer}
             />
           </div>
         )}
