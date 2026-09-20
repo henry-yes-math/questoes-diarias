@@ -95,9 +95,9 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
             {/* Cabeçalho do Card */}
             <div className="flex items-start justify-between gap-3 pt-1">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 mb-1.5">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 mb-1.5 whitespace-nowrap">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Resposta Correta! Ofensiva de Hoje Garantida 🔥</span>
+                  <span>Resposta correta!</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                   PARABÉNS, {studentName.toUpperCase()}! 🎉
@@ -105,7 +105,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                 <p className="text-sm text-slate-600 mt-0.5">
                   {orderIndex > 0 ? (
                     <>
-                      Você é o <span className="font-bold text-blue-700">#{orderIndex}º</span> aluno a concluir a questão de hoje.
+                      Você é a <span className="font-bold text-blue-700">#{orderIndex}ª pessoa</span> a concluir a questão de hoje.
                     </>
                   ) : (
                     'Questão de hoje concluída com sucesso!'

@@ -50,9 +50,9 @@ export const CelebrationCard: React.FC<Props> = ({
       {/* Topo: Parabéns e Ordem */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-blue-100 pb-5">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 mb-2 whitespace-nowrap">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Resposta Correta! Ofensiva de Hoje Garantida 🔥</span>
+            <span>Resposta correta!</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Parabéns, {studentName}! 🎉
@@ -60,7 +60,7 @@ export const CelebrationCard: React.FC<Props> = ({
           <p className="text-sm text-slate-600 mt-1">
             {orderIndex > 0 ? (
               <>
-                Você é o <span className="font-bold text-blue-700">#{orderIndex}º</span> aluno a concluir a questão de hoje.
+                Você é a <span className="font-bold text-blue-700">#{orderIndex}ª pessoa</span> a concluir a questão de hoje.
               </>
             ) : (
               'Questão de hoje concluída com sucesso!'
