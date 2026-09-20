@@ -50,9 +50,15 @@ export const CelebrationCard: React.FC<Props> = ({
       {/* Topo: Parabéns e Ordem */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-blue-100 pb-5">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 mb-2 whitespace-nowrap">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Resposta correta!</span>
+          <div className="flex flex-wrap items-center gap-1.5 mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Resposta correta</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 whitespace-nowrap">
+              <Flame className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+              <span>Ofensiva garantida</span>
+            </div>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Parabéns, {studentName}! 🎉
