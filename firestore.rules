@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Alunos e perfis
+    match /students/{studentId} {
+      allow read, write: if true;
+    }
+    
+    // Submissões diárias da turma
+    match /daily_submissions/{submissionId} {
+      allow read, write: if true;
+    }
+    
+    // Questões diárias e metadados
+    match /questions/{questionId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Configurações do app (ciclo diário controlado pelo professor)
+    match /app_settings/{settingId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

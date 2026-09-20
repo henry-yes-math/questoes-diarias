@@ -1,0 +1,291 @@
+{
+  "id": 9627,
+  "date": "2024-02-10T19:34:12",
+  "date_gmt": "2024-02-10T22:34:12",
+  "guid": {
+    "rendered": "https://www.yesmatematica.com/?p=9627"
+  },
+  "modified": "2024-02-10T19:46:24",
+  "modified_gmt": "2024-02-10T22:46:24",
+  "slug": "enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto",
+  "status": "publish",
+  "type": "post",
+  "link": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/",
+  "title": {
+    "rendered": "ENEM 2023 PPL &#8211; Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto"
+  },
+  "content": {
+    "rendered": "\n<p class=\"wp-block-paragraph\">(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Em decorrência de uma mudança no projeto, o salão ficará com 12 m de comprimento por 5 m de largura e as mesmas dimensões para porta e janela. Como a compra de azulejos já foi feita, essa pessoa ajustará a altura do salão de modo que a área lateral, incluindo as regiões da porta e da janela, seja equivalente à área lateral antes da alteração do projeto.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Qual é a medida, em metro, dessa nova altura, expressa com duas casas decimais?</p>\n\n\n\n<p class=\"wp-block-paragraph\">A 3,25<br>B 3,00<br>C 2,50<br>D 2,35<br>E 2,00</p>\n\n\n\n<h2 class=\"wp-block-heading\">Dicas e Resolução</h2>\n\n\n\n<p class=\"wp-block-paragraph\">IMPORTANTE: Tente resolver a questão por alguns minutos antes de consultar as dicas. A melhor maneira de progredir em matemática é tentando resolver exercícios por conta própria.</p>\n\n\n\n<h2 class=\"wp-block-heading\">Dica 1</h2>\n\n\n\n<p class=\"wp-block-paragraph\">Na figura abaixo, você pode ver como era o projeto inicial do salão.</p>\n\n\n\n<figure class=\"wp-block-image size-large\"><img fetchpriority=\"high\" decoding=\"async\" width=\"1024\" height=\"428\" src=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-1024x428.png\" alt=\"(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura.\n\nEm decorrência de uma mudança no projeto, o salão ficará com 12 m de comprimento por 5 m de largura e as mesmas dimensões para porta e janela. Como a compra de azulejos já foi feita, essa pessoa ajustará a altura do salão de modo que a área lateral, incluindo as regiões da porta e da janela, seja equivalente à área lateral antes da\nalteração do projeto.\n\nQual é a medida, em metro, dessa nova altura, expressa com duas casas decimais?\n\nA 3,25\nB 3,00\nC 2,50\nD 2,35\nE 2,00\" class=\"wp-image-9629\" srcset=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-1024x428.png 1024w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-300x126.png 300w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-768x321.png 768w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-370x155.png 370w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-970x406.png 970w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas.png 1243w\" sizes=\"(max-width: 1024px) 100vw, 1024px\" /></figure>\n\n\n\n<p class=\"wp-block-paragraph\">Esse salão tem quatro paredes.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Temos que calcular a área de cada uma das quatro paredes.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Sua vez de fazer isso!</p>\n\n\n\n<h2 class=\"wp-block-heading\">Resolução da Dica 1</h2>\n\n\n\n<p class=\"wp-block-paragraph\">Vamos começar analisando a parede da frente.</p>\n\n\n\n<h3 class=\"wp-block-heading\">Parede da frente</h3>\n\n\n\n<figure class=\"wp-block-image size-large\"><img decoding=\"async\" width=\"1024\" height=\"429\" src=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-1024x429.png\" alt=\"(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura.\n\nEm decorrência de uma mudança no projeto, o salão ficará com 12 m de comprimento por 5 m de largura e as mesmas dimensões para porta e janela. Como a compra de azulejos já foi feita, essa pessoa ajustará a altura do salão de modo que a área lateral, incluindo as regiões da porta e da janela, seja equivalente à área lateral antes da\nalteração do projeto.\n\nQual é a medida, em metro, dessa nova altura, expressa com duas casas decimais?\n\nA 3,25\nB 3,00\nC 2,50\nD 2,35\nE 2,00\" class=\"wp-image-9631\" srcset=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-1024x429.png 1024w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-300x126.png 300w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-768x322.png 768w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-370x155.png 370w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-970x407.png 970w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no.png 1221w\" sizes=\"(max-width: 1024px) 100vw, 1024px\" /></figure>\n\n\n\n<p class=\"wp-block-paragraph\">Essa parede é um retângulo de base 10 m e altura 2,5 m. </p>\n\n\n\n<p class=\"wp-block-paragraph\">A área dessa parede é 10 × 2,5 = 25 m<sup>2</sup>.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Agora, vamos analisar a parede de trás.</p>\n\n\n\n<h3 class=\"wp-block-heading\">Parede de trás</h3>\n\n\n\n<figure class=\"wp-block-image size-large\"><img decoding=\"async\" width=\"1024\" height=\"432\" src=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-1024x432.png\" alt=\"(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura.\n\nEm decorrência de uma mudança no projeto, o salão ficará com 12 m de comprimento por 5 m de largura e as mesmas dimensões para porta e janela. Como a compra de azulejos já foi feita, essa pessoa ajustará a altura do salão de modo que a área lateral, incluindo as regiões da porta e da janela, seja equivalente à área lateral antes da\nalteração do projeto.\n\nQual é a medida, em metro, dessa nova altura, expressa com duas casas decimais?\n\nA 3,25\nB 3,00\nC 2,50\nD 2,35\nE 2,00\" class=\"wp-image-9632\" srcset=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-1024x432.png 1024w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-300x126.png 300w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-768x324.png 768w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-370x156.png 370w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-970x409.png 970w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto.png 1217w\" sizes=\"(max-width: 1024px) 100vw, 1024px\" /></figure>\n\n\n\n<p class=\"wp-block-paragraph\">A parede de trás tem exatamente as mesmas medidas da parede da frente.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Ela é um retângulo de base 10 m e altura 2,5 m. </p>\n\n\n\n<p class=\"wp-block-paragraph\">A área da parede de trás é 10 × 2,5 = 25 m<sup>2</sup>.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Agora, vamos analisar as paredes da esquerda e direita.</p>\n\n\n\n<h3 class=\"wp-block-heading\">Paredes da esquerda e direita</h3>\n\n\n\n<figure class=\"wp-block-image size-large\"><img loading=\"lazy\" decoding=\"async\" width=\"1024\" height=\"412\" src=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-1024x412.png\" alt=\"(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura.\n\nEm decorrência de uma mudança no projeto, o salão ficará com 12 m de comprimento por 5 m de largura e as mesmas dimensões para porta e janela. Como a compra de azulejos já foi feita, essa pessoa ajustará a altura do salão de modo que a área lateral, incluindo as regiões da porta e da janela, seja equivalente à área lateral antes da\nalteração do projeto.\n\nQual é a medida, em metro, dessa nova altura, expressa com duas casas decimais?\n\nA 3,25\nB 3,00\nC 2,50\nD 2,35\nE 2,00\" class=\"wp-image-9633\" srcset=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-1024x412.png 1024w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-300x121.png 300w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-768x309.png 768w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-370x149.png 370w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-970x390.png 970w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao.png 1362w\" sizes=\"(max-width: 1024px) 100vw, 1024px\" /></figure>\n\n\n\n<p class=\"wp-block-paragraph\">As duas paredes, da esquerda e da direita, têm exatamente as mesmas dimensões.</p>\n\n\n\n<p class=\"wp-block-paragraph\">São retângulos de 6m de comprimento e 2,5 m de altura.</p>\n\n\n\n<p class=\"wp-block-paragraph\">A área de cada uma dessas paredes é 6 × 2,5 = 15 m<sup>2</sup>.</p>\n\n\n\n<h2 class=\"wp-block-heading\">Dica 2</h2>\n\n\n\n<p class=\"wp-block-paragraph\">Calculamos o seguinte:</p>\n\n\n\n<ul class=\"wp-block-list\">\n<li>Parede da frente: 25 m<sup>2</sup></li>\n\n\n\n<li>Parede de trás: 25 m<sup>2</sup></li>\n\n\n\n<li>Parede da esquerda: 15 m<sup>2</sup></li>\n\n\n\n<li>Parede da direita: 15 m<sup>2</sup></li>\n</ul>\n\n\n\n<p class=\"wp-block-paragraph\">Nesse projeto inicial do salão, qual é a área total das paredes laterais?</p>\n\n\n\n<h2 class=\"wp-block-heading\">Resolução da Dica 2</h2>\n\n\n\n<p class=\"wp-block-paragraph\">Basta a gente somar as áreas de cada parede:</p>\n\n\n\n<p class=\"wp-block-paragraph\">25 + 25 + 15 + 15 = 80 m<sup>2</sup></p>\n\n\n\n<p class=\"wp-block-paragraph\"><strong>No projeto inicial, a área total das paredes laterais é de 80 m<sup>2</sup>.</strong></p>\n\n\n\n<h2 class=\"wp-block-heading\">Dica 3</h2>\n\n\n\n<p class=\"wp-block-paragraph\">Agora vamos analisar o novo projeto.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Nesse novo projeto o salão terá 12 m de comprimento e 5 m de largura. </p>\n\n\n\n<p class=\"wp-block-paragraph\">Qual será a altura do salão? Bom, é exatamente isso que queremos calcular. Então vamos dizer que a altura mede x metros.</p>\n\n\n\n<figure class=\"wp-block-image size-large\"><img loading=\"lazy\" decoding=\"async\" width=\"1024\" height=\"336\" src=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-1024x336.png\" alt=\"(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura.\n\nEm decorrência de uma mudança no projeto, o salão ficará com 12 m de comprimento por 5 m de largura e as mesmas dimensões para porta e janela. Como a compra de azulejos já foi feita, essa pessoa ajustará a altura do salão de modo que a área lateral, incluindo as regiões da porta e da janela, seja equivalente à área lateral antes da\nalteração do projeto.\n\nQual é a medida, em metro, dessa nova altura, expressa com duas casas decimais?\n\nA 3,25\nB 3,00\nC 2,50\nD 2,35\nE 2,00\" class=\"wp-image-9637\" srcset=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-1024x336.png 1024w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-300x98.png 300w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-768x252.png 768w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-370x121.png 370w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-970x318.png 970w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato.png 1077w\" sizes=\"(max-width: 1024px) 100vw, 1024px\" /></figure>\n\n\n\n<p class=\"wp-block-paragraph\">Agora, com essas medidas, vamos calcular a área de cada parede.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Sua vez de continuar!</p>\n\n\n\n<h2 class=\"wp-block-heading\">Resolução da Dica 3</h2>\n\n\n\n<p class=\"wp-block-paragraph\">Vamos começar analisando as paredes da frente e de trás</p>\n\n\n\n<h3 class=\"wp-block-heading\">Paredes da frente e de trás</h3>\n\n\n\n<figure class=\"wp-block-image size-large\"><img loading=\"lazy\" decoding=\"async\" width=\"1024\" height=\"342\" src=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-1024x342.png\" alt=\"(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura.\n\nEm decorrência de uma mudança no projeto, o salão ficará com 12 m de comprimento por 5 m de largura e as mesmas dimensões para porta e janela. Como a compra de azulejos já foi feita, essa pessoa ajustará a altura do salão de modo que a área lateral, incluindo as regiões da porta e da janela, seja equivalente à área lateral antes da\nalteração do projeto.\n\nQual é a medida, em metro, dessa nova altura, expressa com duas casas decimais?\n\nA 3,25\nB 3,00\nC 2,50\nD 2,35\nE 2,00\" class=\"wp-image-9639\" srcset=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-1024x342.png 1024w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-300x100.png 300w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-768x256.png 768w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-370x123.png 370w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-970x324.png 970w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um.png 1079w\" sizes=\"(max-width: 1024px) 100vw, 1024px\" /></figure>\n\n\n\n<p class=\"wp-block-paragraph\">As paredes da frente e de trás têm exatamente as mesmas dimensões.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Ambas são retângulos de comprimento 12 m e altura x m.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Então, a área de cada parede é 12.x.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Agora vamos analisar as paredes da esquerda e da direita</p>\n\n\n\n<h3 class=\"wp-block-heading\">Paredes da esquerda e da direita</h3>\n\n\n\n<figure class=\"wp-block-image size-large is-resized\"><img loading=\"lazy\" decoding=\"async\" width=\"1024\" height=\"335\" src=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-1024x335.png\" alt=\"(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura.\n\nEm decorrência de uma mudança no projeto, o salão ficará com 12 m de comprimento por 5 m de largura e as mesmas dimensões para porta e janela. Como a compra de azulejos já foi feita, essa pessoa ajustará a altura do salão de modo que a área lateral, incluindo as regiões da porta e da janela, seja equivalente à área lateral antes da\nalteração do projeto.\n\nQual é a medida, em metro, dessa nova altura, expressa com duas casas decimais?\n\nA 3,25\nB 3,00\nC 2,50\nD 2,35\nE 2,00\" class=\"wp-image-9642\" style=\"width:840px;height:auto\" srcset=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-1024x335.png 1024w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-300x98.png 300w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-768x251.png 768w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-370x121.png 370w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-970x317.png 970w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para.png 1055w\" sizes=\"(max-width: 1024px) 100vw, 1024px\" /></figure>\n\n\n\n<p class=\"wp-block-paragraph\">As paredes da esquerda e da direita têm as mesmas dimensões.</p>\n\n\n\n<p class=\"wp-block-paragraph\">São retângulos de 5 m de comprimento e x metros de altura.</p>\n\n\n\n<p class=\"wp-block-paragraph\">A área de cada parede é 5.x.</p>\n\n\n\n<h2 class=\"wp-block-heading\">Dica 4</h2>\n\n\n\n<p class=\"wp-block-paragraph\">Calculamos o seguinte para o novo projeto:</p>\n\n\n\n<ul class=\"wp-block-list\">\n<li>Parede da frente: 12x m<sup>2</sup></li>\n\n\n\n<li>Parede de trás: 12x m<sup>2</sup></li>\n\n\n\n<li>Parede da esquerda: 5x m<sup>2</sup></li>\n\n\n\n<li>Parede da direita: 5x m<sup>2</sup></li>\n</ul>\n\n\n\n<p class=\"wp-block-paragraph\">Quanto que dá a soma das áreas dessas paredes?</p>\n\n\n\n<h2 class=\"wp-block-heading\">Resolução da Dica 4</h2>\n\n\n\n<p class=\"wp-block-paragraph\">12x + 12x + 5x + 5x = 34x</p>\n\n\n\n<p class=\"wp-block-paragraph\">No novo projeto, a soma das áreas das paredes é 34x m<sup>2</sup>.</p>\n\n\n\n<h2 class=\"wp-block-heading\">Dica 5</h2>\n\n\n\n<p class=\"wp-block-paragraph\">Veja essa frase do enunciado:</p>\n\n\n\n<blockquote class=\"wp-block-quote is-layout-flow wp-block-quote-is-layout-flow\">\n<p class=\"wp-block-paragraph\">essa pessoa ajustará a altura do salão (no novo projeto) de modo que a área lateral, incluindo as regiões da porta e da janela, seja equivalente à área lateral antes da alteração do projeto.</p>\n</blockquote>\n\n\n\n<p class=\"wp-block-paragraph\">Já vimos que no projeto inicial a área das paredes era de 80 m<sup>2</sup>.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Vimos também que no novo projeto, a altura das paredes é x, e a área total das paredes laterais é 34x m<sup>2</sup>.</p>\n\n\n\n<p class=\"wp-block-paragraph\">A pessoa vai escolher a altura x de modo que 34x seja igual a 80. </p>\n\n\n\n<p class=\"wp-block-paragraph\">Agora é a sua vez de continuar! Monte uma equação e encontre o valor de x.</p>\n\n\n\n<h2 class=\"wp-block-heading\">Resolução da Dica 5</h2>\n\n\n\n<p class=\"wp-block-paragraph\">Temos que 34x deve ser igual a 80</p>\n\n\n\n<p class=\"wp-block-paragraph\">34x = 80</p>\n\n\n\n<p class=\"wp-block-paragraph\">x = 80 / 34</p>\n\n\n\n<p class=\"wp-block-paragraph\">Agora, vamos fazer a conta de 80 dividido por 34.</p>\n\n\n\n<figure class=\"wp-block-image size-full\"><img loading=\"lazy\" decoding=\"async\" width=\"464\" height=\"609\" src=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de.png\" alt=\"(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura.\n\nEm decorrência de uma mudança no projeto, o salão ficará com 12 m de comprimento por 5 m de largura e as mesmas dimensões para porta e janela. Como a compra de azulejos já foi feita, essa pessoa ajustará a altura do salão de modo que a área lateral, incluindo as regiões da porta e da janela, seja equivalente à área lateral antes da\nalteração do projeto.\n\nQual é a medida, em metro, dessa nova altura, expressa com duas casas decimais?\n\nA 3,25\nB 3,00\nC 2,50\nD 2,35\nE 2,00\" class=\"wp-image-9647\" srcset=\"https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de.png 464w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-229x300.png 229w, https://www.yesmatematica.com/wp-content/uploads/2024/02/ENEM-2023-PPL-uma-pessoa-tinha-um-projeto-para-um-salao-de-370x486.png 370w\" sizes=\"(max-width: 464px) 100vw, 464px\" /></figure>\n\n\n\n<p class=\"wp-block-paragraph\">x = 80 / 34 = 2,35</p>\n\n\n\n<p class=\"wp-block-paragraph\"><strong>A altura do salão no novo projeto é de 2,35 m.</strong></p>\n\n\n\n<figure class=\"wp-block-table\"><table><tbody><tr><td><!--[if IE]>\n<div id=\"cs-uf-epicoepico_capture_sc\"  class=\"capture-wrap uf-wrap ie\"><![endif]--><!--[if !IE]><!-->\n<div id=\"cs-uf-epicoepico_capture_sc\"  class=\"capture-wrap uf-wrap sc\"><!--<![endif]--><div id=\"uf-form-wrapper\" class=\"capture uf \"><div class=\"capture-container uf-container\"><div class=\"capture-container uf-container capture-inner\"><h4 itemprop=\"headline\" class=\"capture-title uf-title \">Projeto 850+ em Matemática no ENEM</h4><p class=\"capture-icon uf-icon\"><i class=\"fafa-refresh\"></i></p><p itemprop=\"text\" class=\"capture-intro uf-intro \">Se você quer tirar mais de 850 em matemática no ENEM, entre agora nesse projeto. Você vai ter material de estudos, treino de exercícios e aulas ao vivo, com foco total em você conseguir mais de 850 em matemática no ENEM.<br /><br />O projeto é inteiramente <strong>GRATUITO</strong>, e acontecerá no nosso grupo de WhatsApp. Para participar basta clicar no botão abaixo.<span class=\"uf-arrow\"><svg fill=\"#00D0CF\" xmlns=\"https://www.w3.org/2000/svg\" viewBox=\"0 0 46.322 60\">><polygon fill=\"#00c29a\" points=\"33.831,36.839 23.161,0 12.491,36.839 0,36.839 23.161,60 46.322,36.839\"/></svg></span></p></div></div><div id=\"uf-form-wrapper\" class=\"capture capture-form uf \"><div class=\"capture-container uf-container \"><div class=\"uf-custom-button\"><!--sse--><a id=\"uf-epicoepico_capture_sc\"  class=\"uf-submit uf-epicoepico_capture_sc\" href=\"https://chat.whatsapp.com/Jaw0218SuCz6tMC7pez9UT\" rel=\"nofollow \">QUERO ENTRAR <i class=\"fa fa-whatsapp\"></i></a><!--/sse-->\n\n\t\t\t\t</div></div></div></div></div></td></tr></tbody></table></figure>\n\n\n\n<h2 class=\"wp-block-heading\">Resposta</h2>\n\n\n\n<p class=\"wp-block-paragraph\"><strong>Alternativa D</strong></p>\n\n\n\n<p class=\"wp-block-paragraph\"><strong>Essa questão é de nível médio</strong></p>\n\n\n\n<p class=\"wp-block-paragraph\">Agora, vou te dar uma dica importante: A melhor maneira de você progredir em matemática é resolvendo exercícios por conta própria. <br><br>Então, se você não resolveu por conta própria essa questão, faça o seguinte agora: Pegue um lápis e papel, e tente resolver novamente a questão, só que dessa vez por conta própria. Refaça o exercício do começo ao fim sem consultar nada.</p>\n\n\n\n<p class=\"wp-block-paragraph\">Você deve ter o seguinte em mente: &#8220;Se essa questão aparece na minha prova do Enem, eu tenho que conseguir resolver ela totalmente por conta própria.&#8221;<br><br>Adote essa prática para todos os exercícios aqui do site. Isso vai te ajudar a progredir muito mais rápido em matemática.</p>\n\n\n\n<h2 class=\"wp-block-heading\">Como foi a sua experiência?</h2>\n\n\n\n<div class=\"wp-block-contact-form-7-contact-form-selector\">\n<div class=\"wpcf7 no-js\" id=\"wpcf7-f8961-o1\" lang=\"pt-BR\" dir=\"ltr\" data-wpcf7-id=\"8961\">\n<div class=\"screen-reader-response\"><p role=\"status\" aria-live=\"polite\" aria-atomic=\"true\"></p> <ul></ul></div>\n<form action=\"/wp-json/wp/v2/posts?slug=enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto#wpcf7-f8961-o1\" method=\"post\" class=\"wpcf7-form init\" aria-label=\"Formulários de contato\" novalidate=\"novalidate\" data-status=\"init\">\n<fieldset class=\"hidden-fields-container\"><input type=\"hidden\" name=\"_wpcf7\" value=\"8961\" /><input type=\"hidden\" name=\"_wpcf7_version\" value=\"6.1.6\" /><input type=\"hidden\" name=\"_wpcf7_locale\" value=\"pt_BR\" /><input type=\"hidden\" name=\"_wpcf7_unit_tag\" value=\"wpcf7-f8961-o1\" /><input type=\"hidden\" name=\"_wpcf7_container_post\" value=\"0\" /><input type=\"hidden\" name=\"_wpcf7_posted_data_hash\" value=\"\" />\n</fieldset>\n<p><span class=\"wpcf7-form-control-wrap\" data-name=\"radio-alternativas\"><span class=\"wpcf7-form-control wpcf7-radio\"><span class=\"wpcf7-list-item first\"><input type=\"radio\" name=\"radio-alternativas\" value=\"Resolvi a questão por conta própria, sem precisar de dicas!\" checked=\"checked\" /><span class=\"wpcf7-list-item-label\">Resolvi a questão por conta própria, sem precisar de dicas!</span></span><span class=\"wpcf7-list-item\"><input type=\"radio\" name=\"radio-alternativas\" value=\"Consultei as dicas, e depois refiz a questão por conta própria.\" /><span class=\"wpcf7-list-item-label\">Consultei as dicas, e depois refiz a questão por conta própria.</span></span><span class=\"wpcf7-list-item\"><input type=\"radio\" name=\"radio-alternativas\" value=\"Vi as dicas e a resolução, mas ficaram algumas dúvidas.\" /><span class=\"wpcf7-list-item-label\">Vi as dicas e a resolução, mas ficaram algumas dúvidas.</span></span><span class=\"wpcf7-list-item last\"><input type=\"radio\" name=\"radio-alternativas\" value=\"Nenhuma dessas alternativas\" /><span class=\"wpcf7-list-item-label\">Nenhuma dessas alternativas</span></span></span></span>\n</p>\n<p>Comentários ou Dúvidas (Opcional)<span class=\"wpcf7-form-control-wrap\" data-name=\"text-comentario\"><input size=\"40\" maxlength=\"400\" class=\"wpcf7-form-control wpcf7-text\" aria-invalid=\"false\" value=\"\" type=\"text\" name=\"text-comentario\" /></span><br />\nSeu email (Opcional)<span class=\"wpcf7-form-control-wrap\" data-name=\"email-aluno\"><input size=\"40\" maxlength=\"400\" class=\"wpcf7-form-control wpcf7-email wpcf7-text wpcf7-validates-as-email\" aria-invalid=\"false\" value=\"\" type=\"email\" name=\"email-aluno\" /></span><br />\n<input class=\"wpcf7-form-control wpcf7-submit has-spinner\" type=\"submit\" value=\"Enviar\" />\n</p><p style=\"display: none !important;\" class=\"akismet-fields-container\" data-prefix=\"_wpcf7_ak_\"><label>&#916;<textarea name=\"_wpcf7_ak_hp_textarea\" cols=\"45\" rows=\"8\" maxlength=\"100\"></textarea></label><input type=\"hidden\" id=\"ak_js_1\" name=\"_wpcf7_ak_js\" value=\"48\"/><script>\ndocument.getElementById( \"ak_js_1\" ).setAttribute( \"value\", ( new Date() ).getTime() );\n</script>\n</p><div class=\"wpcf7-response-output\" aria-hidden=\"true\"></div>\n</form>\n</div>\n</div>\n\n\n\n<h2 class=\"wp-block-heading\">ENEM 2023 PPL &#8211; Resolução Comentada</h2>\n\n\n\n<ul class=\"wp-block-list\">\n<li><a href=\"https://www.yesmatematica.com/enem-2023-ppl-resolucao-comentada-matematica-e-suas-tecnologias/\">Resolução ENEM 2023 PPL &#8211; Matemática e suas Tecnologias</a></li>\n</ul>\n\n\n\n<h2 class=\"wp-block-heading\">Mais Provas Resolvidas</h2>\n\n\n\n<h3 class=\"wp-block-heading\">ENEM 2023</h3>\n\n\n\n<ul class=\"wp-block-list\">\n<li><a href=\"https://www.yesmatematica.com/enem-2023-resolucao-comentada-matematica-e-suas-tecnologias/\">Resolução ENEM 2023 &#8211; Matemática e suas Tecnologias</a></li>\n\n\n\n<li><a href=\"https://www.yesmatematica.com/enem-2023-ppl-resolucao-comentada-matematica-e-suas-tecnologias/\">Resolução ENEM 2023 PPL &#8211; Matemática e suas Tecnologias</a></li>\n</ul>\n\n\n\n<h3 class=\"wp-block-heading\">ENEM 2022</h3>\n\n\n\n<ul class=\"wp-block-list\">\n<li><a href=\"https://www.yesmatematica.com/enem-2022-resolucao-comentada-matematica-e-suas-tecnologias/\">Resolução ENEM 2022 &#8211; Matemática e suas Tecnologias</a></li>\n\n\n\n<li><a href=\"https://www.yesmatematica.com/resolucao-enem-2022-ppl-reaplicacao-matematica-e-suas-tecnologias/\">Resolução ENEM 2022 PPL &#8211; Matemática e suas Tecnologias</a></li>\n</ul>\n\n\n\n<h3 class=\"wp-block-heading\">ENEM 2021</h3>\n\n\n\n<ul class=\"wp-block-list\">\n<li><a href=\"https://www.yesmatematica.com/enem-2021-resolucao-comentada-matematica-e-suas-tecnologias/\">Resolução ENEM 2021 &#8211; Matemática e suas Tecnologias</a></li>\n\n\n\n<li><a href=\"https://www.yesmatematica.com/enem-2021-reaplicacao-ppl-segunda-oportunidade-resolucao-comentada-matematica-e-suas-tecnologias/\">Resolução ENEM 2021 PPL &#8211; Reaplicação &#8211; Matemática e suas Tecnologias</a></li>\n</ul>\n\n\n\n<h3 class=\"wp-block-heading\">ENEM 2020</h3>\n\n\n\n<ul class=\"wp-block-list\">\n<li><a href=\"https://www.yesmatematica.com/enem-2020-resolucao-matematica-e-suas-tecnologias/\">Resolução ENEM 2020 &#8211; Matemática e suas Tecnologias</a></li>\n\n\n\n<li><a href=\"https://www.yesmatematica.com/enem-2020-digital-resolucao-matematica-e-suas-tecnologias/\">Resolução ENEM 2020 Digital &#8211; Matemática e suas Tecnologias</a></li>\n\n\n\n<li><a href=\"https://www.yesmatematica.com/enem-2020-reaplicacao-ppl-resolucao-comentada-matematica-e-suas-tecnologias/\">Resolução ENEM 2020 PPL &#8211; Reaplicação &#8211; Matemática e suas Tecnologias</a></li>\n</ul>\n\n\n\n<h3 class=\"wp-block-heading\">ENEM 2019</h3>\n\n\n\n<ul class=\"wp-block-list\">\n<li><a href=\"https://www.yesmatematica.com/enem-2019-resolucao-matematica-e-suas-tecnologias/\">Resolução ENEM 2019 &#8211; Matemática e suas Tecnologias</a></li>\n\n\n\n<li><a href=\"https://www.yesmatematica.com/enem-2019-ppl-resolucao-segunda-aplicacao-matematica-e-suas-tecnologias/\">Resolução ENEM 2019 PPL &#8211; Segunda Aplicação &#8211; Matemática e suas Tecnologias</a></li>\n</ul>\n\n\n\n<h3 class=\"wp-block-heading\">ENEM 2018</h3>\n\n\n\n<ul class=\"wp-block-list\">\n<li><a href=\"https://www.yesmatematica.com/enem-2018-resolucao-matematica-e-suas-tecnologias/\">Resolução ENEM 2018 &#8211; Matemática e suas Tecnologias</a></li>\n\n\n\n<li><a href=\"https://www.yesmatematica.com/enem-2018-ppl-resolucao-reaplicacao-matematica-e-suas-tecnologias/\">Resolução ENEM 2018 PPL &#8211; Segunda Aplicação &#8211; Matemática e suas Tecnologias</a></li>\n</ul>\n",
+    "protected": false
+  },
+  "excerpt": {
+    "rendered": "<p>(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura. Em decorrência de uma mudança no projeto, o salão <a href=\"https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/\" class=\"more-link\"><span>Continue lendo</span>→</a></p>\n",
+    "protected": false
+  },
+  "author": 1,
+  "featured_media": 504,
+  "comment_status": "open",
+  "ping_status": "open",
+  "sticky": false,
+  "template": "",
+  "format": "standard",
+  "meta": {
+    "footnotes": ""
+  },
+  "categories": [
+    55
+  ],
+  "tags": [],
+  "class_list": [
+    "entry",
+    "author-seuamigohenry",
+    "post-9627",
+    "post",
+    "type-post",
+    "status-publish",
+    "format-standard",
+    "has-post-thumbnail",
+    "category-geometria-areas"
+  ],
+  "yoast_head": "<!-- This site is optimized with the Yoast SEO plugin v28.1 - https://yoast.com/product/yoast-seo-wordpress/ -->\n<title>ENEM 2023 PPL - Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto - YesMatematica</title>\n<meta name=\"robots\" content=\"index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1\" />\n<link rel=\"canonical\" href=\"https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/\" />\n<meta property=\"og:locale\" content=\"pt_BR\" />\n<meta property=\"og:type\" content=\"article\" />\n<meta property=\"og:title\" content=\"ENEM 2023 PPL - Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto - YesMatematica\" />\n<meta property=\"og:description\" content=\"(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura. Em decorrência de uma mudança no projeto, o salão Continue lendo→\" />\n<meta property=\"og:url\" content=\"https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/\" />\n<meta property=\"og:site_name\" content=\"YesMatematica\" />\n<meta property=\"article:published_time\" content=\"2024-02-10T22:34:12+00:00\" />\n<meta property=\"article:modified_time\" content=\"2024-02-10T22:46:24+00:00\" />\n<meta property=\"og:image\" content=\"https://www.yesmatematica.com/wp-content/uploads/2018/04/enem.jpg\" />\n\t<meta property=\"og:image:width\" content=\"509\" />\n\t<meta property=\"og:image:height\" content=\"302\" />\n\t<meta property=\"og:image:type\" content=\"image/jpeg\" />\n<meta name=\"author\" content=\"Henry\" />\n<meta name=\"twitter:card\" content=\"summary_large_image\" />\n<meta name=\"twitter:label1\" content=\"Escrito por\" />\n\t<meta name=\"twitter:data1\" content=\"Henry\" />\n\t<meta name=\"twitter:label2\" content=\"Est. tempo de leitura\" />\n\t<meta name=\"twitter:data2\" content=\"24 minutos\" />\n<script type=\"application/ld+json\" class=\"yoast-schema-graph\">{\"@context\":\"https:\\/\\/schema.org\",\"@graph\":[{\"@type\":\"Article\",\"@id\":\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/#article\",\"isPartOf\":{\"@id\":\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/\"},\"author\":{\"name\":\"Henry\",\"@id\":\"https:\\/\\/www.yesmatematica.com\\/#\\/schema\\/person\\/0c05b9d0fe090668bf050446e5c79595\"},\"headline\":\"ENEM 2023 PPL &#8211; Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto\",\"datePublished\":\"2024-02-10T22:34:12+00:00\",\"dateModified\":\"2024-02-10T22:46:24+00:00\",\"mainEntityOfPage\":{\"@id\":\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/\"},\"wordCount\":785,\"commentCount\":0,\"image\":{\"@id\":\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/#primaryimage\"},\"thumbnailUrl\":\"https:\\/\\/www.yesmatematica.com\\/wp-content\\/uploads\\/2018\\/04\\/enem.jpg\",\"articleSection\":[\"Geometria - Áreas\"],\"inLanguage\":\"pt-BR\",\"potentialAction\":[{\"@type\":\"CommentAction\",\"name\":\"Comment\",\"target\":[\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/#respond\"]}]},{\"@type\":\"WebPage\",\"@id\":\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/\",\"url\":\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/\",\"name\":\"ENEM 2023 PPL - Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto - YesMatematica\",\"isPartOf\":{\"@id\":\"https:\\/\\/www.yesmatematica.com\\/#website\"},\"primaryImageOfPage\":{\"@id\":\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/#primaryimage\"},\"image\":{\"@id\":\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/#primaryimage\"},\"thumbnailUrl\":\"https:\\/\\/www.yesmatematica.com\\/wp-content\\/uploads\\/2018\\/04\\/enem.jpg\",\"datePublished\":\"2024-02-10T22:34:12+00:00\",\"dateModified\":\"2024-02-10T22:46:24+00:00\",\"author\":{\"@id\":\"https:\\/\\/www.yesmatematica.com\\/#\\/schema\\/person\\/0c05b9d0fe090668bf050446e5c79595\"},\"breadcrumb\":{\"@id\":\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/#breadcrumb\"},\"inLanguage\":\"pt-BR\",\"potentialAction\":[{\"@type\":\"ReadAction\",\"target\":[\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/\"]}]},{\"@type\":\"ImageObject\",\"inLanguage\":\"pt-BR\",\"@id\":\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/#primaryimage\",\"url\":\"https:\\/\\/www.yesmatematica.com\\/wp-content\\/uploads\\/2018\\/04\\/enem.jpg\",\"contentUrl\":\"https:\\/\\/www.yesmatematica.com\\/wp-content\\/uploads\\/2018\\/04\\/enem.jpg\",\"width\":509,\"height\":302,\"caption\":\"enem\"},{\"@type\":\"BreadcrumbList\",\"@id\":\"https:\\/\\/www.yesmatematica.com\\/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto\\/#breadcrumb\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Início\",\"item\":\"https:\\/\\/www.yesmatematica.com\\/\"},{\"@type\":\"ListItem\",\"position\":2,\"name\":\"ENEM 2023 PPL &#8211; Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto\"}]},{\"@type\":\"WebSite\",\"@id\":\"https:\\/\\/www.yesmatematica.com\\/#website\",\"url\":\"https:\\/\\/www.yesmatematica.com\\/\",\"name\":\"YesMatematica\",\"description\":\"Aqui a matemática fica fácil\",\"potentialAction\":[{\"@type\":\"SearchAction\",\"target\":{\"@type\":\"EntryPoint\",\"urlTemplate\":\"https:\\/\\/www.yesmatematica.com\\/?s={search_term_string}\"},\"query-input\":{\"@type\":\"PropertyValueSpecification\",\"valueRequired\":true,\"valueName\":\"search_term_string\"}}],\"inLanguage\":\"pt-BR\"},{\"@type\":\"Person\",\"@id\":\"https:\\/\\/www.yesmatematica.com\\/#\\/schema\\/person\\/0c05b9d0fe090668bf050446e5c79595\",\"name\":\"Henry\",\"image\":{\"@type\":\"ImageObject\",\"inLanguage\":\"pt-BR\",\"@id\":\"https:\\/\\/secure.gravatar.com\\/avatar\\/20ee6d0ae409267eae1a764accdea0445ac0432ff2bf8a938dd73ce92943e491?s=96&d=mm&r=g\",\"url\":\"https:\\/\\/secure.gravatar.com\\/avatar\\/20ee6d0ae409267eae1a764accdea0445ac0432ff2bf8a938dd73ce92943e491?s=96&d=mm&r=g\",\"contentUrl\":\"https:\\/\\/secure.gravatar.com\\/avatar\\/20ee6d0ae409267eae1a764accdea0445ac0432ff2bf8a938dd73ce92943e491?s=96&d=mm&r=g\",\"caption\":\"Henry\"},\"description\":\"Henry vai te mostrar que matemática não precisa ser difícil, e que você pode sim tirar uma nota muito boa no ENEM e nos vestibulares! Henry cursou engenharia no ITA e fez mestrado na Ecole Polytechnique em Paris. Ficou na primeira colocação dentre os treineiros de biológicas na FUVEST 2003. Adora dar aulas! Vamos treinar muitos exercícios juntos para você chegar muito bem preparado no ENEM e vestibulares!\"}]}</script>\n<!-- / Yoast SEO plugin. -->",
+  "yoast_head_json": {
+    "title": "ENEM 2023 PPL - Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto - YesMatematica",
+    "robots": {
+      "index": "index",
+      "follow": "follow",
+      "max-snippet": "max-snippet:-1",
+      "max-image-preview": "max-image-preview:large",
+      "max-video-preview": "max-video-preview:-1"
+    },
+    "canonical": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/",
+    "og_locale": "pt_BR",
+    "og_type": "article",
+    "og_title": "ENEM 2023 PPL - Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto - YesMatematica",
+    "og_description": "(ENEM 2023 PPL) Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto retângulo. Ela comprou a quantidade exata de azulejos para cobrir as paredes laterais, incluindo as regiões destinadas a uma porta e uma janela. Os azulejos que cobririam essas regiões seriam reservados para futuras substituições. Esse projeto previa que o salão teria, como dimensões internas, 10 m de comprimento por 6 m de largura por 2,5 m de altura. Em decorrência de uma mudança no projeto, o salão Continue lendo→",
+    "og_url": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/",
+    "og_site_name": "YesMatematica",
+    "article_published_time": "2024-02-10T22:34:12+00:00",
+    "article_modified_time": "2024-02-10T22:46:24+00:00",
+    "og_image": [
+      {
+        "width": 509,
+        "height": 302,
+        "url": "https://www.yesmatematica.com/wp-content/uploads/2018/04/enem.jpg",
+        "type": "image/jpeg"
+      }
+    ],
+    "author": "Henry",
+    "twitter_card": "summary_large_image",
+    "twitter_misc": {
+      "Escrito por": "Henry",
+      "Est. tempo de leitura": "24 minutos"
+    },
+    "schema": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Article",
+          "@id": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/#article",
+          "isPartOf": {
+            "@id": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/"
+          },
+          "author": {
+            "name": "Henry",
+            "@id": "https://www.yesmatematica.com/#/schema/person/0c05b9d0fe090668bf050446e5c79595"
+          },
+          "headline": "ENEM 2023 PPL &#8211; Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto",
+          "datePublished": "2024-02-10T22:34:12+00:00",
+          "dateModified": "2024-02-10T22:46:24+00:00",
+          "mainEntityOfPage": {
+            "@id": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/"
+          },
+          "wordCount": 785,
+          "commentCount": 0,
+          "image": {
+            "@id": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/#primaryimage"
+          },
+          "thumbnailUrl": "https://www.yesmatematica.com/wp-content/uploads/2018/04/enem.jpg",
+          "articleSection": [
+            "Geometria - Áreas"
+          ],
+          "inLanguage": "pt-BR",
+          "potentialAction": [
+            {
+              "@type": "CommentAction",
+              "name": "Comment",
+              "target": [
+                "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/#respond"
+              ]
+            }
+          ]
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/",
+          "url": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/",
+          "name": "ENEM 2023 PPL - Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto - YesMatematica",
+          "isPartOf": {
+            "@id": "https://www.yesmatematica.com/#website"
+          },
+          "primaryImageOfPage": {
+            "@id": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/#primaryimage"
+          },
+          "image": {
+            "@id": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/#primaryimage"
+          },
+          "thumbnailUrl": "https://www.yesmatematica.com/wp-content/uploads/2018/04/enem.jpg",
+          "datePublished": "2024-02-10T22:34:12+00:00",
+          "dateModified": "2024-02-10T22:46:24+00:00",
+          "author": {
+            "@id": "https://www.yesmatematica.com/#/schema/person/0c05b9d0fe090668bf050446e5c79595"
+          },
+          "breadcrumb": {
+            "@id": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/#breadcrumb"
+          },
+          "inLanguage": "pt-BR",
+          "potentialAction": [
+            {
+              "@type": "ReadAction",
+              "target": [
+                "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/"
+              ]
+            }
+          ]
+        },
+        {
+          "@type": "ImageObject",
+          "inLanguage": "pt-BR",
+          "@id": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/#primaryimage",
+          "url": "https://www.yesmatematica.com/wp-content/uploads/2018/04/enem.jpg",
+          "contentUrl": "https://www.yesmatematica.com/wp-content/uploads/2018/04/enem.jpg",
+          "width": 509,
+          "height": 302,
+          "caption": "enem"
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://www.yesmatematica.com/enem-2023-ppl-uma-pessoa-tinha-um-projeto-para-um-salao-de-festas-no-formato-de-paralelepipedo-reto/#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Início",
+              "item": "https://www.yesmatematica.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "ENEM 2023 PPL &#8211; Uma pessoa tinha um projeto para um salão de festas no formato de paralelepípedo reto"
+            }
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.yesmatematica.com/#website",
+          "url": "https://www.yesmatematica.com/",
+          "name": "YesMatematica",
+          "description": "Aqui a matemática fica fácil",
+          "potentialAction": [
+            {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://www.yesmatematica.com/?s={search_term_string}"
+              },
+              "query-input": {
+                "@type": "PropertyValueSpecification",
+                "valueRequired": true,
+                "valueName": "search_term_string"
+              }
+            }
+          ],
+          "inLanguage": "pt-BR"
+        },
+        {
+          "@type": "Person",
+          "@id": "https://www.yesmatematica.com/#/schema/person/0c05b9d0fe090668bf050446e5c79595",
+          "name": "Henry",
+          "image": {
+            "@type": "ImageObject",
+            "inLanguage": "pt-BR",
+            "@id": "https://secure.gravatar.com/avatar/20ee6d0ae409267eae1a764accdea0445ac0432ff2bf8a938dd73ce92943e491?s=96&d=mm&r=g",
+            "url": "https://secure.gravatar.com/avatar/20ee6d0ae409267eae1a764accdea0445ac0432ff2bf8a938dd73ce92943e491?s=96&d=mm&r=g",
+            "contentUrl": "https://secure.gravatar.com/avatar/20ee6d0ae409267eae1a764accdea0445ac0432ff2bf8a938dd73ce92943e491?s=96&d=mm&r=g",
+            "caption": "Henry"
+          },
+          "description": "Henry vai te mostrar que matemática não precisa ser difícil, e que você pode sim tirar uma nota muito boa no ENEM e nos vestibulares! Henry cursou engenharia no ITA e fez mestrado na Ecole Polytechnique em Paris. Ficou na primeira colocação dentre os treineiros de biológicas na FUVEST 2003. Adora dar aulas! Vamos treinar muitos exercícios juntos para você chegar muito bem preparado no ENEM e vestibulares!"
+        }
+      ]
+    }
+  },
+  "_links": {
+    "self": [
+      {
+        "href": "https://www.yesmatematica.com/wp-json/wp/v2/posts/9627",
+        "targetHints": {
+          "allow": [
+            "GET"
+          ]
+        }
+      }
+    ],
+    "collection": [
+      {
+        "href": "https://www.yesmatematica.com/wp-json/wp/v2/posts"
+      }
+    ],
+    "about": [
+      {
+        "href": "https://www.yesmatematica.com/wp-json/wp/v2/types/post"
+      }
+    ],
+    "author": [
+      {
+        "embeddable": true,
+        "href": "https://www.yesmatematica.com/wp-json/wp/v2/users/1"
+      }
+    ],
+    "replies": [
+      {
+        "embeddable": true,
+        "href": "https://www.yesmatematica.com/wp-json/wp/v2/comments?post=9627"
+      }
+    ],
+    "version-history": [
+      {
+        "count": 16,
+        "href": "https://www.yesmatematica.com/wp-json/wp/v2/posts/9627/revisions"
+      }
+    ],
+    "predecessor-version": [
+      {
+        "id": 9652,
+        "href": "https://www.yesmatematica.com/wp-json/wp/v2/posts/9627/revisions/9652"
+      }
+    ],
+    "wp:attachment": [
+      {
+        "href": "https://www.yesmatematica.com/wp-json/wp/v2/media?parent=9627"
+      }
+    ],
+    "wp:term": [
+      {
+        "taxonomy": "category",
+        "embeddable": true,
+        "href": "https://www.yesmatematica.com/wp-json/wp/v2/categories?post=9627"
+      },
+      {
+        "taxonomy": "post_tag",
+        "embeddable": true,
+        "href": "https://www.yesmatematica.com/wp-json/wp/v2/tags?post=9627"
+      }
+    ],
+    "curies": [
+      {
+        "name": "wp",
+        "href": "https://api.w.org/{rel}",
+        "templated": true
+      }
+    ]
+  }
+}
