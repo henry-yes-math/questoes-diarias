@@ -28,6 +28,54 @@ interface DynamicHintsSectionProps {
   onConfirmAnswer?: (letter: string) => void;
 }
 
+/**
+ * Divide o HTML da conclusão/resposta para posicionar a caixa de validação
+ * IMEDIATAMENTE após a menção da alternativa correta (ex: "Alternativa C", "Gabarito: C", etc).
+ */
+function splitHtmlAtAlternative(
+  html: string,
+  targetLetter: string
+): { beforeHtml: string; afterHtml: string } | null {
+  if (!html || !targetLetter) return null;
+
+  // Regex para encontrar parágrafo ou bloco contendo "Alternativa [A-E]" ou "Letra [A-E]" ou "Gabarito [A-E]"
+  const pattern = new RegExp(
+    `(<(?:p|div|h[1-6])[^>]*>\\s*(?:<[^>]*>)*\\s*(?:Alternativa|Letra|Gabarito)\\s*[:\-–—]?\\s*(?:<[^>]*>)*\\s*${targetLetter}\\b[\\s\\S]*?<\\/(?:p|div|h[1-6])>)`,
+    'i'
+  );
+
+  const match = html.match(pattern);
+  if (match && match.index !== undefined) {
+    const cutIndex = match.index + match[0].length;
+    return {
+      beforeHtml: html.slice(0, cutIndex),
+      afterHtml: html.slice(cutIndex),
+    };
+  }
+
+  // Se não encontrar tag fechada exata, tenta encontrar no texto direto
+  const simplePattern = new RegExp(
+    `(?:Alternativa|Letra|Gabarito)\\s*[:\-–—]?\\s*(?:<[^>]*>)*\\s*${targetLetter}\\b(?:<\\/[^>]*>)*`,
+    'i'
+  );
+  const simpleMatch = html.match(simplePattern);
+  if (simpleMatch && simpleMatch.index !== undefined) {
+    // Procura o próximo fechamento de tag </p> ou </div> ou <br>
+    const tail = html.slice(simpleMatch.index);
+    const closeTagMatch = tail.match(/<\/(?:p|div|h[1-6])>|<br\s*\/?>/i);
+    const offset = closeTagMatch && closeTagMatch.index !== undefined
+      ? closeTagMatch.index + closeTagMatch[0].length
+      : simpleMatch[0].length;
+    const cutIndex = simpleMatch.index + offset;
+    return {
+      beforeHtml: html.slice(0, cutIndex),
+      afterHtml: html.slice(cutIndex),
+    };
+  }
+
+  return null;
+}
+
 export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
   steps,
   unlockedStepIds,
@@ -196,47 +244,75 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
                       exit={{ opacity: 0, height: 0 }}
                       className={`mt-6 pt-5 border-t border-[#ece9e2] space-y-4 text-[#292524] ${bodyTextClass} font-sans`}
                     >
-                      <div
-                        className="prose-content space-y-3"
-                        dangerouslySetInnerHTML={{ __html: cleanHtml }}
-                      />
+                      {/* Se for etapa de resolução, insere o botão imediatamente após o anúncio da alternativa */}
+                      {(() => {
+                        if (!isResolution || !correctLetter || !onConfirmAnswer) {
+                          return (
+                            <div
+                              className="prose-content space-y-3"
+                              dangerouslySetInnerHTML={{ __html: cleanHtml }}
+                            />
+                          );
+                        }
 
-                      {/* Botão de Validação Direta da Ofensiva no Final da Resolução (Opção 1) */}
-                      {isResolution && correctLetter && onConfirmAnswer && (
-                        <div className="pt-4 mt-2 border-t border-emerald-100">
-                          {selectedLetter === correctLetter ? (
-                            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
-                              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                              <span>Alternativa {correctLetter} confirmada! Sua ofensiva de hoje foi computada com sucesso.</span>
-                            </div>
-                          ) : (
-                            <div className="bg-amber-50/90 border border-amber-200/90 rounded-xl p-4 space-y-3">
-                              <div className="flex items-start gap-2.5">
-                                <span className="p-1 rounded-lg bg-amber-100 text-amber-700 mt-0.5 shrink-0">
-                                  <Flame className="w-4 h-4 fill-amber-500 text-amber-600 animate-pulse" />
-                                </span>
-                                <div>
-                                  <h4 className="text-xs font-bold text-amber-950">
-                                    Não esqueça de validar sua ofensiva!
-                                  </h4>
-                                  <p className="text-xs text-amber-800 leading-relaxed mt-0.5">
-                                    Você acabou de ver a resolução completa. Registre a <strong>Alternativa {correctLetter}</strong> com 1 clique para salvar seu progresso e garantir seu dia de estudo:
-                                  </p>
-                                </div>
+                        const split = splitHtmlAtAlternative(cleanHtml, correctLetter);
+
+                        const validationCard = (
+                          <div className="py-2.5 my-3 border-y border-emerald-100/80">
+                            {selectedLetter === correctLetter ? (
+                              <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+                                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                                <span>Alternativa {correctLetter} confirmada! Sua ofensiva de hoje foi computada com sucesso.</span>
                               </div>
+                            ) : (
+                              <div className="bg-amber-50/95 border border-amber-300/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+                                <div className="flex items-start gap-2.5">
+                                  <span className="p-1.5 rounded-xl bg-amber-100 text-amber-700 mt-0.5 shrink-0">
+                                    <Flame className="w-4 h-4 fill-amber-500 text-amber-600 animate-pulse" />
+                                  </span>
+                                  <div>
+                                    <h4 className="text-xs sm:text-sm font-bold text-amber-950">
+                                      Valide sua ofensiva agora mesmo!
+                                    </h4>
+                                    <p className="text-xs text-amber-900 leading-relaxed mt-0.5">
+                                      A alternativa correta é <strong>{correctLetter}</strong>. Clique no botão abaixo para registrar sua resposta e computar sua presença no mural da turma:
+                                    </p>
+                                  </div>
+                                </div>
 
-                              <button
-                                type="button"
-                                onClick={() => onConfirmAnswer(correctLetter)}
-                                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer group"
-                              >
-                                <Flame className="w-4 h-4 fill-amber-400 text-amber-400 group-hover:scale-110 transition-transform" />
-                                <span>Marcar Alternativa {correctLetter} e Validar Ofensiva de Hoje</span>
-                              </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onConfirmAnswer(correctLetter)}
+                                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer group"
+                                >
+                                  <Flame className="w-4 h-4 fill-amber-400 text-amber-400 group-hover:scale-110 transition-transform" />
+                                  <span>Confirmar Alternativa {correctLetter} e Validar Ofensiva de Hoje</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+
+                        if (split) {
+                          return (
+                            <div className="prose-content space-y-3">
+                              <div dangerouslySetInnerHTML={{ __html: split.beforeHtml }} />
+                              {validationCard}
+                              {split.afterHtml && (
+                                <div dangerouslySetInnerHTML={{ __html: split.afterHtml }} />
+                              )}
                             </div>
-                          )}
-                        </div>
-                      )}
+                          );
+                        }
+
+                        // Caso não ache padrão no meio, exibe o HTML e o botão logo a seguir
+                        return (
+                          <div className="prose-content space-y-3">
+                            {validationCard}
+                            <div dangerouslySetInnerHTML={{ __html: cleanHtml }} />
+                          </div>
+                        );
+                      })()}
 
                       {/* If next step is still locked, show quick next step button */}
                       {idx < steps.length - 1 && !unlockedStepIds.has(steps[idx + 1].id) && (
