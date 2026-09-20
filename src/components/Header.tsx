@@ -25,16 +25,12 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="border-b border-stone-200 bg-white/95 backdrop-blur-md sticky top-0 z-20 transition-colors">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Company brand & Student Greeting */}
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-stone-900 text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-2xs shrink-0">
-            Y
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold text-stone-900 text-sm sm:text-base tracking-tight truncate">
+              Yes Matemática
+            </span>
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-stone-900 text-sm sm:text-base tracking-tight truncate">
-                Yes Matemática
-              </span>
-            </div>
 
             {/* Saudação com Apelido e Status do Aluno */}
             {nickname && (
@@ -71,7 +67,6 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </div>
             )}
-          </div>
         </div>
 
         {/* Right: Actions */}
