@@ -3,7 +3,7 @@ import { QuestionData } from '../types';
 import { INITIAL_QUESTION } from '../data/fallbackQuestion';
 import { fetchWordPressPost, parseWordPressPost } from '../utils/wordpressParser';
 
-const STORAGE_KEY = 'yesmatematica_active_question';
+const STORAGE_KEY = 'yesmatematica_active_question_v2';
 
 function sanitizeQuestionData(q: QuestionData): QuestionData {
   if (!q) return q;
@@ -47,21 +47,16 @@ export function useQuestionProgress() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // If it was the previous fallback question or old cache, transition seamlessly to the updated INITIAL_QUESTION
-        if (parsed.id === 7223 || parsed.id === '7223' || parsed.id === 8627 || parsed.id === '8627') {
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_QUESTION));
-          } catch (_) {}
-          return INITIAL_QUESTION;
+        // Ensure cached object is valid and has required structure
+        if (parsed && parsed.id && Array.isArray(parsed.alternatives) && parsed.alternatives.length > 0) {
+          const sanitized = sanitizeQuestionData(parsed);
+          if (sanitized.correctLetter !== parsed.correctLetter) {
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+            } catch (_) {}
+          }
+          return sanitized;
         }
-
-        const sanitized = sanitizeQuestionData(parsed);
-        if (sanitized.correctLetter !== parsed.correctLetter) {
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
-          } catch (_) {}
-        }
-        return sanitized;
       }
     } catch (e) {
       console.warn('Could not load saved question from localStorage', e);
