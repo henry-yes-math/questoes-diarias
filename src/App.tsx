@@ -84,7 +84,6 @@ export default function App() {
     <div className="min-h-screen bg-[#f8f7f4] text-[#1c1917] flex flex-col font-sans selection:bg-amber-100 selection:text-amber-900">
       {/* Top sticky header */}
       <Header
-        onReset={handleReset}
         fontSize={fontSize}
         onToggleFontSize={toggleFontSize}
         onOpenAdmin={() => setAdminOpen(true)}

@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { RotateCcw, Share2, Check, Settings, Flame, Target, Users } from 'lucide-react';
+import React from 'react';
+import { Settings, Flame, Target, Users } from 'lucide-react';
 import { StudentProfile } from '../types';
 
 interface HeaderProps {
-  onReset: () => void;
   fontSize: 'normal' | 'large';
   onToggleFontSize: () => void;
   onOpenAdmin: () => void;
@@ -14,7 +13,6 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  onReset,
   fontSize,
   onToggleFontSize,
   onOpenAdmin,
@@ -23,19 +21,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenNickModal,
   onOpenMural,
 }) => {
-  const [copied, setCopied] = useState<boolean>(false);
-
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   return (
     <header className="border-b border-stone-200 bg-white/95 backdrop-blur-md sticky top-0 z-20 transition-colors">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
@@ -73,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
                       className="text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 rounded text-[10.5px] font-bold inline-flex items-center gap-1"
                       title={
                         studentProfile.totalSolved >= 3
-                          ? `Total: ${studentProfile.totalSolved} questões feitas`
+                           ? `Total: ${studentProfile.totalSolved} questões feitas`
                           : `1ª Meta: ${studentProfile.totalSolved}/3 questões feitas`
                       }
                     >
@@ -124,32 +109,6 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <span className="text-[11px] text-stone-500">A</span>
             <span className="text-sm font-bold">A</span>
-          </button>
-
-          {/* Share button */}
-          <button
-            id="share-button"
-            type="button"
-            onClick={handleCopyLink}
-            title="Copiar link da questão"
-            className="p-1.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-md transition-colors cursor-pointer"
-          >
-            {copied ? (
-              <Check className="w-4 h-4 text-emerald-600" />
-            ) : (
-              <Share2 className="w-4 h-4" />
-            )}
-          </button>
-
-          {/* Reset button */}
-          <button
-            id="reset-page-button"
-            type="button"
-            onClick={onReset}
-            title="Reiniciar questão"
-            className="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-md transition-colors cursor-pointer"
-          >
-            <RotateCcw className="w-4 h-4" />
           </button>
         </div>
       </div>
