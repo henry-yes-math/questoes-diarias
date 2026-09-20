@@ -96,7 +96,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
               <div>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Resposta Correta! Presença Garantida</span>
+                  <span>Resposta Correta! Ofensiva de Hoje Garantida 🔥</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                   PARABÉNS, {studentName.toUpperCase()}! 🎉

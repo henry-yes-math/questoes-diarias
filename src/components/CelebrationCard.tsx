@@ -51,7 +51,7 @@ export const CelebrationCard: React.FC<Props> = ({
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 mb-2">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Resposta Correta! Presença Garantida</span>
+            <span>Resposta Correta! Ofensiva de Hoje Garantida 🔥</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Parabéns, {studentName}! 🎉
