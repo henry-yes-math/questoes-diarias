@@ -46,6 +46,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [advancingCycle, setAdvancingCycle] = useState(false);
   const [resettingData, setResettingData] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showAdvanceConfirm, setShowAdvanceConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -71,11 +73,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   if (!isOpen) return null;
 
   const handleStartNewDay = async () => {
-    const confirmAdvance = window.confirm(
-      `Deseja realmente iniciar um Novo Dia (Dia #${cycleNum + 1})?\n\nIsso fechará o Mural do Dia #${cycleNum} e quem resolver a questão a partir de agora entrará no novo Mural!`
-    );
-    if (!confirmAdvance) return;
-
+    setShowAdvanceConfirm(false);
     setAdvancingCycle(true);
     setError(null);
     setSuccessMessage(null);
@@ -94,16 +92,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   const handleResetTestData = async () => {
-    const confirmReset = window.confirm(
-      '⚠️ ATENÇÃO: ZERAR DADOS DE TESTE PARA O LANÇAMENTO OFICIAL?\n\n' +
-      '• Todas as submissões de teste do mural serão apagadas.\n' +
-      '• O ciclo voltará para o "Dia #1" oficial com mural zerado.\n' +
-      '• As ofensivas de teste serão limpas.\n' +
-      '• A questão atual cadastrada será MANTIDA intacta.\n\n' +
-      'Deseja prosseguir com a limpeza oficial?'
-    );
-    if (!confirmReset) return;
-
+    setShowResetConfirm(false);
     setResettingData(true);
     setError(null);
     setSuccessMessage(null);
@@ -234,47 +223,69 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              disabled={resettingData || advancingCycle}
-              onClick={handleResetTestData}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-stone-100 hover:bg-red-50 text-stone-600 hover:text-red-700 border border-stone-200 hover:border-red-200 active:bg-red-100 disabled:opacity-50 text-xs font-semibold rounded-xl transition-all shadow-2xs shrink-0 cursor-pointer"
-              title="Apaga as respostas e alunos de teste e reinicia o ciclo no Dia #1 oficial"
-            >
-              {resettingData ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-red-600" />
-                  <span className="text-red-700">Limpando...</span>
-                </>
-              ) : (
-                <>
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Zerar Testes (Dia #1)</span>
-                </>
-              )}
-            </button>
+          {showResetConfirm ? (
+            <div className="flex items-center gap-2 shrink-0 bg-red-50 p-2 rounded-xl border border-red-200 animate-in fade-in duration-150">
+              <span className="text-xs font-bold text-red-900">Zerar testes agora?</span>
+              <button
+                type="button"
+                onClick={handleResetTestData}
+                disabled={resettingData}
+                className="px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer"
+              >
+                {resettingData ? 'Limpando...' : 'Sim, Zerar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="px-2.5 py-1.5 bg-white hover:bg-stone-100 text-stone-700 border border-stone-300 text-xs font-semibold rounded-lg cursor-pointer"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : showAdvanceConfirm ? (
+            <div className="flex items-center gap-2 shrink-0 bg-amber-50 p-2 rounded-xl border border-amber-200 animate-in fade-in duration-150">
+              <span className="text-xs font-bold text-amber-900">Iniciar Dia #{cycleNum + 1}?</span>
+              <button
+                type="button"
+                onClick={handleStartNewDay}
+                disabled={advancingCycle}
+                className="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer"
+              >
+                {advancingCycle ? 'Iniciando...' : 'Sim, Iniciar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAdvanceConfirm(false)}
+                className="px-2.5 py-1.5 bg-white hover:bg-stone-100 text-stone-700 border border-stone-300 text-xs font-semibold rounded-lg cursor-pointer"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                disabled={resettingData || advancingCycle}
+                onClick={() => setShowResetConfirm(true)}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-stone-100 hover:bg-red-50 text-stone-600 hover:text-red-700 border border-stone-200 hover:border-red-200 active:bg-red-100 disabled:opacity-50 text-xs font-semibold rounded-xl transition-all shadow-2xs shrink-0 cursor-pointer"
+                title="Apaga as respostas e alunos de teste e reinicia o ciclo no Dia #1 oficial"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Zerar Testes (Dia #1)</span>
+              </button>
 
-            <button
-              type="button"
-              disabled={advancingCycle || resettingData}
-              onClick={handleStartNewDay}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition-all shadow-xs shrink-0 cursor-pointer"
-              title="Avançar para o próximo ciclo diário da comunidade"
-            >
-              {advancingCycle ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Virando dia...</span>
-                </>
-              ) : (
-                <>
-                  <RotateCw className="w-3.5 h-3.5" />
-                  <span>Começar Novo Dia (Dia #{cycleNum + 1})</span>
-                </>
-              )}
-            </button>
-          </div>
+              <button
+                type="button"
+                disabled={advancingCycle || resettingData}
+                onClick={() => setShowAdvanceConfirm(true)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition-all shadow-xs shrink-0 cursor-pointer"
+                title="Avançar para o próximo ciclo diário da comunidade"
+              >
+                <RotateCw className="w-3.5 h-3.5" />
+                <span>Começar Novo Dia (Dia #{cycleNum + 1})</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Abas de Navegação */}

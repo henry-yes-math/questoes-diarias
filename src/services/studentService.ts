@@ -4,6 +4,7 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   getDocs,
@@ -465,8 +466,6 @@ export async function getSubmissionsByDate(
  * Mantém intacta a questão ativa.
  */
 export async function resetAllTestDataForLaunch(): Promise<void> {
-  const { deleteDoc } = await import('firebase/firestore');
-  
   // 1. Apagar todas as submissões
   const subsSnap = await getDocs(collection(db, SUBMISSIONS_COLLECTION));
   for (const docSnap of subsSnap.docs) {
