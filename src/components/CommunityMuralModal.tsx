@@ -39,10 +39,13 @@ export const CommunityMuralModal: React.FC<Props> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
-                {submissions.length}{' '}
-                {submissions.length === 1
-                  ? 'colega concluiu a questão'
-                  : 'colegas concluíram a questão'}
+                {submissions.length === 0
+                  ? 'Desafio de hoje liberado'
+                  : `${submissions.length} ${
+                      submissions.length === 1
+                        ? 'colega concluiu a questão'
+                        : 'colegas concluíram a questão'
+                    }`}
               </p>
             </div>
           </div>
@@ -58,11 +61,15 @@ export const CommunityMuralModal: React.FC<Props> = ({
         {/* Lista de Alunos */}
         <div className="p-6 overflow-y-auto flex-1 space-y-2">
           {submissions.length === 0 ? (
-            <div className="text-center py-10 text-slate-400">
-              <Sparkles className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-              <p className="font-semibold text-slate-600">Ninguém concluiu ainda hoje.</p>
-              <p className="text-xs text-slate-400 mt-1">
-                Seja o primeiro a resolver a questão do dia para abrir o Mural!
+            <div className="text-center py-10 px-4">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600 shadow-2xs">
+                <Trophy className="w-6 h-6 text-amber-500" />
+              </div>
+              <p className="font-bold text-slate-800 text-sm">
+                A vaga #01 de hoje está aberta!
+              </p>
+              <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+                Resolva a questão agora para liderar o mural da turma do dia.
               </p>
             </div>
           ) : (
