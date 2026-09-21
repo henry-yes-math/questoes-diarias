@@ -33,11 +33,10 @@ export const CommunityMuralModal: React.FC<Props> = ({
                 <h3 className="text-lg font-bold text-slate-900 leading-snug">
                   Mural da Turma
                 </h3>
-                {cycleNumber && (
-                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
-                    Dia #{cycleNumber}
-                  </span>
-                )}
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 inline-flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Hoje
+                </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
                 {submissions.length}{' '}
