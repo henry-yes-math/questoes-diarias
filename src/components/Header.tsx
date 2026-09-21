@@ -1,6 +1,7 @@
 import React from 'react';
 import { Settings, Flame, Target, Users } from 'lucide-react';
 import { StudentProfile } from '../types';
+import { MILESTONES } from '../utils/gamification';
 
 interface HeaderProps {
   fontSize: 'normal' | 'large';
@@ -23,6 +24,10 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMural,
   showAdminButton = false,
 }) => {
+  const totalSolved = studentProfile?.totalSolved || 0;
+  const targetMilestone =
+    MILESTONES.find((m) => m > totalSolved) || 3;
+
   return (
     <header className="border-b border-stone-200 bg-white/95 backdrop-blur-md sticky top-0 z-20 transition-colors">
       <div className="max-w-3xl mx-auto px-3 sm:px-6 py-2 sm:py-0 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
@@ -52,20 +57,21 @@ export const Header: React.FC<HeaderProps> = ({
                     {studentProfile.streakDays || 0}d
                   </span>
                   <span className="text-stone-300">•</span>
-                  {/* Caixinha com a meta de questões (Preservada e visível em todos os celulares) */}
+                  {/* Caixinha empilhada com meta e progresso de questões */}
                   <span
-                    className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 rounded text-[10px] sm:text-[10.5px] font-bold shrink-0"
-                    title={
-                      studentProfile.totalSolved >= 3
-                        ? `Total: ${studentProfile.totalSolved} questões feitas`
-                        : `Meta: ${studentProfile.totalSolved}/3 questões feitas`
-                    }
+                    className="inline-flex items-center gap-1.5 bg-sky-50/90 border border-sky-200/80 px-2 py-0.5 rounded-lg shrink-0 shadow-2xs"
+                    title={`Meta atual: ${targetMilestone} questões. Você já concluiu ${totalSolved} ${
+                      totalSolved === 1 ? 'questão' : 'questões'
+                    }.`}
                   >
-                    <Target className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-600 shrink-0" />
-                    <span>
-                      {studentProfile.totalSolved >= 3
-                        ? `${studentProfile.totalSolved} feitas`
-                        : `${studentProfile.totalSolved}/3`}
+                    <Target className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                    <span className="flex flex-col text-left leading-tight">
+                      <span className="text-[8px] font-bold text-sky-600 tracking-wider uppercase">
+                        Meta: {targetMilestone}
+                      </span>
+                      <span className="text-[10px] sm:text-[10.5px] font-extrabold text-sky-950">
+                        {totalSolved} {totalSolved === 1 ? 'resolvida' : 'resolvidas'}
+                      </span>
                     </span>
                   </span>
                 </span>
