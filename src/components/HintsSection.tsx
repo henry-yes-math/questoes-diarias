@@ -29,6 +29,48 @@ interface DynamicHintsSectionProps {
 }
 
 /**
+ * Remove qualquer bloco de "Comentários sobre a questão" (análise de dificuldade, links do blog, etc)
+ * para exibir apenas a resolução e dicas pedagógicas no app.
+ */
+function stripQuestionComments(input: string): string {
+  if (!input) return '';
+  const lower = input.toLowerCase();
+  const searchTerms = [
+    'comentários sobre a questão',
+    'comentarios sobre a questao',
+    'comentário sobre a questão',
+    'comentario sobre a questao',
+    'comentários da questão',
+    'comentarios da questao'
+  ];
+  let earliestIdx = -1;
+  for (const term of searchTerms) {
+    const idx = lower.indexOf(term);
+    if (idx !== -1 && (earliestIdx === -1 || idx < earliestIdx)) {
+      earliestIdx = idx;
+    }
+  }
+
+  // Se não encontrou o termo longo, procura por títulos (h1-h6) que contenham comentário/comentários
+  if (earliestIdx === -1) {
+    const headingMatch = input.match(/<h[1-6][^>]*>[^<]*coment[áa]rios?[^<]*<\/h[1-6]>/i);
+    if (headingMatch && headingMatch.index !== undefined) {
+      earliestIdx = headingMatch.index;
+    }
+  }
+
+  if (earliestIdx === -1) return input;
+
+  const beforeText = input.slice(0, earliestIdx);
+  const lastOpeningTagIndex = beforeText.search(/<(?:h[1-6]|p|div|section)[^>]*>(?:(?!<\/(?:h[1-6]|p|div|section)>)[^<])*$/i);
+  
+  if (lastOpeningTagIndex !== -1) {
+    return input.slice(0, lastOpeningTagIndex).trim();
+  }
+  return input.slice(0, earliestIdx).trim();
+}
+
+/**
  * Divide o HTML da conclusão/resposta para posicionar a caixa de validação
  * IMEDIATAMENTE após a menção da alternativa correta (ex: "Alternativa C", "Gabarito: C", etc).
  */
@@ -167,7 +209,8 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
             !isUnlocked &&
             (idx === 0 || unlockedStepIds.has(steps[idx - 1].id));
 
-          const cleanHtml = DOMPurify.sanitize(step.htmlContent, {
+          const rawCleaned = stripQuestionComments(step.htmlContent);
+          const cleanHtml = DOMPurify.sanitize(rawCleaned, {
             ADD_TAGS: ['figure', 'figcaption', 'annotation', 'semantics', 'math', 'mrow', 'mfrac', 'mn', 'mi', 'mo', 'mspace', 'msup', 'msub', 'msqrt', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'iframe'],
             ADD_ATTR: ['src', 'alt', 'srcset', 'sizes', 'class', 'width', 'height', 'aria-hidden', 'encoding', 'style', 'title', 'frameborder', 'allow', 'allowfullscreen', 'referrerpolicy']
           });

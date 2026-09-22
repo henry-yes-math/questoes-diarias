@@ -126,7 +126,10 @@ export function parseWordPressPost(post: any): QuestionData {
 
     if (
       foundCutoff ||
-      text.includes('comentário sobre a questão') ||
+      text.includes('comentário') ||
+      text.includes('comentario') ||
+      text.includes('comentários') ||
+      text.includes('comentarios') ||
       text.includes('como foi a sua experiência') ||
       text.includes('resolução comentada') ||
       text.includes('provas resolvidas') ||
@@ -321,13 +324,42 @@ export function parseWordPressPost(post: any): QuestionData {
   for (const sec of sections) {
     const titleLower = sec.title.toLowerCase();
 
-    // Skip the intro title "Dicas e Resolução"
-    if (titleLower.includes('dicas e resolução')) {
+    // Skip intro title or comments sections
+    if (
+      titleLower.includes('dicas e resolução') ||
+      titleLower.includes('comentário') ||
+      titleLower.includes('comentario')
+    ) {
       continue;
     }
 
     const container = document.createElement('div');
     sec.elements.forEach((el) => container.appendChild(el.cloneNode(true)));
+
+    // Clean any nested comment headings or sections within this container
+    const commentNodes = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6, p'));
+    let inCommentCutoff = false;
+    for (const node of commentNodes) {
+      const nodeText = node.textContent?.toLowerCase() || '';
+      if (
+        inCommentCutoff ||
+        nodeText.includes('comentários sobre a questão') ||
+        nodeText.includes('comentario sobre a questão') ||
+        nodeText.includes('comentários da questão') ||
+        nodeText.includes('comentarios sobre a questao') ||
+        (node.tagName.toLowerCase().startsWith('h') && (nodeText.includes('comentário') || nodeText.includes('comentarios')))
+      ) {
+        inCommentCutoff = true;
+        let curr: Element | null = node;
+        while (curr) {
+          const next: Element | null = curr.nextElementSibling;
+          curr.remove();
+          curr = next;
+        }
+        break;
+      }
+    }
+
     const htmlContent = renderLatexInHtml(container.innerHTML);
 
     if (
