@@ -2,8 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { StudentProfile, DailySubmission, MilestoneInfo, DailyCycleConfig } from '../types';
 import {
   getLocalStudentId,
+  setLocalStudentId,
   getLocalStudentNick,
   setLocalStudentNick,
+  getStudentProfileById,
+  findExistingStudentByNickname,
   getOrCreateStudentProfile,
   registerDailySubmission,
   subscribeToCurrentCycleSubmissions,
@@ -13,7 +16,7 @@ import { calculateMilestone, getLocalDateString } from '../utils/gamification';
 import { INITIAL_QUESTION } from '../data/fallbackQuestion';
 
 export function useStudentGamification(currentQuestionId: string = String(INITIAL_QUESTION.id)) {
-  const [studentId] = useState<string>(() => getLocalStudentId());
+  const [studentId, setStudentId] = useState<string>(() => getLocalStudentId());
   const [nickname, setNicknameState] = useState<string>(() => getLocalStudentNick());
   const [isNickModalOpen, setIsNickModalOpen] = useState<boolean>(() => !getLocalStudentNick());
   const [isMuralModalOpen, setIsMuralModalOpen] = useState<boolean>(false);
@@ -38,33 +41,71 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
     return () => unsubCycle();
   }, []);
 
-  // Carrega ou inicializa perfil do aluno quando tem nickname
+  // 1º Passo (Prioridade Absoluta - ID) e 2º Passo (Fallback inteligente - Nickname)
   useEffect(() => {
-    if (!nickname) {
-      setIsNickModalOpen(true);
-      return;
-    }
-
     let isMounted = true;
-    getOrCreateStudentProfile(studentId, nickname)
-      .then((p) => {
-        if (isMounted) {
-          setProfile(p);
-          if (p.lastCompletedCycle === currentCycle.currentCycleNumber) {
+
+    async function initStudent() {
+      // 1. Tenta buscar direto pelo ID no Firestore
+      const profileById = await getStudentProfileById(studentId);
+      if (!isMounted) return;
+
+      if (profileById) {
+        // Encontrou por ID! Usa perfil consolidado diretamente
+        setProfile(profileById);
+        if (profileById.nickname) {
+          setNicknameState(profileById.nickname);
+          setLocalStudentNick(profileById.nickname);
+          setIsNickModalOpen(false);
+        }
+        if (profileById.lastCompletedCycle === currentCycle.currentCycleNumber) {
+          setHasCompletedToday(true);
+        }
+        const mInfo = calculateMilestone(profileById.totalSolved, Math.max(0, profileById.totalSolved - 1));
+        setMilestoneInfo(mInfo);
+        return;
+      }
+
+      // 2. Se o ID atual não tem perfil no Firestore, verifica se há um nickname salvo
+      if (nickname) {
+        const profileByNick = await findExistingStudentByNickname(nickname, studentId);
+        if (!isMounted) return;
+
+        if (profileByNick) {
+          // Adota o ID do perfil original com histórico
+          setLocalStudentId(profileByNick.studentId);
+          setStudentId(profileByNick.studentId);
+          setProfile(profileByNick);
+          if (profileByNick.lastCompletedCycle === currentCycle.currentCycleNumber) {
             setHasCompletedToday(true);
           }
-          const mInfo = calculateMilestone(p.totalSolved, Math.max(0, p.totalSolved - 1));
+          const mInfo = calculateMilestone(profileByNick.totalSolved, Math.max(0, profileByNick.totalSolved - 1));
+          setMilestoneInfo(mInfo);
+          setIsNickModalOpen(false);
+          return;
+        }
+
+        // Se não encontrou nem por ID nem por nick, inicializa o novo
+        const newP = await getOrCreateStudentProfile(studentId, nickname);
+        if (isMounted) {
+          setProfile(newP);
+          const mInfo = calculateMilestone(newP.totalSolved, Math.max(0, newP.totalSolved - 1));
           setMilestoneInfo(mInfo);
         }
-      })
-      .catch((err) => {
-        console.warn('Erro ao carregar perfil do aluno:', err);
-      });
+      } else {
+        // Sem ID válido e sem nickname: solicita identificação
+        setIsNickModalOpen(true);
+      }
+    }
+
+    initStudent().catch((err) => {
+      console.warn('Erro ao inicializar aluno:', err);
+    });
 
     return () => {
       isMounted = false;
     };
-  }, [studentId, nickname, currentCycle.currentCycleNumber]);
+  }, [studentId, currentCycle.currentCycleNumber]);
 
   // Escuta as submissões do ciclo atual em tempo real
   useEffect(() => {
@@ -85,20 +126,29 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
     };
   }, [studentId, currentCycle.currentCycleNumber]);
 
-  // Salvar novo nickname
+  // Salvar novo nickname (ou adotar ID existente ao confirmar)
   const updateNickname = useCallback(
-    async (newNick: string) => {
+    async (newNick: string, adoptedStudentId?: string) => {
+      const targetStudentId = adoptedStudentId || studentId;
+      setLocalStudentId(targetStudentId);
       setLocalStudentNick(newNick);
+      setStudentId(targetStudentId);
       setNicknameState(newNick);
       setIsNickModalOpen(false);
+
       try {
-        const p = await getOrCreateStudentProfile(studentId, newNick);
+        const p = await getOrCreateStudentProfile(targetStudentId, newNick);
         setProfile(p);
+        if (p.lastCompletedCycle === currentCycle.currentCycleNumber) {
+          setHasCompletedToday(true);
+        }
+        const mInfo = calculateMilestone(p.totalSolved, Math.max(0, p.totalSolved - 1));
+        setMilestoneInfo(mInfo);
       } catch (err) {
         console.warn('Erro ao atualizar perfil com novo nick:', err);
       }
     },
-    [studentId]
+    [studentId, currentCycle.currentCycleNumber]
   );
 
   // Submeter a resolução da questão do ciclo atual

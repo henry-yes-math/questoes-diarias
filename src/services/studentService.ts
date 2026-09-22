@@ -174,12 +174,87 @@ export function getLocalStudentId(): string {
   return id;
 }
 
+export function setLocalStudentId(id: string): void {
+  try {
+    localStorage.setItem(LOCAL_STUDENT_ID_KEY, id);
+  } catch (e) {
+    console.warn('Erro ao salvar local student id:', e);
+  }
+}
+
 export function getLocalStudentNick(): string {
   return localStorage.getItem(LOCAL_STUDENT_NICK_KEY) || '';
 }
 
 export function setLocalStudentNick(nick: string): void {
-  localStorage.setItem(LOCAL_STUDENT_NICK_KEY, nick);
+  try {
+    localStorage.setItem(LOCAL_STUDENT_NICK_KEY, nick);
+  } catch (e) {
+    console.warn('Erro ao salvar local student nick:', e);
+  }
+}
+
+/**
+ * Busca perfil existente no Firestore pelo ID do aluno (busca prioritária direta)
+ */
+export async function getStudentProfileById(
+  studentId: string
+): Promise<StudentProfile | null> {
+  if (!studentId) return null;
+  try {
+    const studentRef = doc(db, STUDENTS_COLLECTION, studentId);
+    const snap = await getDoc(studentRef);
+    if (snap.exists()) {
+      return snap.data() as StudentProfile;
+    }
+  } catch (err) {
+    console.warn('Erro ao buscar perfil por ID no Firestore:', err);
+  }
+  return null;
+}
+
+/**
+ * Busca se já existe um aluno cadastrado no Firestore com o mesmo apelido
+ * Útil para recuperar ofensivas quando o aluno abre em outro navegador ou dispositivo.
+ */
+export async function findExistingStudentByNickname(
+  nickname: string,
+  excludeStudentId?: string
+): Promise<StudentProfile | null> {
+  const clean = nickname.trim();
+  if (!clean) return null;
+
+  try {
+    const cleanLower = clean.toLowerCase();
+    const studentsSnap = await getDocs(collection(db, STUDENTS_COLLECTION));
+    const matching: StudentProfile[] = [];
+
+    studentsSnap.forEach((docSnap) => {
+      const p = docSnap.data() as StudentProfile;
+      if (excludeStudentId && p.studentId === excludeStudentId) {
+        return;
+      }
+      if (p.nickname && p.nickname.trim().toLowerCase() === cleanLower) {
+        matching.push(p);
+      }
+    });
+
+    if (matching.length === 0) return null;
+
+    // Ordena priorizando o perfil com maior histórico e ofensiva ativa
+    matching.sort((a, b) => {
+      const cycleDiff = (b.lastCompletedCycle || 0) - (a.lastCompletedCycle || 0);
+      if (cycleDiff !== 0) return cycleDiff;
+      const streakDiff = (b.streakDays || 0) - (a.streakDays || 0);
+      if (streakDiff !== 0) return streakDiff;
+      return (b.totalSolved || 0) - (a.totalSolved || 0);
+    });
+
+    return matching[0];
+  } catch (err) {
+    console.warn('Erro ao buscar perfil por nickname:', err);
+    return null;
+  }
 }
 
 /**

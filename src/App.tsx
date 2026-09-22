@@ -33,6 +33,7 @@ export default function App() {
 
   const questionIdStr = String(question.id || INITIAL_QUESTION.id);
   const {
+    studentId,
     nickname,
     currentCycle,
     isNickModalOpen,
@@ -225,6 +226,7 @@ export default function App() {
       <StudentIdentificationModal
         isOpen={isNickModalOpen}
         initialNickname={nickname}
+        currentStudentId={studentId}
         onSave={updateNickname}
         onClose={() => setIsNickModalOpen(false)}
       />
