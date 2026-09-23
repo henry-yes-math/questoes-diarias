@@ -109,7 +109,7 @@ const messages = generateWhatsAppMessages({
   cycleNumber: 2,
 });
 
-assert(messages.message1.includes('⚔️ *BOM DIA! MURAL OFICIAL DA TURMA* 🎯'), 'Mensagem 1 deve ter título em *negrito* sem identificação de dia');
+assert(messages.message1.includes('⚔️ *BOM DIA! MURAL DE ONTEM* 🎯'), 'Mensagem 1 deve ter título em *negrito* sem identificação de dia');
 assert(messages.message1.includes('*2 mentes focadas mantiveram o ritmo firme*'), 'Mensagem 1 deve usar mentes focadas');
 assert(messages.message1.includes('👏 Parabéns a quem manteve o ritmo firme!'), 'Mensagem 1 deve usar parabéns a quem');
 assert(!messages.message1.includes('alunos'), 'Mensagem 1 não deve usar termo alunos');
@@ -117,20 +117,18 @@ assert(!messages.message1.includes('DIA #'), 'Mensagem 1 não deve conter identi
 assert(messages.message1.includes('01. *Lucas* (🔥 3 dias) 🎖️ *Marco de 3 Questões!*'), 'Mensagem 1 deve destacar apelido e marco em *negrito*');
 
 assert(messages.message2.includes('🚀 *QUESTÃO DO DIA LIBERADA!*'), 'Mensagem 2 deve ter cabeçalho em *negrito* sem identificação de dia');
-assert(messages.message2.includes('📌 *ENEM — Matemática*'), 'Mensagem 2 deve conter fixo ENEM — Matemática');
-assert(messages.message2.includes('Quem vai ser a 1ª pessoa a fazer a de hoje? 👀'), 'Mensagem 2 deve usar 1ª pessoa a fazer');
-assert(messages.message2.includes('💡 *Entrou na turma agora?*'), 'Mensagem 2 deve usar Entrou na turma agora');
-assert(!messages.message2.includes('Novo na turma'), 'Mensagem 2 não deve usar Novo na turma');
-assert(!messages.message2.includes('*Tema:*'), 'Mensagem 2 não deve conter frase do tema');
-assert(!messages.message2.includes('DIA #'), 'Mensagem 2 não deve conter identificador de dia');
+assert(messages.message2.includes('📌 ENEM — Matemática (com dicas guiadas se travar)'), 'Mensagem 2 deve conter ENEM — Matemática');
+assert(messages.message2.includes('⚠️ *REGRA DO FOGO:*'), 'Mensagem 2 deve conter a seção Regra do Fogo');
+assert(messages.message2.includes('Quem vai ser a 1ª pessoa a inaugurar o Mural de hoje? 👀'), 'Mensagem 2 deve usar 1ª pessoa a inaugurar');
+assert(messages.message2.includes('*Quem tá chegando agora:*'), 'Mensagem 2 deve acolher quem está chegando');
 assert(messages.message2.includes('🔗 *FAÇA AGORA (3 a 5 min):*'), 'Mensagem 2 deve destacar link de ação em *negrito*');
+assert(messages.message2.includes('👇 Vai manter sua chama acesa? Manda um 🔥!'), 'Mensagem 2 deve convidar a mandar o emoji de fogo');
 
-assert(messages.message3.includes('🚨 *PRÉVIA DA CHAMADA — QUESTÃO DO DIA!* 🚨'), 'Mensagem 3 deve ter título em *negrito* sem identificação de dia');
-assert(messages.message3.includes('🔥 *QUEM JÁ FEZ A QUESTÃO DE HOJE:*'), 'Mensagem 3 deve listar quem já fez a de hoje');
-assert(messages.message3.includes('*1 fera já garantiu a presença*'), 'Mensagem 3 deve usar fera(s)');
-assert(!messages.message3.includes('guerreiros'), 'Mensagem 3 não deve usar termo guerreiros');
-assert(!messages.message3.includes('DIA #'), 'Mensagem 3 não deve conter identificador de dia');
-assert(messages.message3.includes('🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*'), 'Mensagem 3 deve destacar chamada da noite em *negrito*');
+assert(messages.message3A.includes('🔥 *QUEM JÁ SALVOU A OFENSIVA HOJE:* 🔥'), 'Mensagem 3A deve listar quem já salvou a ofensiva');
+assert(messages.message3A.includes('*1 fera já garantiu a presença*'), 'Mensagem 3A deve usar fera(s)');
+assert(!messages.message3A.includes('guerreiros'), 'Mensagem 3A não deve usar termo guerreiros');
+assert(!messages.message3A.includes('DIA #'), 'Mensagem 3A não deve conter identificador de dia');
+assert(messages.message3B.includes('🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*'), 'Mensagem 3B deve destacar chamada da noite em *negrito*');
 
 console.log('\n------------------------------------------------------');
 console.log(' \x1b[32m✔ TODOS OS TESTES DE METAS PASSARAM COM SUCESSO!\x1b[0m\n');

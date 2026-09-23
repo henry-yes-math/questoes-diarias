@@ -237,18 +237,19 @@ Viu seu apelido na lista? Deixa um 👍 aqui!`;
 
   // Mensagem 2 - Questão do Dia
   const message2 = `🚀 *QUESTÃO DO DIA LIBERADA!*
-📌 *ENEM — Matemática*
 
-🎯 *Padrão Clássico do ENEM:* Questão de alto peso na TRI. Travou? O app tem dicas passo a passo.
+📌 ENEM — Matemática (com dicas guiadas se travar)
 
-Quem vai ser a 1ª pessoa a fazer a de hoje? 👀
+⚠️ *REGRA DO FOGO:*
+• *Quem já tá no jogo:* responda hoje para somar *+1 dia de ofensiva 🔥*. Se pular o dia, *ZERA TUDO!*
+• *Quem tá chegando agora:* faça hoje para estrear sua chama de *🔥 1 dia*.
+
+Quem vai ser a 1ª pessoa a inaugurar o Mural de hoje? 👀
 
 🔗 *FAÇA AGORA (3 a 5 min):*
 👉 ${questionUrl}
 
-💡 *Entrou na turma agora?* A Ofensiva (🔥) é a sua sequência de dias seguidos resolvendo a questão. Faça a de hoje para acender seu primeiro *🔥 1 dia*!
-
-👇 Vai fazer a de hoje? Deixa um 👍 para firmar o compromisso!`;
+👇 Vai manter sua chama acesa? Manda um 🔥!`;
 
   // Mensagem 3 - Noite
   const countToday = todayList.length;
