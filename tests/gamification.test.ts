@@ -129,6 +129,10 @@ assert(messages.message3A.includes('*1 fera já garantiu a presença*'), 'Mensag
 assert(!messages.message3A.includes('guerreiros'), 'Mensagem 3A não deve usar termo guerreiros');
 assert(!messages.message3A.includes('DIA #'), 'Mensagem 3A não deve conter identificador de dia');
 assert(messages.message3B.includes('🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*'), 'Mensagem 3B deve destacar chamada da noite em *negrito*');
+assert(messages.message3B.includes('⚠️ *PRAZO: ATÉ A MEIA-NOITE (23h59)*'), 'Mensagem 3B deve conter aviso explícito de prazo até meia-noite');
+assert(messages.message3B.includes('*ZERA A OFENSIVA*'), 'Mensagem 3B deve conter aviso de que zera a ofensiva');
+assert(messages.message3B.includes('somar *+1 dia de ofensiva 🔥*'), 'Mensagem 3B deve conter ganho de ofensiva');
+assert(messages.message3B.includes('👇 Quem ainda vai salvar a chama antes da meia-noite? Manda um 🔥!'), 'Mensagem 3B deve conter CTA de emoji');
 
 console.log('\n------------------------------------------------------');
 console.log(' \x1b[32m✔ TODOS OS TESTES DE METAS PASSARAM COM SUCESSO!\x1b[0m\n');

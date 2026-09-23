@@ -275,14 +275,15 @@ ${muralLinesToday}`;
   // Mensagem 3B - Noite (Parte 2: Chamada Noturna + Link)
   const message3B = `🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*
 
-Se você estuda agora e seu apelido ainda não está na lista acima, não vá dormir sem fazer a sua!
+Se seu apelido ainda não está na lista acima, faça a sua questão já!
 
-Mantenha sua ofensiva ativa e garanta sua presença no *Mural oficial* com a gente! ⏰
+⚠️ *PRAZO: ATÉ A MEIA-NOITE (23h59)*
+Às 23h59 o sistema vira e quem não respondeu *ZERA A OFENSIVA*. Responda agora para somar *+1 dia de ofensiva 🔥* e garantir seu nome no Mural de hoje!
 
 👉 *RESOLVA AGORA (3 a 5 min):*
 ${questionUrl}
 
-Quem vai fechar a lista antes da virada do dia? 👀`;
+👇 Quem ainda vai salvar a chama antes da meia-noite? Manda um 🔥!`;
 
   return { message1, message2, message3A, message3B };
 }
