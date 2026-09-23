@@ -226,11 +226,10 @@ export function generateWhatsAppMessages({
       .join('\n');
   }
 
-  const message1 = `⚔️ *BOM DIA! MURAL OFICIAL DA TURMA* 🎯
+  const message1 = `⚔️ *BOM DIA! MURAL DE ONTEM* 🎯
 
-*${countYesterday} ${countYesterday === 1 ? 'mente focada manteve' : 'mentes focadas mantiveram'} o ritmo firme* e garantiram a presença no mural anterior! 🎯
+*${countYesterday} ${countYesterday === 1 ? 'mente focada manteve' : 'mentes focadas mantiveram'} o ritmo firme* e fecharam o dia com a presença garantida! 🎯
 
-📋 *MURAL OFICIAL CONSOLIDADO:*
 ${muralLinesYesterday}
 
 👏 Parabéns a quem manteve o ritmo firme!
@@ -265,11 +264,10 @@ Quem vai ser a 1ª pessoa a fazer a de hoje? 👀
       .join('\n');
   }
 
-  const message3 = `🚨 *PRÉVIA DA CHAMADA — QUESTÃO DO DIA!* 🚨
+  const message3 = `🔥 *QUEM JÁ SALVOU A OFENSIVA HOJE:* 🔥
 
 Já passamos da metade do dia e *${countToday} ${countToday === 1 ? 'fera já garantiu' : 'feras já garantiram'} a presença* no mural de hoje! 🎯
 
-🔥 *QUEM JÁ FEZ A QUESTÃO DE HOJE:*
 ${muralLinesToday}
 
 🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*
