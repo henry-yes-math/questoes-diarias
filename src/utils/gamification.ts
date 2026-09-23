@@ -264,14 +264,17 @@ Quem vai ser a 1ª pessoa a fazer a de hoje? 👀
       .join('\n');
   }
 
-  const message3 = `🔥 *QUEM JÁ SALVOU A OFENSIVA HOJE:* 🔥
+  // Mensagem 3A - Noite (Parte 1: Lista / Prova Social)
+  const message3A = `🔥 *QUEM JÁ SALVOU A OFENSIVA HOJE:* 🔥
 
 Já passamos da metade do dia e *${countToday} ${countToday === 1 ? 'fera já garantiu' : 'feras já garantiram'} a presença* no mural de hoje! 🎯
 
-${muralLinesToday}
+${muralLinesToday}`;
 
-🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*
-Se você estuda agora e seu apelido ainda não está aqui, não vá dormir sem fazer a sua!
+  // Mensagem 3B - Noite (Parte 2: Chamada Noturna + Link)
+  const message3B = `🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*
+
+Se você estuda agora e seu apelido ainda não está na lista acima, não vá dormir sem fazer a sua!
 
 Mantenha sua ofensiva ativa e garanta sua presença no *Mural oficial* com a gente! ⏰
 
@@ -280,5 +283,5 @@ ${questionUrl}
 
 Quem vai fechar a lista antes da virada do dia? 👀`;
 
-  return { message1, message2, message3 };
+  return { message1, message2, message3A, message3B };
 }

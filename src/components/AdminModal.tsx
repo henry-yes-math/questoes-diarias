@@ -159,7 +159,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const cleanUrl = new URL(window.location.href);
   cleanUrl.searchParams.delete('admin');
   const questionUrl = cleanUrl.toString().split('#')[0];
-  const { message1, message2, message3 } = generateWhatsAppMessages({
+  const { message1, message2, message3A, message3B } = generateWhatsAppMessages({
     yesterdayList: previousCycleSubmissions,
     todayList: todaySubmissions,
     questionUrl,
@@ -405,36 +405,87 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               </div>
 
               {/* Card Mensagem 3: Noite (Chamada da Noite) */}
-              <div className="border border-stone-200 rounded-xl p-4 bg-stone-50/50 space-y-2.5">
+              <div className="border border-purple-200 rounded-xl p-4 bg-purple-50/30 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded">
                       Mensagem 3 • Noite
                     </span>
                     <h4 className="text-sm font-bold text-stone-900">
-                      Prévia da Chamada da Turma (Noite)
+                      Ofensiva da Noite (Dividida em 2 partes para o WhatsApp)
                     </h4>
                   </div>
-                  <button
-                    onClick={() => handleCopyText(message3, 3)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs cursor-pointer"
-                  >
-                    {copiedIndex === 3 ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-white" />
-                        <span>Copiado!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copiar Mensagem 3</span>
-                      </>
-                    )}
-                  </button>
                 </div>
-                <pre className="p-3 bg-white border border-stone-200 rounded-lg text-xs text-stone-700 whitespace-pre-wrap font-sans leading-relaxed max-h-40 overflow-y-auto">
-                  {message3}
-                </pre>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  {/* Parte 1: Lista / Prova Social */}
+                  <div className="p-3 bg-white border border-stone-200 rounded-xl space-y-2 shadow-2xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-stone-700">
+                          Parte 1: Lista (Quem já fez)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(message3A, 3)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs cursor-pointer"
+                        >
+                          {copiedIndex === 3 ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-white" />
+                              <span>Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copiar Parte 1</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <pre className="p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-xs text-stone-700 whitespace-pre-wrap font-sans leading-relaxed max-h-36 overflow-y-auto">
+                        {message3A}
+                      </pre>
+                    </div>
+                    <p className="text-[11px] text-stone-500 mt-2">
+                      💡 Envie primeiro no grupo. O WhatsApp cortará com "Ler mais", gerando prova social.
+                    </p>
+                  </div>
+
+                  {/* Parte 2: Chamada + Link */}
+                  <div className="p-3 bg-white border border-stone-200 rounded-xl space-y-2 shadow-2xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-stone-700">
+                          Parte 2: Chamada + Link
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(message3B, 4)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs cursor-pointer"
+                        >
+                          {copiedIndex === 4 ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-white" />
+                              <span>Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copiar Parte 2</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <pre className="p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-xs text-stone-700 whitespace-pre-wrap font-sans leading-relaxed max-h-36 overflow-y-auto">
+                        {message3B}
+                      </pre>
+                    </div>
+                    <p className="text-[11px] text-stone-500 mt-2">
+                      🚀 Envie logo em seguida. O link ficará 100% visível e clicável, sem "Ler mais".
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
