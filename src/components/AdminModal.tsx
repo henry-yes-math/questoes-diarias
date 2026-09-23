@@ -263,6 +263,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </div>
           ) : (
             <div className="flex items-center gap-2 shrink-0">
+              {/* 
+                BOTÃO OCULTO PARA SEGURANÇA CONTRA CLIQUES ACIDENTAIS DURANTE O ANO LETIVO.
+                A lógica (handleResetAllData) permanece preservada no código para reutilização no início do próximo ciclo anual.
+                Para reativar no próximo ano, basta descomentar o bloco abaixo:
               <button
                 type="button"
                 disabled={resettingData || advancingCycle}
@@ -273,6 +277,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Zerar Testes (Dia #1)</span>
               </button>
+              */}
 
               <button
                 type="button"
