@@ -218,9 +218,7 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
           // Style based on step type
           const isResolution =
             step.type === 'resolution' ||
-            step.title?.toLowerCase().includes('resposta') ||
-            step.title?.toLowerCase().includes('conclusão') ||
-            idx === steps.length - 1;
+            (idx === steps.length - 1 && !step.title?.toLowerCase().includes('dica'));
           const isHintRes = step.type === 'hint-resolution';
 
           let iconBg = 'bg-[#f5f4f0] border-[#e7e5df] text-[#1c1917]';
@@ -348,11 +346,11 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
                           );
                         }
 
-                        // Caso não ache padrão no meio, exibe o HTML e o botão logo a seguir
+                        // Caso não ache padrão no meio, exibe o HTML da resolução primeiro e o botão de validação logo após
                         return (
                           <div className="prose-content space-y-3">
-                            {validationCard}
                             <div dangerouslySetInnerHTML={{ __html: cleanHtml }} />
+                            {validationCard}
                           </div>
                         );
                       })()}

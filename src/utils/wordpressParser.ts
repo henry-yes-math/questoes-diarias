@@ -362,6 +362,29 @@ export function parseWordPressPost(post: any): QuestionData {
 
     const htmlContent = renderLatexInHtml(container.innerHTML);
 
+    const ordinalWords: Record<string, number> = {
+      primeira: 1,
+      primeiro: 1,
+      segunda: 2,
+      segundo: 2,
+      terceira: 3,
+      terceiro: 3,
+      quarta: 4,
+      quarto: 4,
+      quinta: 5,
+      quinto: 5
+    };
+
+    const extractStepNumber = (title: string, fallback: number): number => {
+      const match = title.match(/\d+/);
+      if (match) return parseInt(match[0], 10);
+      const lower = title.toLowerCase();
+      for (const [word, val] of Object.entries(ordinalWords)) {
+        if (lower.includes(word)) return val;
+      }
+      return fallback;
+    };
+
     if (
       titleLower.includes('resolução da dica') ||
       titleLower.includes('resolucao da dica') ||
@@ -369,8 +392,7 @@ export function parseWordPressPost(post: any): QuestionData {
       titleLower.startsWith('resolução') ||
       titleLower.startsWith('resolucao')
     ) {
-      const numMatch = sec.title.match(/\d+/);
-      const num = numMatch ? parseInt(numMatch[0], 10) : stepCounter;
+      const num = extractStepNumber(sec.title, stepCounter);
       steps.push({
         id: `hint-res-${num}-${steps.length}`,
         type: 'hint-resolution',
@@ -378,9 +400,8 @@ export function parseWordPressPost(post: any): QuestionData {
         subtitle: `Conferência do passo ${num}`,
         htmlContent
       });
-    } else if (titleLower.startsWith('dica')) {
-      const numMatch = sec.title.match(/\d+/);
-      const num = numMatch ? parseInt(numMatch[0], 10) : stepCounter++;
+    } else if (titleLower.includes('dica')) {
+      const num = extractStepNumber(sec.title, stepCounter++);
       steps.push({
         id: `hint-${num}-${steps.length}`,
         type: 'hint',
@@ -389,7 +410,12 @@ export function parseWordPressPost(post: any): QuestionData {
         subtitle: `Direcionamento para continuar o raciocínio`,
         htmlContent
       });
-    } else if (titleLower.includes('resposta') || titleLower.includes('conclusão')) {
+    } else if (
+      titleLower.includes('resposta') ||
+      titleLower.includes('gabarito') ||
+      titleLower.includes('conclusão') ||
+      titleLower.includes('conclusao')
+    ) {
       // Cross-check answer directly from this answer section
       const secText = container.textContent || '';
       const secMatch = secText.match(/(?:alternativa|letra)\s*([A-Ea-e])/i);
