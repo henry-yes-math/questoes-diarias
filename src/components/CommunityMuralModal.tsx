@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Flame, Users, Sparkles, Trophy } from 'lucide-react';
 import { DailySubmission } from '../types';
 
@@ -17,7 +17,14 @@ export const CommunityMuralModal: React.FC<Props> = ({
   currentStudentNick,
   cycleNumber,
 }) => {
+  const [activeTooltipId, setActiveTooltipId] = useState<string | null>(null);
+
   if (!isOpen) return null;
+
+  const handleToggleTooltip = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveTooltipId((prev) => (prev === id ? null : id));
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
@@ -59,7 +66,10 @@ export const CommunityMuralModal: React.FC<Props> = ({
         </div>
 
         {/* Lista de Alunos */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-2">
+        <div
+          onClick={() => setActiveTooltipId(null)}
+          className="p-6 overflow-y-auto flex-1 space-y-2"
+        >
           {submissions.length === 0 ? (
             <div className="text-center py-10 px-4">
               <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600 shadow-2xs">
@@ -79,10 +89,14 @@ export const CommunityMuralModal: React.FC<Props> = ({
                 currentStudentNick &&
                 sub.nickname.toLowerCase() === currentStudentNick.toLowerCase();
 
+              const subId = sub.id || `${sub.studentId}_${index}`;
+              const milestoneTooltipId = `milestone_${subId}`;
+              const streakTooltipId = `streak_${subId}`;
+
               return (
                 <div
-                  key={sub.id || `${sub.studentId}_${index}`}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                  key={subId}
+                  className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all relative ${
                     isCurrentUser
                       ? 'bg-blue-50/80 border-blue-200 text-blue-900 font-medium'
                       : 'bg-slate-50/70 border-slate-200/80 text-slate-800'
@@ -102,18 +116,57 @@ export const CommunityMuralModal: React.FC<Props> = ({
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 relative">
                     {sub.unlockedMilestone && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-200/60">
-                        <Trophy className="w-3 h-3 text-amber-600" />
-                        Marco de {sub.unlockedMilestone}!
-                      </span>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleTooltip(milestoneTooltipId, e)}
+                          title={`Marco de consistência: ${sub.unlockedMilestone} questões resolvidas!`}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-100/80 hover:bg-amber-200/90 active:scale-95 px-2 py-0.5 rounded-md border border-amber-200/60 cursor-pointer transition-all"
+                        >
+                          <Trophy className="w-3 h-3 text-amber-600 shrink-0" />
+                          <span className="sm:hidden">{sub.unlockedMilestone}Q</span>
+                          <span className="hidden sm:inline">Marco de {sub.unlockedMilestone}!</span>
+                        </button>
+
+                        {/* Balão flutuante no toque/clique */}
+                        {activeTooltipId === milestoneTooltipId && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute right-0 top-full mt-1.5 z-30 w-52 bg-slate-900 text-white text-[11px] rounded-lg px-2.5 py-1.5 shadow-xl border border-slate-700 leading-snug animate-in fade-in zoom-in-95 duration-150"
+                          >
+                            <span className="font-bold text-amber-300">🏆 Marco atingido:</span>{' '}
+                            {sub.unlockedMilestone} questões resolvidas no total!
+                            <div className="absolute -top-1 right-4 w-2 h-2 bg-slate-900 rotate-45 border-l border-t border-slate-700" />
+                          </div>
+                        )}
+                      </div>
                     )}
 
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200/60">
-                      <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
-                      {sub.streakDays} {sub.streakDays === 1 ? 'dia' : 'dias'}
-                    </span>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={(e) => handleToggleTooltip(streakTooltipId, e)}
+                        title={`Ofensiva ativa: ${sub.streakDays} ${sub.streakDays === 1 ? 'dia consecutivo' : 'dias consecutivos'}`}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100/90 active:scale-95 px-2 py-0.5 rounded-md border border-orange-200/60 cursor-pointer transition-all"
+                      >
+                        <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500 shrink-0" />
+                        {sub.streakDays} {sub.streakDays === 1 ? 'dia' : 'dias'}
+                      </button>
+
+                      {/* Balão flutuante no toque/clique */}
+                      {activeTooltipId === streakTooltipId && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="absolute right-0 top-full mt-1.5 z-30 w-48 bg-slate-900 text-white text-[11px] rounded-lg px-2.5 py-1.5 shadow-xl border border-slate-700 leading-snug animate-in fade-in zoom-in-95 duration-150"
+                        >
+                          <span className="font-bold text-orange-400">🔥 Ofensiva ativa:</span>{' '}
+                          {sub.streakDays} {sub.streakDays === 1 ? 'dia consecutivo de estudo' : 'dias consecutivos de estudo'}!
+                          <div className="absolute -top-1 right-4 w-2 h-2 bg-slate-900 rotate-45 border-l border-t border-slate-700" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
