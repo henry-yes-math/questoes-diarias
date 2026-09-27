@@ -1,4 +1,12 @@
-import { MILESTONES, calculateMilestone, generateWhatsAppMessages } from '../src/utils/gamification';
+import {
+  MILESTONES,
+  calculateMilestone,
+  generateWhatsAppMessages,
+  calculateNewStreakWithShield,
+  calculateNewStreakByCycle,
+  MAX_STREAK_SHIELDS,
+  STREAK_DAYS_PER_SHIELD,
+} from '../src/utils/gamification';
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
@@ -134,5 +142,75 @@ assert(messages.message3B.includes('*ZERA A OFENSIVA*'), 'Mensagem 3B deve conte
 assert(messages.message3B.includes('somar *+1 dia de ofensiva 🔥*'), 'Mensagem 3B deve conter ganho de ofensiva');
 assert(messages.message3B.includes('👇 Quem ainda vai salvar a chama antes da meia-noite? Manda um 🔥!'), 'Mensagem 3B deve conter CTA de emoji');
 
+// Teste 4: Regras do Protetor de Chama (Streak Shield)
+console.log('\nTeste 4: Regras do Protetor de Chama (Streak Shield)');
+
+// 4.1 Aluno novo (sem histórico)
+const sNew = calculateNewStreakWithShield(undefined, 0, 1, 0);
+assert(sNew.newStreak === 1, 'Aluno novo deve começar com ofensiva 1');
+assert(sNew.newShields === 0, 'Aluno novo começa com 0 escudos');
+assert(sNew.shieldWasUsed === false, 'Nenhum escudo usado para aluno novo');
+
+// 4.2 Aluno faz dias consecutivos normais
+const sDay2 = calculateNewStreakWithShield(1, 1, 2, 0);
+assert(sDay2.newStreak === 2, 'Dia 2 consecutivo avança para streak 2');
+assert(sDay2.newShields === 0, 'Ainda não atingiu 7 dias para escudo');
+
+// 4.3 Aluno atinge 7 dias de ofensiva -> Conquista 1º Protetor
+const sDay7 = calculateNewStreakWithShield(6, 6, 7, 0);
+assert(sDay7.newStreak === 7, 'Atingiu 7 dias de ofensiva');
+assert(sDay7.newShields === 1, 'Deve ganhar 1º Protetor ao atingir 7 dias');
+assert(sDay7.earnedNewShield === true, 'Deve indicar que ganhou novo escudo');
+assert(sDay7.shieldWasUsed === false, 'Escudo não foi usado');
+
+// 4.4 Aluno atinge 14 dias de ofensiva com 1 escudo acumulado -> Conquista 2º Protetor
+const sDay14 = calculateNewStreakWithShield(13, 13, 14, 1);
+assert(sDay14.newStreak === 14, 'Atingiu 14 dias de ofensiva');
+assert(sDay14.newShields === 2, 'Deve ganhar 2º Protetor ao atingir 14 dias');
+assert(sDay14.earnedNewShield === true, 'Deve indicar ganho de escudo no dia 14');
+
+// 4.5 Aluno atinge 21 dias de ofensiva já com 2 escudos (Teto Máximo = 2)
+const sDay21 = calculateNewStreakWithShield(20, 20, 21, 2);
+assert(sDay21.newStreak === 21, 'Atingiu 21 dias');
+assert(sDay21.newShields === 2, 'Não deve ultrapassar o teto máximo de 2 escudos');
+assert(sDay21.earnedNewShield === false, 'Não deve creditar acima do teto');
+
+// 4.6 Aluno FALTOU 1 dia (pulou ciclo 5), mas TINHA 1 escudo (era ciclo 4, agora é ciclo 6)
+const sSaved = calculateNewStreakWithShield(4, 4, 6, 1);
+assert(sSaved.shieldWasUsed === true, 'Escudo deve ser acionado para salvar');
+assert(sSaved.newStreak === 5, 'Ofensiva deve ser salva e incrementada para 5');
+assert(sSaved.newShields === 0, 'Escudo deve ser consumido (1 - 1 = 0)');
+assert(sSaved.usedInCycle === 5, 'Deve registrar que o escudo foi gasto no ciclo 5 faltante');
+
+// 4.7 Aluno FALTOU 1 dia, mas NÃO TINHA escudo (era ciclo 4, agora é ciclo 6, 0 escudos)
+const sLost = calculateNewStreakWithShield(4, 4, 6, 0);
+assert(sLost.shieldWasUsed === false, 'Sem escudo para usar');
+assert(sLost.newStreak === 1, 'Sem escudo, ofensiva zera e recomeça em 1');
+assert(sLost.newShields === 0, 'Continua com 0 escudos');
+
+// 4.8 Aluno FALTOU 2 dias inteiros (era ciclo 3, agora é ciclo 6), tendo apenas 1 escudo
+const sDoubleMiss = calculateNewStreakWithShield(3, 3, 6, 1);
+assert(sDoubleMiss.shieldWasUsed === false, '1 escudo não cobre 2 dias de falta');
+assert(sDoubleMiss.newStreak === 1, 'Faltou 2 dias com apenas 1 escudo, ofensiva reinicia em 1');
+assert(sDoubleMiss.newShields === 1, 'Mantém o escudo intacto para o futuro');
+
+// 4.8b Aluno FALTOU 2 dias seguidos (era ciclo 3, agora é ciclo 6), e TINHA 2 escudos
+const sTwoShieldsSaved = calculateNewStreakWithShield(3, 10, 6, 2);
+assert(sTwoShieldsSaved.shieldWasUsed === true, '2 escudos devem salvar 2 dias de ausência');
+assert(sTwoShieldsSaved.shieldsUsed === 2, 'Devem ser consumidos os 2 escudos');
+assert(sTwoShieldsSaved.newStreak === 11, 'Ofensiva de 10 deve avançar para 11 salva');
+assert(sTwoShieldsSaved.newShields === 0, '2 escudos foram gastos (2 - 2 = 0)');
+
+// 4.9 Re-resolução do mesmo ciclo no mesmo dia
+const sSameCycle = calculateNewStreakWithShield(5, 5, 5, 1);
+assert(sSameCycle.newStreak === 5, 'Mesmo ciclo mantém a ofensiva');
+assert(sSameCycle.newShields === 1, 'Mesmo ciclo mantém escudos');
+assert(sSameCycle.shieldWasUsed === false, 'Nenhum escudo usado');
+
+// 4.10 Retrocompatibilidade da função calculateNewStreakByCycle
+assert(calculateNewStreakByCycle(4, 4, 6, 1) === 5, 'calculateNewStreakByCycle salva com escudo');
+assert(calculateNewStreakByCycle(4, 4, 6, 0) === 1, 'calculateNewStreakByCycle zera sem escudo');
+assert(calculateNewStreakByCycle(5, 5, 6) === 6, 'calculateNewStreakByCycle avança normalmente');
+
 console.log('\n------------------------------------------------------');
-console.log(' \x1b[32m✔ TODOS OS TESTES DE METAS PASSARAM COM SUCESSO!\x1b[0m\n');
+console.log(' \x1b[32m✔ TODOS OS TESTES DE METAS E ESCUDOS PASSARAM COM SUCESSO!\x1b[0m\n');

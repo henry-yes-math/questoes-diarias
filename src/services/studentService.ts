@@ -18,6 +18,7 @@ import { StudentProfile, DailySubmission, DailyCycleConfig, QuestionData } from 
 import {
   getLocalDateString,
   calculateNewStreakByCycle,
+  calculateNewStreakWithShield,
   calculateMilestone,
 } from '../utils/gamification';
 
@@ -285,6 +286,7 @@ export async function getOrCreateStudentProfile(
     nickname,
     totalSolved: 0,
     streakDays: 0,
+    streakShields: 0,
     lastSolvedDate: null,
     lastCompletedCycle: 0,
     unlockedMilestones: [],
@@ -294,6 +296,19 @@ export async function getOrCreateStudentProfile(
 
   await setDoc(studentRef, newProfile);
   return newProfile;
+}
+
+/**
+ * Remove recursivamente ou superficialmente campos undefined para compatibilidade com o Firestore
+ */
+function cleanFirestoreData<T extends Record<string, any>>(obj: T): T {
+  const cleaned: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned as T;
 }
 
 /**
@@ -309,6 +324,9 @@ export async function registerDailySubmission(
   profile: StudentProfile;
   milestoneUnlocked?: number;
   isFirstQuestion: boolean;
+  shieldWasUsed?: boolean;
+  shieldsUsed?: number;
+  earnedNewShield?: boolean;
 }> {
   // Se não passar cicloNumber, obtém o ciclo ativo
   const activeCycle = cycleNumber || (await getOrCreateDailyCycle()).currentCycleNumber;
@@ -346,6 +364,9 @@ export async function registerDailySubmission(
         profile,
         milestoneUnlocked: existingSubmission.unlockedMilestone,
         isFirstQuestion: profile.totalSolved === 1,
+        shieldWasUsed: false,
+        shieldsUsed: 0,
+        earnedNewShield: false,
       };
     }
 
@@ -357,14 +378,19 @@ export async function registerDailySubmission(
     const cycleSnaps = await getDocs(qCycle);
     const orderIndex = cycleSnaps.size + 1;
 
-    // Calcular novo total e streak baseado no ciclo
+    // Calcular novo total e streak/protetor baseado no ciclo
     const previousTotal = profile.totalSolved || 0;
     const newTotal = previousTotal + 1;
-    const newStreak = calculateNewStreakByCycle(
+    const currentShields = profile.streakShields || 0;
+
+    const streakResult = calculateNewStreakWithShield(
       profile.lastCompletedCycle,
       profile.streakDays || 0,
-      activeCycle
+      activeCycle,
+      currentShields
     );
+    const newStreak = streakResult.newStreak;
+    const newShields = streakResult.newShields;
 
     const milestoneCalc = calculateMilestone(newTotal, previousTotal);
     const milestoneUnlocked = milestoneCalc.isMilestoneJustUnlocked
@@ -376,16 +402,25 @@ export async function registerDailySubmission(
       newMilestones.push(milestoneUnlocked);
     }
 
+    const lastShieldCycleValue = streakResult.shieldWasUsed
+      ? (streakResult.usedInCycle || activeCycle - 1)
+      : profile.lastShieldUsedCycle;
+
     const updatedProfile: StudentProfile = {
       ...profile,
       nickname,
       totalSolved: newTotal,
       streakDays: newStreak,
+      streakShields: newShields,
       lastSolvedDate: todayStr,
       lastCompletedCycle: activeCycle,
       unlockedMilestones: newMilestones,
       updatedAt: new Date().toISOString(),
+      ...(lastShieldCycleValue !== undefined ? { lastShieldUsedCycle: lastShieldCycleValue } : {}),
     };
+    if (lastShieldCycleValue === undefined) {
+      delete updatedProfile.lastShieldUsedCycle;
+    }
 
     const submissionData: Record<string, any> = {
       id: submissionDocId,
@@ -395,6 +430,7 @@ export async function registerDailySubmission(
       cycleNumber: activeCycle,
       questionId,
       streakDays: newStreak,
+      streakShields: newShields,
       orderIndex,
       completedAt: new Date().toISOString(),
       serverTime: serverTimestamp(),
@@ -412,19 +448,23 @@ export async function registerDailySubmission(
       cycleNumber: activeCycle,
       questionId,
       streakDays: newStreak,
+      streakShields: newShields,
       orderIndex,
       completedAt: new Date().toISOString(),
       ...(milestoneUnlocked !== undefined ? { unlockedMilestone: milestoneUnlocked } : {}),
     };
 
-    transaction.set(studentRef, updatedProfile);
-    transaction.set(submissionRef, submissionData);
+    transaction.set(studentRef, cleanFirestoreData(updatedProfile));
+    transaction.set(submissionRef, cleanFirestoreData(submissionData));
 
     return {
       submission: newSubmission,
       profile: updatedProfile,
       milestoneUnlocked,
       isFirstQuestion: newTotal === 1,
+      shieldWasUsed: streakResult.shieldWasUsed,
+      shieldsUsed: streakResult.shieldsUsed,
+      earnedNewShield: streakResult.earnedNewShield,
     };
   });
 }

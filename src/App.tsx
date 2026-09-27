@@ -7,6 +7,7 @@ import { AdminPasswordModal, ADMIN_AUTH_KEY } from './components/AdminPasswordMo
 import { StudentIdentificationModal } from './components/StudentIdentificationModal';
 import { CelebrationBottomSheet } from './components/CelebrationBottomSheet';
 import { CommunityMuralModal } from './components/CommunityMuralModal';
+import { ShieldRescueModal } from './components/ShieldRescueModal';
 import { useQuestionProgress } from './hooks/useQuestionProgress';
 import { useStudentGamification } from './hooks/useStudentGamification';
 import { INITIAL_QUESTION } from './data/fallbackQuestion';
@@ -40,7 +41,17 @@ export default function App() {
     setIsNickModalOpen,
     isMuralModalOpen,
     setIsMuralModalOpen,
+    isShieldRescueModalOpen,
+    setIsShieldRescueModalOpen,
+    dismissShieldRescueModal,
+    wasShieldUsed,
+    shieldsUsedCount,
+    missedCycles,
+    earnedNewShield,
     profile,
+    streakShields,
+    isShieldProtectingCurrentCycle,
+    hasCompletedToday,
     todaySubmissions,
     todayMySubmission,
     milestoneInfo,
@@ -113,14 +124,16 @@ export default function App() {
 
     // Se acertou a alternativa:
     if (letter === question.correctLetter) {
-      // Registra a conclusão no Firebase em background
-      completeQuestion();
+      // Registra a conclusão no Firebase
+      const res = await completeQuestion();
 
       // 2. Micro-delay pedagógico (850ms):
       // Permite o aluno comemorar e absorver visualmente a cor verde da alternativa correta antes da gaveta subir
-      celebrationTimeoutRef.current = setTimeout(() => {
-        setIsCelebrationOpen(true);
-      }, 850);
+      if (res) {
+        celebrationTimeoutRef.current = setTimeout(() => {
+          setIsCelebrationOpen(true);
+        }, 850);
+      }
     } else {
       setIsCelebrationOpen(false);
     }
@@ -138,6 +151,8 @@ export default function App() {
         nickname={nickname}
         onOpenNickModal={() => setIsNickModalOpen(true)}
         onOpenMural={() => setIsMuralModalOpen(true)}
+        isShieldProtecting={isShieldProtectingCurrentCycle}
+        onOpenShieldRescue={() => setIsShieldRescueModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -202,8 +217,28 @@ export default function App() {
           milestoneInfo={milestoneInfo}
           onOpenMural={() => setIsMuralModalOpen(true)}
           onScrollToHints={handleScrollToHints}
+          wasShieldUsed={wasShieldUsed}
+          shieldsUsed={shieldsUsedCount || 1}
+          earnedNewShield={earnedNewShield}
         />
       )}
+
+      {/* Modal de Acolhimento do Protetor de Ofensiva (Resgate da Chama) */}
+      <ShieldRescueModal
+        isOpen={isShieldRescueModalOpen}
+        onClose={dismissShieldRescueModal}
+        streakDays={profile?.streakDays || 1}
+        remainingShields={streakShields}
+        missedDays={missedCycles || 1}
+        shieldsUsed={shieldsUsedCount || 1}
+        isAlreadyResolvedToday={hasCompletedToday}
+        onActionClick={() => {
+          const questionCard =
+            document.getElementById('enem-question-card') ||
+            document.querySelector('section[aria-label="Questão de Matemática"]');
+          questionCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }}
+      />
 
       {/* Modal de Senha do Professor */}
       <AdminPasswordModal
@@ -227,7 +262,18 @@ export default function App() {
         isOpen={isNickModalOpen}
         initialNickname={nickname}
         currentStudentId={studentId}
-        onSave={updateNickname}
+        onSave={async (newNick, adoptedStudentId) => {
+          const updated = await updateNickname(newNick, adoptedStudentId);
+          // Se o aluno já estava confirmando a resposta correta:
+          if (selectedLetter && selectedLetter === question.correctLetter) {
+            const res = await completeQuestion(updated.studentId, updated.nickname);
+            if (res) {
+              celebrationTimeoutRef.current = setTimeout(() => {
+                setIsCelebrationOpen(true);
+              }, 400);
+            }
+          }
+        }}
         onClose={() => setIsNickModalOpen(false)}
       />
 

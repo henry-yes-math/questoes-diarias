@@ -140,30 +140,131 @@ export function calculateMilestone(
   };
 }
 
+export const MAX_STREAK_SHIELDS = 2;
+export const STREAK_DAYS_PER_SHIELD = 7;
+
+export interface StreakShieldCalculationResult {
+  newStreak: number;
+  newShields: number;
+  shieldWasUsed: boolean;
+  shieldsUsed?: number;
+  earnedNewShield: boolean;
+  usedInCycle?: number;
+}
+
+/**
+ * Calcula a ofensiva (streak) e o gerenciamento de Protetores de Chama (Shields)
+ * com base nos ciclos diários acionados pelo professor.
+ * Permite que 2 protetores cubram 2 faltas consecutivas de forma justa e transparente.
+ */
+export function calculateNewStreakWithShield(
+  lastCompletedCycle: number | undefined | null,
+  currentStreak: number,
+  currentCycleNumber: number,
+  currentShields: number = 0
+): StreakShieldCalculationResult {
+  const safeCurrentStreak = Math.max(0, currentStreak || 0);
+  let safeShields = Math.max(0, Math.min(MAX_STREAK_SHIELDS, currentShields || 0));
+
+  // 1. Aluno sem histórico ou iniciando agora
+  if (lastCompletedCycle === undefined || lastCompletedCycle === null || lastCompletedCycle <= 0) {
+    return {
+      newStreak: 1,
+      newShields: safeShields,
+      shieldWasUsed: false,
+      shieldsUsed: 0,
+      earnedNewShield: false,
+    };
+  }
+
+  // 2. Se já concluiu este mesmo ciclo anteriormente, mantém a ofensiva e escudos
+  if (lastCompletedCycle === currentCycleNumber) {
+    return {
+      newStreak: Math.max(1, safeCurrentStreak),
+      newShields: safeShields,
+      shieldWasUsed: false,
+      shieldsUsed: 0,
+      earnedNewShield: false,
+    };
+  }
+
+  // 3. Concluiu exatamente o ciclo imediatamente anterior (consecutivo, sem falta)
+  if (lastCompletedCycle === currentCycleNumber - 1) {
+    const nextStreak = Math.max(1, safeCurrentStreak) + 1;
+    let earnedNewShield = false;
+    // Concede +1 escudo a cada 7 dias de ofensiva ininterrupta (7, 14, 21...), até o teto de 2
+    if (nextStreak % STREAK_DAYS_PER_SHIELD === 0 && safeShields < MAX_STREAK_SHIELDS) {
+      safeShields += 1;
+      earnedNewShield = true;
+    }
+    return {
+      newStreak: nextStreak,
+      newShields: safeShields,
+      shieldWasUsed: false,
+      shieldsUsed: 0,
+      earnedNewShield,
+    };
+  }
+
+  // 4. Pulou ciclos. Quantos ciclos foram perdidos?
+  const missedCycles = currentCycleNumber - 1 - lastCompletedCycle;
+
+  // Se faltou 1 ou mais ciclos e tem protetores suficientes para cobrir TODAS as faltas consecutivas:
+  // Ex: faltou 1 dia e tem >= 1 protetor -> consome 1 protetor e salva a ofensiva.
+  // Ex: faltou 2 dias seguidos e tem 2 protetores -> consome os 2 protetores e salva a ofensiva!
+  if (missedCycles > 0 && safeShields >= missedCycles) {
+    const shieldsUsed = missedCycles;
+    const consumedShields = safeShields - shieldsUsed;
+    const nextStreak = Math.max(1, safeCurrentStreak) + 1;
+    let earnedNewShield = false;
+
+    // Se ao salvar atingiu múltiplo de 7, recarrega se o teto permitir
+    if (nextStreak % STREAK_DAYS_PER_SHIELD === 0 && consumedShields < MAX_STREAK_SHIELDS) {
+      return {
+        newStreak: nextStreak,
+        newShields: consumedShields + 1,
+        shieldWasUsed: true,
+        shieldsUsed,
+        earnedNewShield: true,
+        usedInCycle: currentCycleNumber - 1,
+      };
+    }
+    return {
+      newStreak: nextStreak,
+      newShields: consumedShields,
+      shieldWasUsed: true,
+      shieldsUsed,
+      earnedNewShield: false,
+      usedInCycle: currentCycleNumber - 1,
+    };
+  }
+
+  // 5. Sem protetores suficientes (ex: 0 protetores, ou faltou mais ciclos do que escudos disponíveis)
+  // -> ofensiva reinicia em 1
+  return {
+    newStreak: 1,
+    newShields: safeShields,
+    shieldWasUsed: false,
+    shieldsUsed: 0,
+    earnedNewShield: false,
+  };
+}
+
 /**
  * Calcula a ofensiva (streak) com base nos ciclos diários acionados pelo professor
  */
 export function calculateNewStreakByCycle(
   lastCompletedCycle: number | undefined,
   currentStreak: number,
-  currentCycleNumber: number
+  currentCycleNumber: number,
+  currentShields: number = 0
 ): number {
-  if (lastCompletedCycle === undefined || lastCompletedCycle === null || lastCompletedCycle <= 0) {
-    return 1;
-  }
-
-  // Se já concluiu este mesmo ciclo anteriormente, mantém a ofensiva
-  if (lastCompletedCycle === currentCycleNumber) {
-    return Math.max(1, currentStreak);
-  }
-
-  // Se concluiu exatamente o ciclo imediatamente anterior, avança a sequência
-  if (lastCompletedCycle === currentCycleNumber - 1) {
-    return Math.max(1, currentStreak) + 1;
-  }
-
-  // Se pulou um ou mais ciclos inteiros, recomeça em 1
-  return 1;
+  return calculateNewStreakWithShield(
+    lastCompletedCycle,
+    currentStreak,
+    currentCycleNumber,
+    currentShields
+  ).newStreak;
 }
 
 /**

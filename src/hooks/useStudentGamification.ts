@@ -144,41 +144,118 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
         }
         const mInfo = calculateMilestone(p.totalSolved, Math.max(0, p.totalSolved - 1));
         setMilestoneInfo(mInfo);
+        return { profile: p, studentId: targetStudentId, nickname: newNick };
       } catch (err) {
         console.warn('Erro ao atualizar perfil com novo nick:', err);
+        return { profile: null, studentId: targetStudentId, nickname: newNick };
       }
     },
     [studentId, currentCycle.currentCycleNumber]
   );
 
+  // Estado do Modal de Resgate de Protetor de Ofensiva (Ufa! Sua chama continua viva!)
+  const [isShieldRescueModalOpen, setIsShieldRescueModalOpen] = useState(false);
+  const [wasShieldUsedInSubmission, setWasShieldUsedInSubmission] = useState(false);
+  const [shieldsUsedInSubmission, setShieldsUsedInSubmission] = useState<number>(0);
+  const [earnedNewShieldInSubmission, setEarnedNewShieldInSubmission] = useState(false);
+
   // Submeter a resolução da questão do ciclo atual
-  const completeQuestion = useCallback(async () => {
-    if (!nickname) {
-      setIsNickModalOpen(true);
-      return null;
-    }
+  const completeQuestion = useCallback(
+    async (overrideStudentId?: string, overrideNickname?: string) => {
+      const activeNick = overrideNickname || nickname;
+      const activeId = overrideStudentId || studentId;
 
+      if (!activeNick) {
+        setIsNickModalOpen(true);
+        return null;
+      }
+
+      try {
+        const prevTotal = profile?.totalSolved || 0;
+        const res = await registerDailySubmission(
+          activeId,
+          activeNick,
+          currentQuestionId,
+          currentCycle.currentCycleNumber
+        );
+        setProfile(res.profile);
+        setTodayMySubmission(res.submission);
+        setHasCompletedToday(true);
+
+        if (res.shieldWasUsed) {
+          setWasShieldUsedInSubmission(true);
+          if (res.shieldsUsed) {
+            setShieldsUsedInSubmission(res.shieldsUsed);
+          }
+        }
+        if (res.earnedNewShield) {
+          setEarnedNewShieldInSubmission(true);
+        }
+
+        const mInfo = calculateMilestone(res.profile.totalSolved, prevTotal);
+        setMilestoneInfo(mInfo);
+
+        return res;
+      } catch (err) {
+        console.error('Erro ao registrar conclusão diária:', err);
+        return null;
+      }
+    },
+    [studentId, nickname, currentQuestionId, currentCycle.currentCycleNumber, profile]
+  );
+
+  const streakShields = profile?.streakShields ?? 0;
+  const missedCycles =
+    profile?.lastCompletedCycle != null && profile.lastCompletedCycle > 0
+      ? Math.max(0, currentCycle.currentCycleNumber - 1 - profile.lastCompletedCycle)
+      : 0;
+
+  // O aluno está protegido se tiver faltado 1 ou mais ciclos e possuir escudos suficientes para cobrir TODAS as faltas
+  const isShieldProtectingCurrentCycle = Boolean(
+    profile &&
+    missedCycles > 0 &&
+    missedCycles <= streakShields
+  );
+
+  const wasShieldUsed = wasShieldUsedInSubmission || Boolean(
+    profile &&
+    profile.lastShieldUsedCycle === currentCycle.currentCycleNumber - 1 &&
+    profile.lastCompletedCycle === currentCycle.currentCycleNumber
+  );
+
+  const shieldsUsedCount = shieldsUsedInSubmission || (isShieldProtectingCurrentCycle ? missedCycles : wasShieldUsed ? 1 : 0);
+
+  const earnedNewShield = earnedNewShieldInSubmission || Boolean(
+    profile &&
+    profile.lastCompletedCycle === currentCycle.currentCycleNumber &&
+    profile.streakDays > 0 &&
+    profile.streakDays % 7 === 0 &&
+    streakShields > 0
+  );
+
+  // Exibe o modal de resgate automaticamente ao entrar no app se o aluno estiver protegido por escudo
+  useEffect(() => {
+    if (!profile || !studentId || isNickModalOpen) return;
+
+    if (isShieldProtectingCurrentCycle) {
+      const storageKey = `yes_shield_rescue_seen_${studentId}_cycle_${currentCycle.currentCycleNumber}`;
+      const hasSeen = localStorage.getItem(storageKey);
+      if (!hasSeen) {
+        setIsShieldRescueModalOpen(true);
+      }
+    }
+  }, [profile, studentId, isShieldProtectingCurrentCycle, currentCycle.currentCycleNumber, isNickModalOpen]);
+
+  // Função para fechar e registrar que o aluno já viu o modal neste ciclo
+  const dismissShieldRescueModal = useCallback(() => {
+    setIsShieldRescueModalOpen(false);
     try {
-      const prevTotal = profile?.totalSolved || 0;
-      const res = await registerDailySubmission(
-        studentId,
-        nickname,
-        currentQuestionId,
-        currentCycle.currentCycleNumber
-      );
-      setProfile(res.profile);
-      setTodayMySubmission(res.submission);
-      setHasCompletedToday(true);
-
-      const mInfo = calculateMilestone(res.profile.totalSolved, prevTotal);
-      setMilestoneInfo(mInfo);
-
-      return res;
-    } catch (err) {
-      console.error('Erro ao registrar conclusão diária:', err);
-      return null;
+      const storageKey = `yes_shield_rescue_seen_${studentId}_cycle_${currentCycle.currentCycleNumber}`;
+      localStorage.setItem(storageKey, 'seen');
+    } catch (e) {
+      // Ignora erro se localStorage estiver desabilitado
     }
-  }, [studentId, nickname, currentQuestionId, currentCycle.currentCycleNumber, profile]);
+  }, [studentId, currentCycle.currentCycleNumber]);
 
   return {
     studentId,
@@ -188,7 +265,18 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
     setIsNickModalOpen,
     isMuralModalOpen,
     setIsMuralModalOpen,
+    isShieldRescueModalOpen,
+    setIsShieldRescueModalOpen,
+    dismissShieldRescueModal,
+    wasShieldUsed,
+    wasShieldUsedInSubmission,
+    shieldsUsedCount,
+    missedCycles,
+    earnedNewShield,
     profile,
+    streakShields,
+    isShieldProtectingCurrentCycle,
+    lastShieldUsedCycle: profile?.lastShieldUsedCycle,
     todaySubmissions,
     todayMySubmission,
     milestoneInfo,

@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   X,
   BookOpen,
+  Shield,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MilestoneInfo } from '../types';
@@ -23,6 +24,9 @@ interface Props {
   milestoneInfo: MilestoneInfo;
   onOpenMural: () => void;
   onScrollToHints?: () => void;
+  wasShieldUsed?: boolean;
+  shieldsUsed?: number;
+  earnedNewShield?: boolean;
 }
 
 export const CelebrationBottomSheet: React.FC<Props> = ({
@@ -34,6 +38,9 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
   milestoneInfo,
   onOpenMural,
   onScrollToHints,
+  wasShieldUsed,
+  shieldsUsed = 1,
+  earnedNewShield,
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -152,6 +159,29 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                 </div>
               </div>
             </div>
+
+            {/* Avisos de Protetor de Ofensiva */}
+            {wasShieldUsed && (
+              <div className="bg-blue-50/90 border border-blue-200/90 rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 text-xs text-blue-900 shadow-2xs">
+                <Shield className="w-4 h-4 text-blue-600 fill-blue-500/20 shrink-0" />
+                <span>
+                  <strong className="font-bold text-blue-950">
+                    {shieldsUsed >= 2 ? '2 Protetores de Ofensiva Acionados:' : 'Protetor de Ofensiva Acionado:'}
+                  </strong>{' '}
+                  {shieldsUsed >= 2
+                    ? 'Suas faltas dos últimos 2 dias foram salvas pelos seus 2 protetores e sua chama continua viva!'
+                    : 'Sua falta anterior foi salva pelo seu protetor e sua chama continua viva!'}
+                </span>
+              </div>
+            )}
+            {earnedNewShield && (
+              <div className="bg-emerald-50/90 border border-emerald-200/90 rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 text-xs text-emerald-900 shadow-2xs">
+                <Shield className="w-4 h-4 text-emerald-600 fill-emerald-500/20 shrink-0" />
+                <span>
+                  <strong className="font-bold text-emerald-950">Novo Protetor Desbloqueado! 🛡️</strong> Parabéns pela consistência, você ganhou +1 protetor de reserva!
+                </span>
+              </div>
+            )}
 
             {/* Linha Divisória */}
             <div className="border-t border-slate-200/80" />

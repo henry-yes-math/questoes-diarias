@@ -37,6 +37,8 @@ export interface StudentProfile {
   lastSolvedDate: string | null; // Formato YYYY-MM-DD
   lastCompletedCycle?: number; // Número do último ciclo completado
   unlockedMilestones: number[];
+  streakShields?: number; // Quantidade de protetores de chama acumulados (0 a 2)
+  lastShieldUsedCycle?: number; // Último ciclo em que o protetor foi acionado para salvar a ofensiva
   createdAt?: string;
   updatedAt?: string;
 }
@@ -59,6 +61,7 @@ export interface DailySubmission {
   orderIndex: number; // 1 para #1, 2 para #2, etc.
   completedAt: string; // ISO string
   unlockedMilestone?: number; // ex: 3, 7
+  streakShields?: number; // Quantidade de escudos ativos no momento
 }
 
 export interface MilestoneInfo {

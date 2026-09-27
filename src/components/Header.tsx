@@ -1,5 +1,5 @@
-import React from 'react';
-import { Settings, Flame, Target, Users } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Settings, Flame, Target, Users, Shield } from 'lucide-react';
 import { StudentProfile } from '../types';
 import { MILESTONES } from '../utils/gamification';
 
@@ -12,6 +12,8 @@ interface HeaderProps {
   onOpenNickModal: () => void;
   onOpenMural: () => void;
   showAdminButton?: boolean;
+  isShieldProtecting?: boolean;
+  onOpenShieldRescue?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,10 +25,27 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenNickModal,
   onOpenMural,
   showAdminButton = false,
+  isShieldProtecting = false,
+  onOpenShieldRescue,
 }) => {
+  const [showShieldTooltip, setShowShieldTooltip] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showShieldTooltip) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (tooltipRef.current && !tooltipRef.current.contains(e.target as Node)) {
+        setShowShieldTooltip(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showShieldTooltip]);
+
   const totalSolved = studentProfile?.totalSolved || 0;
   const targetMilestone =
     MILESTONES.find((m) => m > totalSolved) || 3;
+  const streakShields = studentProfile?.streakShields || 0;
 
   return (
     <header className="border-b border-stone-200 bg-white/95 backdrop-blur-md sticky top-0 z-20 transition-colors">
@@ -41,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Saudação com Apelido e Status do Aluno (Sempre visível inclusive no celular) */}
           {nickname && (
-            <div className="flex items-center gap-1 sm:gap-2 text-[11px] text-stone-500 truncate mt-0.5">
+            <div className="flex items-center gap-1 sm:gap-2 text-[11px] text-stone-500 mt-0.5">
               <button
                 type="button"
                 onClick={onOpenNickModal}
@@ -56,6 +75,84 @@ export const Header: React.FC<HeaderProps> = ({
                     <Flame className="w-3 h-3 fill-amber-500" />
                     {studentProfile.streakDays || 0}d
                   </span>
+
+                    {/* Protetor de Chama (Escudo) com tooltip interativo */}
+                  <div className="relative inline-flex items-center" ref={tooltipRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShowShieldTooltip((prev) => !prev)}
+                      className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] cursor-pointer transition-all ${
+                        isShieldProtecting
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300 font-bold hover:bg-amber-200'
+                          : streakShields > 0
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200/80 hover:bg-blue-100 font-bold'
+                          : 'bg-stone-100 text-stone-400 hover:text-stone-600 hover:bg-stone-200/60 font-medium'
+                      }`}
+                      title={
+                        isShieldProtecting
+                          ? 'Protetor em ação hoje! Clique para saber mais'
+                          : 'Protetor de Ofensiva (Clique para saber mais)'
+                      }
+                      aria-label="Protetor de Ofensiva"
+                    >
+                      <Shield
+                        className={`w-3 h-3 ${
+                          isShieldProtecting
+                            ? 'fill-amber-500 text-amber-700'
+                            : streakShields > 0
+                            ? 'fill-blue-500 text-blue-600'
+                            : 'text-stone-400'
+                        }`}
+                      />
+                      <span>{streakShields}</span>
+                    </button>
+
+                    {showShieldTooltip && (
+                      <div className="absolute top-full left-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 w-60 sm:w-64 p-2.5 bg-stone-900 text-white rounded-lg shadow-xl text-[11px] leading-snug z-50 animate-in fade-in duration-150">
+                        <div className="flex items-center gap-1.5 font-bold mb-1">
+                          <Shield
+                            className={`w-3.5 h-3.5 ${
+                              isShieldProtecting
+                                ? 'fill-amber-400 text-amber-400'
+                                : streakShields > 0
+                                ? 'fill-blue-400 text-blue-400'
+                                : 'text-stone-400'
+                            }`}
+                          />
+                          <span>
+                            {isShieldProtecting
+                              ? 'Protetor Acionado Hoje!'
+                              : streakShields > 0
+                              ? `${streakShields} ${streakShields === 1 ? 'Protetor Ativo' : 'Protetores Ativos'}`
+                              : 'Nenhum Protetor Ativo'}
+                          </span>
+                        </div>
+                        <p className="text-stone-300">
+                          {isShieldProtecting
+                            ? 'O protetor está segurando sua chama! Resolva a questão de hoje para confirmar a presença.'
+                            : streakShields > 0
+                            ? `Sua ofensiva de ${studentProfile.streakDays || 0} dias está protegida contra ${
+                                streakShields === 1 ? '1 dia de imprevisto' : 'até 2 dias seguidos de imprevisto'
+                              }.`
+                            : 'Você ganha 1 Protetor a cada 7 dias seguidos de ofensiva (máx 2).'}
+                        </p>
+                        {isShieldProtecting && onOpenShieldRescue && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowShieldTooltip(false);
+                              onOpenShieldRescue();
+                            }}
+                            className="mt-2 w-full py-1.5 px-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] rounded cursor-pointer transition-colors text-center shadow-xs"
+                          >
+                            Ver aviso de resgate da chama
+                          </button>
+                        )}
+                        <div className="absolute -top-1 left-4 sm:left-1/2 sm:-translate-x-1/2 w-2 h-2 bg-stone-900 rotate-45" />
+                      </div>
+                    )}
+                  </div>
+
                   <span className="text-stone-300">•</span>
                   {/* Caixinha empilhada com meta e progresso de questões */}
                   <span
