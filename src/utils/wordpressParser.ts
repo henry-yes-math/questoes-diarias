@@ -2,6 +2,32 @@ import { QuestionData, Alternative, PedagogicalStep } from '../types';
 import { renderLatexInHtml } from './mathRenderer';
 
 /**
+ * Removes ENEM exam booklet color references cleanly from text or HTML fragments
+ * e.g. "Questão 140 Prova Amarela, Questão 177 Prova Cinza, Questão 170 Prova Azul, Questão 146 Prova Rosa"
+ */
+export function removeExamColorReferences(textOrHtml: string): string {
+  if (!textOrHtml) return textOrHtml;
+
+  // Regex pattern matching booklet color sequences with question numbers and separators
+  const bookletSequencePattern = /(?:[,\s;–—\-\|\/]*\(?\s*(?:quest[ãa]o\s*\d+\s*(?:[-–—:]\s*)?)?prova\s+(?:amarela|azul|cinza|rosa|branca|laranja)(?:\s*(?:[-–—:]\s*)?quest[ãa]o\s*\d+)?\s*\)?)+[,\s;–—\-\|\/.]*/gi;
+
+  const cleaned = textOrHtml.replace(bookletSequencePattern, '').trim();
+  // Strip any trailing empty br tags left behind
+  return cleaned.replace(/<br\s*[\/]?>\s*$/i, '').trim();
+}
+
+/**
+ * Checks if a string or element text is exclusively/predominantly an exam booklet color mapping reference
+ */
+export function isExamColorMappingText(text: string): boolean {
+  if (!text) return false;
+  // If removing exam color references leaves virtually nothing (just punctuation or whitespace)
+  const stripped = removeExamColorReferences(text);
+  const remaining = stripped.replace(/[\s,.;:–—\-\|\/()]+/g, '');
+  return remaining.length === 0 && text.replace(/[\s,.;:–—\-\|\/()]+/g, '').length > 0;
+}
+
+/**
  * Extracts clean slug or post ID from a Yes Matemática WordPress URL
  */
 export function extractSlugOrIdFromUrl(inputUrl: string): { slug?: string; id?: string } {
@@ -287,19 +313,21 @@ export function parseWordPressPost(post: any): QuestionData {
     });
   }
 
-  // 5. Build cleaned Enunciado HTML (excluding the elements/lines that contain alternatives)
+  // 5. Build cleaned Enunciado HTML (excluding the elements/lines that contain alternatives and exam booklet color references)
   const enunciadoContainer = document.createElement('div');
   enunciadoElements.forEach((el) => {
-    // Check if element contains alternatives separated by <br>
+    // 1. Check if element contains alternatives or exam color references separated by <br>
     const innerHtml = el.innerHTML;
     if (/<br\s*[\/]?>/i.test(innerHtml)) {
       const parts = innerHtml.split(/<br\s*[\/]?>/gi);
-      const nonAltParts = parts.filter((part) => {
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = part;
-        const text = (tempDiv.textContent || '').trim();
-        return !altRegex.test(text);
-      });
+      const nonAltParts = parts
+        .map((part) => removeExamColorReferences(part))
+        .filter((part) => {
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = part;
+          const text = (tempDiv.textContent || '').trim();
+          return text.length > 0 && !altRegex.test(text) && !isExamColorMappingText(text);
+        });
       if (nonAltParts.length > 0) {
         const newEl = el.cloneNode(false) as HTMLElement;
         newEl.innerHTML = nonAltParts.join('<br>');
@@ -308,14 +336,29 @@ export function parseWordPressPost(post: any): QuestionData {
       return;
     }
 
-    const text = (el.textContent || '').trim();
+    // 2. If element is purely/predominantly an exam color reference block, discard it
+    const rawText = (el.textContent || '').trim();
+    if (isExamColorMappingText(rawText)) {
+      return;
+    }
+
+    const text = rawText;
     const isSingleAlt = altRegex.test(text);
     const hasMultipleAlts = (text.match(/[A-E](?:\)|\.|\s*[-–—])/g) || []).length >= 2;
     if (!isSingleAlt && !hasMultipleAlts) {
-      enunciadoContainer.appendChild(el.cloneNode(true));
+      const cloned = el.cloneNode(true) as HTMLElement;
+      const strippedHtml = removeExamColorReferences(cloned.innerHTML);
+      if (strippedHtml !== cloned.innerHTML) {
+        cloned.innerHTML = strippedHtml;
+      }
+      if ((cloned.textContent || '').trim().length > 0 || cloned.querySelector('img, svg, table')) {
+        enunciadoContainer.appendChild(cloned);
+      }
     }
   });
-  const cleanedEnunciadoHtml = renderLatexInHtml(enunciadoContainer.innerHTML);
+  const cleanedEnunciadoHtml = renderLatexInHtml(
+    removeExamColorReferences(enunciadoContainer.innerHTML)
+  );
 
   // 6. Build Pedagogical Steps
   const steps: PedagogicalStep[] = [];

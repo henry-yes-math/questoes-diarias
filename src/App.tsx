@@ -8,6 +8,8 @@ import { StudentIdentificationModal } from './components/StudentIdentificationMo
 import { CelebrationBottomSheet } from './components/CelebrationBottomSheet';
 import { CommunityMuralModal } from './components/CommunityMuralModal';
 import { ShieldRescueModal } from './components/ShieldRescueModal';
+import { ReferralWelcomeBanner } from './components/ReferralWelcomeBanner';
+import { ReferralRewardToast } from './components/ReferralRewardToast';
 import { useQuestionProgress } from './hooks/useQuestionProgress';
 import { useStudentGamification } from './hooks/useStudentGamification';
 import { INITIAL_QUESTION } from './data/fallbackQuestion';
@@ -44,6 +46,10 @@ export default function App() {
     isShieldRescueModalOpen,
     setIsShieldRescueModalOpen,
     dismissShieldRescueModal,
+    referralInfo,
+    clearReferralInfo,
+    pendingRewardFriendName,
+    dismissReferralRewardToast,
     wasShieldUsed,
     shieldsUsedCount,
     missedCycles,
@@ -157,6 +163,14 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-2xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6 font-sans">
+        {/* Banner de Boas-vindas para Aluno Convidado */}
+        {referralInfo?.referrerName && !hasCompletedToday && (
+          <ReferralWelcomeBanner
+            referrerName={referralInfo.referrerName}
+            onDismiss={clearReferralInfo}
+          />
+        )}
+
         {/* Question Card */}
         <section aria-label="Questão de Matemática">
           <QuestionCard
@@ -191,6 +205,9 @@ export default function App() {
               correctLetter={question.correctLetter}
               selectedLetter={selectedLetter}
               onConfirmAnswer={handleConfirmAnswer}
+              hasCompletedToday={hasCompletedToday}
+              isFirstQuestion={Boolean(milestoneInfo?.isFirstQuestion)}
+              whatsappGroupUrl={currentCycle?.whatsappGroupUrl}
             />
           </div>
         )}
@@ -214,6 +231,8 @@ export default function App() {
           studentName={nickname || 'Estudante'}
           orderIndex={todayMySubmission?.orderIndex || todaySubmissions.length}
           streakDays={profile?.streakDays || 1}
+          streakShields={streakShields}
+          whatsappGroupUrl={currentCycle?.whatsappGroupUrl}
           milestoneInfo={milestoneInfo}
           onOpenMural={() => setIsMuralModalOpen(true)}
           onScrollToHints={handleScrollToHints}
@@ -222,6 +241,12 @@ export default function App() {
           earnedNewShield={earnedNewShield}
         />
       )}
+
+      {/* Toast Comemorativo de Escudo Ganho por Indicação de Amigo */}
+      <ReferralRewardToast
+        friendName={pendingRewardFriendName}
+        onDismiss={dismissReferralRewardToast}
+      />
 
       {/* Modal de Acolhimento do Protetor de Ofensiva (Resgate da Chama) */}
       <ShieldRescueModal
@@ -284,6 +309,9 @@ export default function App() {
         submissions={todaySubmissions}
         currentStudentNick={nickname}
         cycleNumber={currentCycle?.currentCycleNumber}
+        hasCompletedToday={hasCompletedToday}
+        isFirstQuestion={Boolean(milestoneInfo?.isFirstQuestion)}
+        whatsappGroupUrl={currentCycle?.whatsappGroupUrl}
       />
     </div>
   );

@@ -183,6 +183,62 @@ runTest('Deve remover figcaption dos passos/dicas', () => {
 });
 
 // ----------------------------------------------------
+// CASO 5: Remoção das cores de cadernos de prova (Prova Amarela, Cinza, Azul, Rosa)
+// ----------------------------------------------------
+console.log('\nCaso 5: Remoção de referências de cores de caderno de prova');
+
+const mockPostWithColorBooklets = {
+  id: 8627,
+  title: { rendered: 'ENEM 2023 – Um tipo de semente necessita de bastante água' },
+  content: {
+    rendered: `
+      <p>Um tipo de semente necessita de bastante água nos dois primeiros meses após o plantio.</p>
+      <p>No início de qual desses meses o produtor deverá plantar esse tipo de semente?</p>
+      <p>Questão 140 Prova Amarela, Questão 177 Prova Cinza, Questão 170 Prova Azul, Questão 146 Prova Rosa</p>
+      <p>A) Outubro<br>B) Novembro<br>C) Dezembro<br>D) Janeiro<br>E) Fevereiro</p>
+      <h2>Dicas e Resolução</h2>
+      <p>Dica inicial</p>
+      <h2>Dica 1</h2>
+      <p>Texto da dica 1</p>
+      <h2>Resposta</h2>
+      <p>Alternativa C</p>
+    `
+  }
+};
+const q5 = parseWordPressPost(mockPostWithColorBooklets);
+
+runTest('Deve remover parágrafo de cores de caderno isolado do enunciado', () => {
+  assert.ok(!q5.enunciadoHtml.includes('Prova Amarela'));
+  assert.ok(!q5.enunciadoHtml.includes('Prova Cinza'));
+  assert.ok(!q5.enunciadoHtml.includes('Prova Azul'));
+  assert.ok(!q5.enunciadoHtml.includes('Prova Rosa'));
+  assert.ok(!q5.enunciadoHtml.includes('Questão 140'));
+  assert.ok(q5.enunciadoHtml.includes('No início de qual desses meses o produtor deverá plantar'));
+});
+
+const mockPostWithColorsInlineAndBr = {
+  id: 8628,
+  title: { rendered: 'ENEM 2023 – Questão com cores com quebra de linha' },
+  content: {
+    rendered: `
+      <p>Uma urna tem 5 bolas amarelas, 3 azuis e 2 rosas.<br>No início de qual desses meses o produtor deverá plantar?<br>Questão 140 Prova Amarela, Questão 177 Prova Cinza, Questão 170 Prova Azul, Questão 146 Prova Rosa</p>
+      <p>A 10<br>B 20<br>C 30<br>D 40<br>E 50</p>
+      <h2>Resposta</h2>
+      <p>Alternativa A</p>
+    `
+  }
+};
+const q6 = parseWordPressPost(mockPostWithColorsInlineAndBr);
+
+runTest('Deve remover as cores de prova com <br> e preservar o texto da pergunta e dados de probabilidade', () => {
+  assert.ok(!q6.enunciadoHtml.includes('Prova Amarela'));
+  assert.ok(!q6.enunciadoHtml.includes('Questão 140'));
+  assert.ok(q6.enunciadoHtml.includes('No início de qual desses meses o produtor deverá plantar?'));
+  // Bolas amarelas e azuis são parte do problema de probabilidade e DEVEM ser preservadas!
+  assert.ok(q6.enunciadoHtml.includes('5 bolas amarelas, 3 azuis e 2 rosas'));
+});
+
+// ----------------------------------------------------
 // Resumo dos Resultados
 // ----------------------------------------------------
 console.log('\n------------------------------------------------------');

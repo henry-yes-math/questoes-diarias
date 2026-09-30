@@ -1,6 +1,6 @@
 {
   "name": "Yes Matemática",
-  "description": "Plataforma de questões interativas do ENEM com resolução guiada e dicas pedagógicas por Yes Matemática.",
+  "description": "Desafio diário de Matemática do Enem. Só 3 minutos. Se travar, tem dicas passo a passo. Tenta aí! 👇",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

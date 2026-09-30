@@ -39,6 +39,15 @@ export interface StudentProfile {
   unlockedMilestones: number[];
   streakShields?: number; // Quantidade de protetores de chama acumulados (0 a 2)
   lastShieldUsedCycle?: number; // Último ciclo em que o protetor foi acionado para salvar a ofensiva
+  // Campos de Convite e Indicação (Viralidade e Escudos)
+  referredByStudentId?: string; // ID do aluno que indicou
+  referredByStudentName?: string; // Nome/Apelido do aluno que indicou
+  successfulReferralsCount?: number; // Total de amigos que completaram a 1ª questão
+  lastReferralReward?: {
+    friendName: string;
+    rewardedAt: string;
+    seen: boolean;
+  };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -48,6 +57,7 @@ export interface DailyCycleConfig {
   currentCycleDate: string; // ex: "20/09/2026"
   startedAt: string; // ISO string
   questionId?: string;
+  whatsappGroupUrl?: string; // Link direto para a comunidade oficial do WhatsApp
 }
 
 export interface DailySubmission {
@@ -62,6 +72,8 @@ export interface DailySubmission {
   completedAt: string; // ISO string
   unlockedMilestone?: number; // ex: 3, 7
   streakShields?: number; // Quantidade de escudos ativos no momento
+  referredByStudentId?: string; // Vinculo de indicação nesta submissão
+  referredByStudentName?: string;
 }
 
 export interface MilestoneInfo {

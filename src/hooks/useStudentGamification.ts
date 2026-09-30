@@ -9,8 +9,13 @@ import {
   findExistingStudentByNickname,
   getOrCreateStudentProfile,
   registerDailySubmission,
+  markReferralRewardSeen,
   subscribeToCurrentCycleSubmissions,
   subscribeToDailyCycle,
+  getPendingReferral,
+  setPendingReferral,
+  clearPendingReferral,
+  PendingReferralInfo,
 } from '../services/studentService';
 import { calculateMilestone, getLocalDateString } from '../utils/gamification';
 import { INITIAL_QUESTION } from '../data/fallbackQuestion';
@@ -20,6 +25,28 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
   const [nickname, setNicknameState] = useState<string>(() => getLocalStudentNick());
   const [isNickModalOpen, setIsNickModalOpen] = useState<boolean>(() => !getLocalStudentNick());
   const [isMuralModalOpen, setIsMuralModalOpen] = useState<boolean>(false);
+
+  // Informações de indicação (quem convidou este aluno)
+  const [referralInfo, setReferralInfo] = useState<PendingReferralInfo | null>(() => getPendingReferral());
+
+  // Captura automática de parâmetros de convite na URL (?convite=Nome ou ?ref=Nome)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const inviteParam = params.get('convite') || params.get('ref') || params.get('indicacao');
+      if (inviteParam && inviteParam.trim()) {
+        const cleanName = decodeURIComponent(inviteParam.trim());
+        const info: PendingReferralInfo = {
+          referrerName: cleanName,
+          storedAt: new Date().toISOString(),
+        };
+        setPendingReferral(info);
+        setReferralInfo(info);
+      }
+    } catch (e) {
+      console.warn('Erro ao processar parâmetro de convite:', e);
+    }
+  }, []);
 
   const [currentCycle, setCurrentCycle] = useState<DailyCycleConfig>({
     currentCycleNumber: 1,
@@ -159,6 +186,24 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
   const [shieldsUsedInSubmission, setShieldsUsedInSubmission] = useState<number>(0);
   const [earnedNewShieldInSubmission, setEarnedNewShieldInSubmission] = useState(false);
 
+  // Notificação de Escudo ganho por indicação de amigo (?convite)
+  const [pendingRewardFriendName, setPendingRewardFriendName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profile?.lastReferralReward && !profile.lastReferralReward.seen) {
+      setPendingRewardFriendName(profile.lastReferralReward.friendName);
+    } else {
+      setPendingRewardFriendName(null);
+    }
+  }, [profile]);
+
+  const dismissReferralRewardToast = useCallback(async () => {
+    setPendingRewardFriendName(null);
+    if (studentId) {
+      await markReferralRewardSeen(studentId);
+    }
+  }, [studentId]);
+
   // Submeter a resolução da questão do ciclo atual
   const completeQuestion = useCallback(
     async (overrideStudentId?: string, overrideNickname?: string) => {
@@ -176,7 +221,8 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
           activeId,
           activeNick,
           currentQuestionId,
-          currentCycle.currentCycleNumber
+          currentCycle.currentCycleNumber,
+          referralInfo ? { referrerName: referralInfo.referrerName, referrerId: referralInfo.referrerId } : undefined
         );
         setProfile(res.profile);
         setTodayMySubmission(res.submission);
@@ -268,6 +314,10 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
     isShieldRescueModalOpen,
     setIsShieldRescueModalOpen,
     dismissShieldRescueModal,
+    pendingRewardFriendName,
+    dismissReferralRewardToast,
+    referralInfo,
+    clearReferralInfo: clearPendingReferral,
     wasShieldUsed,
     wasShieldUsedInSubmission,
     shieldsUsedCount,

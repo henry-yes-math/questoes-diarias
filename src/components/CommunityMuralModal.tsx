@@ -8,6 +8,9 @@ interface Props {
   submissions: DailySubmission[];
   currentStudentNick?: string;
   cycleNumber?: number;
+  hasCompletedToday?: boolean;
+  isFirstQuestion?: boolean;
+  whatsappGroupUrl?: string;
 }
 
 export const CommunityMuralModal: React.FC<Props> = ({
@@ -16,6 +19,9 @@ export const CommunityMuralModal: React.FC<Props> = ({
   submissions,
   currentStudentNick,
   cycleNumber,
+  hasCompletedToday = false,
+  isFirstQuestion = false,
+  whatsappGroupUrl,
 }) => {
   const [activeTooltipId, setActiveTooltipId] = useState<string | null>(null);
 
@@ -172,14 +178,44 @@ export const CommunityMuralModal: React.FC<Props> = ({
               );
             })
           )}
+
+          {/* Opção A: Card de Comunidade como último item natural da lista */}
+          {hasCompletedToday && isFirstQuestion && (
+            <div className="mt-3 p-4 rounded-xl bg-linear-to-b from-emerald-50/70 to-emerald-50/30 border border-emerald-200/80 text-center space-y-2.5 animate-in fade-in duration-200">
+              <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-800">
+                <Users className="w-4 h-4 text-emerald-600" />
+                <span>Faça parte da turma no WhatsApp</span>
+              </div>
+              <p className="text-xs text-slate-600 max-w-sm mx-auto">
+                A 2ª questão será liberada amanhã no grupo oficial. Entre para manter seu ritmo de estudos!
+              </p>
+              <a
+                href={whatsappGroupUrl || 'https://chat.whatsapp.com/EDd67eYyB8w8iQ414JgQhO'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl transition-all shadow-xs inline-flex items-center justify-center gap-2 text-xs sm:text-sm text-center"
+              >
+                <svg className="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24">
+                  <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zM12.04 20.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c.01 4.54-3.68 8.23-8.22 8.23z"/>
+                </svg>
+                <span>Entrar no Grupo para garantir a 2ª</span>
+              </a>
+            </div>
+          )}
         </div>
 
-        {/* Rodapé do Modal */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
-          <span>Lista ordenada por ordem de conclusão de hoje</span>
+        {/* Rodapé do Modal Limpo e Harmonioso */}
+        <div className="p-3.5 sm:p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
+          {!hasCompletedToday ? (
+            <span className="font-semibold text-amber-700 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-md text-[11px] sm:text-xs">
+              💡 Resolva a questão para entrar no mural
+            </span>
+          ) : (
+            <span>Lista ordenada por ordem de conclusão de hoje</span>
+          )}
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg transition-colors cursor-pointer"
+            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg transition-colors cursor-pointer text-xs"
           >
             Fechar
           </button>

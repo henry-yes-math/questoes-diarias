@@ -292,6 +292,25 @@ export function calculateNewStreak(
   return 1;
 }
 
+export const DEFAULT_WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/G5qC4QhK64o4h3Y';
+
+/**
+ * Gera o texto universal e direto para o aluno convidar amigos via WhatsApp
+ * Sem diminutivos ("só"), focado em 3 minutos e destravar pontos no TRI do Enem.
+ */
+export function generateStudentInviteWhatsAppUrl(studentNickname: string, baseUrl?: string): string {
+  const origin = baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
+  const cleanNick = studentNickname ? encodeURIComponent(studentNickname.trim()) : '';
+  const inviteUrl = cleanNick ? `${origin}/?convite=${cleanNick}` : origin;
+
+  const text = `Achei essa questão de matemática muito boa pra treinar pro Enem. É rapidinha.
+
+Tenta resolver aí pra ver se você acerta:
+👉 ${inviteUrl}`;
+
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+}
+
 /**
  * Gera as mensagens oficiais de WhatsApp com base no ciclo diário
  */

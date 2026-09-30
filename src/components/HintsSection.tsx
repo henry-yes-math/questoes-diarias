@@ -26,6 +26,9 @@ interface DynamicHintsSectionProps {
   correctLetter?: 'A' | 'B' | 'C' | 'D' | 'E';
   selectedLetter?: string | null;
   onConfirmAnswer?: (letter: string) => void;
+  hasCompletedToday?: boolean;
+  isFirstQuestion?: boolean;
+  whatsappGroupUrl?: string;
 }
 
 /**
@@ -128,7 +131,10 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
   fontSize,
   correctLetter,
   selectedLetter,
-  onConfirmAnswer
+  onConfirmAnswer,
+  hasCompletedToday = false,
+  isFirstQuestion = false,
+  whatsappGroupUrl,
 }) => {
   const allUnlocked = steps.length > 0 && steps.every((s) => unlockedStepIds.has(s.id));
   const anyUnlocked = steps.some((s) => unlockedStepIds.has(s.id));
@@ -376,6 +382,37 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
           );
         })}
       </div>
+
+      {/* Card de Conclusão da 1ª Questão (aparece logo após a resolução quando o aluno já resolveu a 1ª) */}
+      {hasCompletedToday && isFirstQuestion && (
+        <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-linear-to-b from-emerald-50/80 via-white to-white border border-emerald-200/90 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 uppercase tracking-wide">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>1ª Questão Concluída</span>
+              </div>
+              <h4 className="text-sm sm:text-base font-extrabold text-slate-900 mt-1">
+                Gostou da resolução? A 2ª chega amanhã! 🔥
+              </h4>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Entre no grupo do WhatsApp da turma para não perder a próxima questão.
+              </p>
+            </div>
+            <a
+              href={whatsappGroupUrl || 'https://chat.whatsapp.com/EDd67eYyB8w8iQ414JgQhO'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl transition-all shadow-xs text-xs sm:text-sm shrink-0 text-center"
+            >
+              <svg className="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24">
+                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zM12.04 20.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c.01 4.54-3.68 8.23-8.22 8.23z"/>
+              </svg>
+              <span>Entrar no Grupo para garantir a 2ª</span>
+            </a>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

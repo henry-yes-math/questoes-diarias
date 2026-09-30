@@ -16,12 +16,13 @@ import {
 } from 'lucide-react';
 import { fetchWordPressPost, parseWordPressPost } from '../utils/wordpressParser';
 import { QuestionData, DailySubmission, DailyCycleConfig } from '../types';
-import { generateWhatsAppMessages } from '../utils/gamification';
+import { generateWhatsAppMessages, DEFAULT_WHATSAPP_GROUP_URL } from '../utils/gamification';
 import {
   getSubmissionsByCycle,
   advanceToNextCycle,
   setActiveQuestionInFirestore,
   resetAllTestDataForLaunch,
+  updateWhatsappGroupUrl,
 } from '../services/studentService';
 
 interface AdminModalProps {
@@ -54,6 +55,32 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   // Dados do WhatsApp
   const [previousCycleSubmissions, setPreviousCycleSubmissions] = useState<DailySubmission[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [whatsappLinkInput, setWhatsappLinkInput] = useState<string>(
+    currentCycle?.whatsappGroupUrl || DEFAULT_WHATSAPP_GROUP_URL
+  );
+  const [savingWhatsappLink, setSavingWhatsappLink] = useState(false);
+  const [whatsappLinkSaved, setWhatsappLinkSaved] = useState(false);
+
+  useEffect(() => {
+    if (currentCycle?.whatsappGroupUrl) {
+      setWhatsappLinkInput(currentCycle.whatsappGroupUrl);
+    }
+  }, [currentCycle?.whatsappGroupUrl]);
+
+  const handleSaveWhatsappLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!whatsappLinkInput.trim()) return;
+    setSavingWhatsappLink(true);
+    try {
+      await updateWhatsappGroupUrl(whatsappLinkInput.trim());
+      setWhatsappLinkSaved(true);
+      setTimeout(() => setWhatsappLinkSaved(false), 2500);
+    } catch (err: any) {
+      setError('Falha ao salvar link do WhatsApp: ' + (err?.message || 'erro desconhecido'));
+    } finally {
+      setSavingWhatsappLink(false);
+    }
+  };
 
   const cycleNum = currentCycle?.currentCycleNumber || 1;
   const previousCycleNum = Math.max(1, cycleNum - 1);
@@ -342,6 +369,47 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   <span>{successMessage}</span>
                 </div>
               )}
+
+              {/* Card de Configuração: Link Oficial do Grupo do WhatsApp */}
+              <div className="border border-emerald-200 rounded-xl p-4 bg-emerald-50/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                      Comunidade
+                    </span>
+                    <h4 className="text-sm font-bold text-stone-900">
+                      Link do Grupo Oficial no WhatsApp
+                    </h4>
+                  </div>
+                  {whatsappLinkSaved && (
+                    <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      Salvo!
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Este é o link que os alunos recebem no modal da <strong>1ª questão</strong> para entrar no grupo oficial e continuar o ritmo amanhã.
+                </p>
+
+                <form onSubmit={handleSaveWhatsappLink} className="flex gap-2">
+                  <input
+                    type="url"
+                    value={whatsappLinkInput}
+                    onChange={(e) => setWhatsappLinkInput(e.target.value)}
+                    placeholder="https://chat.whatsapp.com/..."
+                    className="flex-1 px-3 py-2 text-xs sm:text-sm bg-white border border-stone-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-emerald-600 text-stone-900 shadow-2xs"
+                  />
+                  <button
+                    type="submit"
+                    disabled={savingWhatsappLink}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition-colors shadow-2xs cursor-pointer shrink-0"
+                  >
+                    {savingWhatsappLink ? 'Salvando...' : 'Salvar Link'}
+                  </button>
+                </form>
+              </div>
 
               {/* Card Mensagem 1: Manhã (Mural do Ciclo Anterior) */}
               <div className="border border-stone-200 rounded-xl p-4 bg-stone-50/50 space-y-2.5">

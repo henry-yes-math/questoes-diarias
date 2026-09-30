@@ -11,9 +11,12 @@ import {
   X,
   BookOpen,
   Shield,
+  Share2,
+  ExternalLink,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MilestoneInfo } from '../types';
+import { generateStudentInviteWhatsAppUrl, DEFAULT_WHATSAPP_GROUP_URL } from '../utils/gamification';
 
 interface Props {
   isOpen: boolean;
@@ -21,6 +24,8 @@ interface Props {
   studentName: string;
   orderIndex: number;
   streakDays: number;
+  streakShields?: number;
+  whatsappGroupUrl?: string;
   milestoneInfo: MilestoneInfo;
   onOpenMural: () => void;
   onScrollToHints?: () => void;
@@ -35,6 +40,8 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
   studentName,
   orderIndex,
   streakDays,
+  streakShields = 0,
+  whatsappGroupUrl,
   milestoneInfo,
   onOpenMural,
   onScrollToHints,
@@ -191,16 +198,13 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
               {/* CENÁRIO 1: PRIMEIRA QUESTÃO FEITA */}
               {isFirstQuestion && (
                 <div className="space-y-3">
-                  <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-amber-900 font-extrabold text-xs sm:text-sm">
-                      <Sparkles className="w-4 h-4 text-amber-500 fill-amber-400 shrink-0" />
-                      <span>Sensacional! 1ª questão no bolso e chama acesa! 🔥</span>
+                  <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-lg space-y-1">
+                    <div className="flex items-center gap-1.5 text-amber-950 font-extrabold text-xs sm:text-sm">
+                      <span className="text-base leading-none">🔥</span>
+                      <span>1ª questão no bolso! Sua meta agora é chegar a 3 resolvidas.</span>
                     </div>
-                    <p className="text-xs text-amber-950 font-medium mt-1 leading-relaxed">
-                      <strong>Sua primeira missão:</strong> manter a constância nos próximos dias até bater <strong>3 questões resolvidas no total</strong>.
-                    </p>
-                    <p className="text-[11px] text-amber-800/90 mt-1 font-semibold flex items-center gap-1">
-                      📌 Amanhã tem mais uma no grupo do WhatsApp. Venha garantir a sua 2ª!
+                    <p className="text-xs text-amber-900 font-medium leading-relaxed pl-6">
+                      A 2ª questão chega amanhã no grupo do WhatsApp.
                     </p>
                   </div>
 
@@ -214,15 +218,30 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                     </div>
 
                     <div className="grid grid-cols-3 gap-1.5 text-center text-[11px]">
-                      <div className="bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold py-1.5 px-2 rounded-lg flex items-center justify-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>1ª (Hoje) ✓</span>
+                      <div className="bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold py-1.5 px-1 rounded-lg flex flex-col items-center justify-center gap-0.5">
+                        <div className="flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>1ª (Hoje)</span>
+                        </div>
+                        <span className="text-[10px] text-emerald-700 font-extrabold">Concluída ✓</span>
                       </div>
-                      <div className="bg-white border border-dashed border-slate-300 text-slate-500 font-medium py-1.5 px-2 rounded-lg">
-                        <span>2ª (Amanhã)</span>
+                      <div className="bg-white border border-dashed border-emerald-300/80 text-slate-700 font-medium py-1.5 px-1 rounded-lg flex flex-col items-center justify-center gap-0.5">
+                        <span className="font-semibold text-slate-800">2ª (Amanhã)</span>
+                        <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-0.5">
+                          <svg className="w-2.5 h-2.5 fill-emerald-600 shrink-0" viewBox="0 0 24 24">
+                            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zM12.04 20.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c.01 4.54-3.68 8.23-8.22 8.23z"/>
+                          </svg>
+                          <span>WhatsApp</span>
+                        </span>
                       </div>
-                      <div className="bg-white border border-dashed border-slate-300 text-slate-400 font-medium py-1.5 px-2 rounded-lg">
-                        <span>3ª (Em breve)</span>
+                      <div className="bg-white border border-dashed border-slate-300 text-slate-500 font-medium py-1.5 px-1 rounded-lg flex flex-col items-center justify-center gap-0.5">
+                        <span className="text-slate-600">3ª (Em breve)</span>
+                        <span className="text-[10px] text-emerald-600/90 font-medium flex items-center gap-0.5">
+                          <svg className="w-2.5 h-2.5 fill-emerald-600 shrink-0" viewBox="0 0 24 24">
+                            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zM12.04 20.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c.01 4.54-3.68 8.23-8.22 8.23z"/>
+                          </svg>
+                          <span>WhatsApp</span>
+                        </span>
                       </div>
                     </div>
 
@@ -233,6 +252,22 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                         style={{ width: '33.3%' }}
                       />
                     </div>
+                  </div>
+
+                  {/* Chamada para o Grupo Oficial do WhatsApp para receber a 2ª questão */}
+                  <div className="pt-1">
+                    <a
+                      href={whatsappGroupUrl || DEFAULT_WHATSAPP_GROUP_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs sm:text-sm text-center"
+                    >
+                      <svg className="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24">
+                        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zM12.04 20.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c.01 4.54-3.68 8.23-8.22 8.23z"/>
+                      </svg>
+                      <span>Entrar no Grupo para garantir a 2ª</span>
+                      <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                    </a>
                   </div>
                 </div>
               )}
@@ -314,8 +349,38 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
               )}
             </div>
 
+            {/* Card de Bônus: Ganhe 1 Escudo Anti-Falta via WhatsApp (Apenas se streakShields < 2 e não for Dia 1) */}
+            {!isFirstQuestion && streakShields < 2 && (
+              <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                    <span>🛡️</span>
+                    <span>BÔNUS: +1 ESCUDO ANTI-FALTA</span>
+                  </span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100/80 text-emerald-800">
+                    {streakShields}/2 ativos
+                  </span>
+                </div>
+
+                <a
+                  href={generateStudentInviteWhatsAppUrl(studentName)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2.5 px-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-lg transition-all shadow-2xs flex items-center justify-center gap-2 text-xs sm:text-sm text-center group cursor-pointer"
+                >
+                  <span className="text-sm leading-none">🟢</span>
+                  <span>Desafiar Amigo no WhatsApp</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-80 group-hover:translate-x-0.5 transition-transform" />
+                </a>
+
+                <p className="text-[11px] text-center text-emerald-900/80 font-medium leading-tight">
+                  Ativado assim que seu amigo concluir a questão de hoje.
+                </p>
+              </div>
+            )}
+
             {/* Ações Inferiores */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
+            <div className="pt-1 flex flex-col sm:flex-row items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => {

@@ -30,6 +30,40 @@ const ACTIVE_QUESTION_DOC_ID = 'active_question';
 
 const LOCAL_STUDENT_ID_KEY = 'yesmatematica_student_id';
 const LOCAL_STUDENT_NICK_KEY = 'yesmatematica_student_nick';
+const LOCAL_PENDING_REFERRAL_KEY = 'yesmatematica_pending_referral';
+
+export interface PendingReferralInfo {
+  referrerName: string;
+  referrerId?: string;
+  storedAt: string;
+}
+
+export function getPendingReferral(): PendingReferralInfo | null {
+  try {
+    const raw = sessionStorage.getItem(LOCAL_PENDING_REFERRAL_KEY) || localStorage.getItem(LOCAL_PENDING_REFERRAL_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function setPendingReferral(info: PendingReferralInfo): void {
+  try {
+    const raw = JSON.stringify(info);
+    sessionStorage.setItem(LOCAL_PENDING_REFERRAL_KEY, raw);
+    localStorage.setItem(LOCAL_PENDING_REFERRAL_KEY, raw);
+  } catch (e) {
+    console.warn('Erro ao salvar indicação pendente:', e);
+  }
+}
+
+export function clearPendingReferral(): void {
+  try {
+    sessionStorage.removeItem(LOCAL_PENDING_REFERRAL_KEY);
+    localStorage.removeItem(LOCAL_PENDING_REFERRAL_KEY);
+  } catch {}
+}
 
 /**
  * Salva a questão ativa no Firestore para todos os alunos da comunidade
@@ -146,9 +180,12 @@ export async function advanceToNextCycle(questionId?: string): Promise<DailyCycl
   return await runTransaction(db, async (transaction) => {
     const snap = await transaction.get(cycleRef);
     let nextNumber = 1;
+    let existingWhatsappUrl: string | undefined = undefined;
+
     if (snap.exists()) {
       const data = snap.data() as DailyCycleConfig;
       nextNumber = (data.currentCycleNumber || 0) + 1;
+      existingWhatsappUrl = data.whatsappGroupUrl;
     }
 
     const newCycle: DailyCycleConfig = {
@@ -156,10 +193,23 @@ export async function advanceToNextCycle(questionId?: string): Promise<DailyCycl
       currentCycleDate: todayStr,
       startedAt: new Date().toISOString(),
       ...(questionId ? { questionId } : {}),
+      ...(existingWhatsappUrl ? { whatsappGroupUrl: existingWhatsappUrl } : {}),
     };
 
     transaction.set(cycleRef, newCycle);
     return newCycle;
+  });
+}
+
+/**
+ * Atualiza o link do grupo da comunidade no WhatsApp (ação do professor)
+ */
+export async function updateWhatsappGroupUrl(url: string): Promise<void> {
+  const cycleRef = doc(db, APP_SETTINGS_COLLECTION, DAILY_CYCLE_DOC_ID);
+  const cleanUrl = url.trim();
+  await updateDoc(cycleRef, {
+    whatsappGroupUrl: cleanUrl,
+    updatedAt: new Date().toISOString(),
   });
 }
 
@@ -312,13 +362,16 @@ function cleanFirestoreData<T extends Record<string, any>>(obj: T): T {
 }
 
 /**
- * Registra a resolução diária de uma questão pelo aluno vinculada ao ciclo atual
+ * Registra a resolução diária de uma questão pelo aluno vinculada ao ciclo atual.
+ * Se o aluno estiver completando sua 1ª questão via convite de um amigo,
+ * recompensa o amigo indicador com +1 Protetor Anti-Falta (caso tenha menos de 2).
  */
 export async function registerDailySubmission(
   studentId: string,
   nickname: string,
   questionId: string,
-  cycleNumber?: number
+  cycleNumber?: number,
+  referralContext?: { referrerName?: string; referrerId?: string }
 ): Promise<{
   submission: DailySubmission;
   profile: StudentProfile;
@@ -327,6 +380,7 @@ export async function registerDailySubmission(
   shieldWasUsed?: boolean;
   shieldsUsed?: number;
   earnedNewShield?: boolean;
+  referrerRewarded?: { friendName: string; referrerNick: string } | null;
 }> {
   // Se não passar cicloNumber, obtém o ciclo ativo
   const activeCycle = cycleNumber || (await getOrCreateDailyCycle()).currentCycleNumber;
@@ -367,6 +421,7 @@ export async function registerDailySubmission(
         shieldWasUsed: false,
         shieldsUsed: 0,
         earnedNewShield: false,
+        referrerRewarded: null,
       };
     }
 
@@ -406,6 +461,66 @@ export async function registerDailySubmission(
       ? (streakResult.usedInCycle || activeCycle - 1)
       : profile.lastShieldUsedCycle;
 
+    // Processamento de indicação (apenas na 1ª questão concluída)
+    let refRewardInfo: { friendName: string; referrerNick: string } | null = null;
+    let finalReferredByName = profile.referredByStudentName || referralContext?.referrerName;
+    let finalReferredById = profile.referredByStudentId || referralContext?.referrerId;
+
+    if (newTotal === 1 && finalReferredByName && !profile.referredByStudentName) {
+      // Localiza o perfil do amigo que indicou (por nome ou ID, ignorando auto-indicação)
+      try {
+        let referrerDocSnap: any = null;
+        let referrerRefDoc: any = null;
+
+        if (finalReferredById && finalReferredById !== studentId) {
+          referrerRefDoc = doc(db, STUDENTS_COLLECTION, finalReferredById);
+          referrerDocSnap = await transaction.get(referrerRefDoc);
+        }
+
+        if (!referrerDocSnap?.exists() && finalReferredByName) {
+          const cleanRefNick = finalReferredByName.trim().toLowerCase();
+          const allStudentsSnap = await getDocs(collection(db, STUDENTS_COLLECTION));
+          for (const sDoc of allStudentsSnap.docs) {
+            const data = sDoc.data() as StudentProfile;
+            if (sDoc.id !== studentId && data.nickname && data.nickname.trim().toLowerCase() === cleanRefNick) {
+              referrerRefDoc = doc(db, STUDENTS_COLLECTION, sDoc.id);
+              referrerDocSnap = await transaction.get(referrerRefDoc);
+              finalReferredById = sDoc.id;
+              break;
+            }
+          }
+        }
+
+        if (referrerDocSnap && referrerDocSnap.exists() && referrerRefDoc) {
+          const referrerData = referrerDocSnap.data() as StudentProfile;
+          const referrerShields = referrerData.streakShields ?? 0;
+          // Recompensa com +1 escudo apenas se o amigo tiver menos de 2 escudos
+          const nextShields = referrerShields < 2 ? referrerShields + 1 : referrerShields;
+          const nextReferralCount = (referrerData.successfulReferralsCount || 0) + 1;
+
+          const updatedReferrerData: Record<string, any> = {
+            ...referrerData,
+            streakShields: nextShields,
+            successfulReferralsCount: nextReferralCount,
+            lastReferralReward: {
+              friendName: nickname || 'Seu amigo(a)',
+              rewardedAt: new Date().toISOString(),
+              seen: false,
+            },
+            updatedAt: new Date().toISOString(),
+          };
+
+          transaction.set(referrerRefDoc, cleanFirestoreData(updatedReferrerData));
+          refRewardInfo = {
+            friendName: nickname,
+            referrerNick: referrerData.nickname || finalReferredByName,
+          };
+        }
+      } catch (err) {
+        console.warn('Erro ao processar recompensa de indicação:', err);
+      }
+    }
+
     const updatedProfile: StudentProfile = {
       ...profile,
       nickname,
@@ -416,6 +531,8 @@ export async function registerDailySubmission(
       lastCompletedCycle: activeCycle,
       unlockedMilestones: newMilestones,
       updatedAt: new Date().toISOString(),
+      ...(finalReferredByName ? { referredByStudentName: finalReferredByName } : {}),
+      ...(finalReferredById ? { referredByStudentId: finalReferredById } : {}),
       ...(lastShieldCycleValue !== undefined ? { lastShieldUsedCycle: lastShieldCycleValue } : {}),
     };
     if (lastShieldCycleValue === undefined) {
@@ -434,6 +551,8 @@ export async function registerDailySubmission(
       orderIndex,
       completedAt: new Date().toISOString(),
       serverTime: serverTimestamp(),
+      ...(finalReferredByName ? { referredByStudentName: finalReferredByName } : {}),
+      ...(finalReferredById ? { referredByStudentId: finalReferredById } : {}),
     };
 
     if (milestoneUnlocked !== undefined) {
@@ -452,6 +571,8 @@ export async function registerDailySubmission(
       orderIndex,
       completedAt: new Date().toISOString(),
       ...(milestoneUnlocked !== undefined ? { unlockedMilestone: milestoneUnlocked } : {}),
+      ...(finalReferredByName ? { referredByStudentName: finalReferredByName } : {}),
+      ...(finalReferredById ? { referredByStudentId: finalReferredById } : {}),
     };
 
     transaction.set(studentRef, cleanFirestoreData(updatedProfile));
@@ -465,8 +586,31 @@ export async function registerDailySubmission(
       shieldWasUsed: streakResult.shieldWasUsed,
       shieldsUsed: streakResult.shieldsUsed,
       earnedNewShield: streakResult.earnedNewShield,
+      referrerRewarded: refRewardInfo,
     };
   });
+}
+
+/**
+ * Marca a notificação de escudo ganho por indicação como vista
+ */
+export async function markReferralRewardSeen(studentId: string): Promise<void> {
+  if (!studentId) return;
+  try {
+    const studentRef = doc(db, STUDENTS_COLLECTION, studentId);
+    const snap = await getDoc(studentRef);
+    if (snap.exists()) {
+      const data = snap.data() as StudentProfile;
+      if (data.lastReferralReward && !data.lastReferralReward.seen) {
+        await updateDoc(studentRef, {
+          'lastReferralReward.seen': true,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('Erro ao marcar recompensa de indicação como vista:', err);
+  }
 }
 
 /**
