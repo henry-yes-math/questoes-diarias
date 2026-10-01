@@ -90,10 +90,10 @@ export const Header: React.FC<HeaderProps> = ({
                       }`}
                       title={
                         isShieldProtecting
-                          ? 'Protetor em ação hoje! Clique para saber mais'
-                          : 'Protetor de Ofensiva (Clique para saber mais)'
+                          ? 'Seu escudo está salvando seu fogo hoje! Clique para ver'
+                          : 'Escudo de Ofensiva: protege seus dias se você esquecer (Clique para ver)'
                       }
-                      aria-label="Protetor de Ofensiva"
+                      aria-label="Escudo de Ofensiva"
                     >
                       <Shield
                         className={`w-3 h-3 ${
@@ -121,20 +121,20 @@ export const Header: React.FC<HeaderProps> = ({
                           />
                           <span>
                             {isShieldProtecting
-                              ? 'Protetor Acionado Hoje!'
+                              ? 'Escudo em Ação Hoje!'
                               : streakShields > 0
-                              ? `${streakShields} ${streakShields === 1 ? 'Protetor Ativo' : 'Protetores Ativos'}`
-                              : 'Nenhum Protetor Ativo'}
+                              ? `${streakShields} ${streakShields === 1 ? 'Escudo de Ofensiva' : 'Escudos de Ofensiva'}`
+                              : 'Nenhum Escudo Ativo'}
                           </span>
                         </div>
                         <p className="text-stone-300">
                           {isShieldProtecting
-                            ? 'O protetor está segurando sua chama! Resolva a questão de hoje para confirmar a presença.'
+                            ? 'Você não entrou ontem, mas seu escudo segurou seu fogo! Resolva a questão de hoje para não zerar sua ofensiva.'
                             : streakShields > 0
-                            ? `Sua ofensiva de ${studentProfile.streakDays || 0} dias está protegida contra ${
+                            ? `Se você esquecer de entrar algum dia, o escudo é usado automaticamente e seu fogo não apaga (protege ${
                                 streakShields === 1 ? '1 dia de imprevisto' : 'até 2 dias seguidos de imprevisto'
-                              }.`
-                            : 'Você ganha 1 Protetor a cada 7 dias seguidos de ofensiva (máx 2).'}
+                              }).`
+                            : 'Ganhe 1 escudo a cada 7 dias seguidos (ou convide um amigo) para proteger seu fogo se esquecer um dia.'}
                         </p>
                         {isShieldProtecting && onOpenShieldRescue && (
                           <button

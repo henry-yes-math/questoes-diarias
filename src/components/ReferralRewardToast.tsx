@@ -45,15 +45,15 @@ export const ReferralRewardToast: React.FC<ReferralRewardToastProps> = ({
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full">
                 <Sparkles className="w-3 h-3 text-emerald-600" />
-                <span>Bônus de Convite Ativado!</span>
+                <span>Escudo de Bônus Desbloqueado!</span>
               </div>
 
               <h4 className="text-sm font-bold text-stone-900 leading-tight">
-                🎉 Tudo certo! <span className="text-emerald-700">{friendName}</span> acabou de concluir a questão pelo seu convite!
+                🎉 <span className="text-emerald-700">{friendName}</span> concluiu a questão pelo seu convite!
               </h4>
 
               <p className="text-xs text-stone-600 leading-relaxed pt-0.5">
-                🛡️ <strong>Seu Escudo Anti-Falta foi ativado!</strong> Se acontecer algum imprevisto, sua chama de ofensiva estará protegida.
+                🛡️ Você ganhou <strong>+1 Escudo de Ofensiva</strong>! Se você esquecer de entrar algum dia, seu fogo continuará aceso.
               </p>
 
               <div className="pt-2">

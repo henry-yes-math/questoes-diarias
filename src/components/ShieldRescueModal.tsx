@@ -77,21 +77,21 @@ export const ShieldRescueModal: React.FC<ShieldRescueModalProps> = ({
 
           {/* Título Principal de Alívio */}
           <h3 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
-            Ufa! Sua chama continua viva!
+            Ufa! O seu escudo salvou o seu fogo! 🔥🛡️
           </h3>
 
           <p className="text-stone-600 text-sm mt-2 leading-relaxed">
             {isTwoDaysAbsence ? (
               <>
-                Nos últimos <strong className="text-stone-900 font-bold">2 dias</strong> você não conseguiu aparecer, mas os seus{' '}
-                <strong className="text-blue-700 font-semibold">2 Protetores de Ofensiva</strong> entraram em
-                ação automaticamente para proteger a sua sequência.
+                Você ficou <strong className="text-stone-900 font-bold">2 dias</strong> sem entrar, mas os seus{' '}
+                <strong className="text-blue-700 font-semibold">2 Escudos de Ofensiva</strong> seguraram
+                a sua sequência para o seu fogo não apagar!
               </>
             ) : (
               <>
-                Ontem você não conseguiu aparecer, mas o seu{' '}
-                <strong className="text-blue-700 font-semibold">Protetor de Ofensiva</strong> entrou em
-                ação automaticamente para proteger o seu progresso.
+                Você não conseguiu entrar ontem, mas o seu{' '}
+                <strong className="text-blue-700 font-semibold">Escudo de Ofensiva</strong> entrou em
+                ação para a sua sequência não zerar.
               </>
             )}
           </p>
@@ -100,7 +100,7 @@ export const ShieldRescueModal: React.FC<ShieldRescueModalProps> = ({
           <div className="bg-amber-50/90 border border-amber-200/90 rounded-xl p-3.5 my-4 flex items-center justify-center gap-2.5 shadow-2xs">
             <Flame className="w-5 h-5 fill-amber-500 text-amber-600 shrink-0" />
             <span className="text-sm font-bold text-amber-950">
-              Sua sequência de <span className="text-amber-700 font-black">{streakDays} {streakDays === 1 ? 'dia' : 'dias'}</span> continua ativa!
+              Sua ofensiva de <span className="text-amber-700 font-black">{streakDays} {streakDays === 1 ? 'dia' : 'dias'}</span> continua viva!
             </span>
           </div>
 
@@ -112,25 +112,25 @@ export const ShieldRescueModal: React.FC<ShieldRescueModalProps> = ({
                 <div className="flex items-start gap-2 text-stone-700">
                   <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="font-bold text-stone-900">2 Protetores acionados:</strong>{' '}
-                    Seus 2 protetores estão cobrindo suas faltas dos últimos 2 dias. Resolva a questão agora para confirmar sua presença e não perder a ofensiva!
+                    <strong className="font-bold text-stone-900">⚠️ Seus 2 escudos entraram em ação:</strong>{' '}
+                    Eles cobriram suas 2 faltas. Resolva a questão de hoje para não deixar o fogo apagar!
                   </div>
                 </div>
               ) : remainingShields >= 2 ? (
                 <div className="flex items-start gap-2 text-stone-700">
                   <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="font-bold text-stone-900">2 Protetores guardados:</strong>{' '}
-                    1 protetor cobriu a sua falta de ontem. Ao resolver a questão de hoje, você ainda terá{' '}
-                    <strong className="text-blue-700 font-bold">1 protetor de reserva</strong> ativo!
+                    <strong className="font-bold text-stone-900">🛡️ 1 escudo usado, 1 ainda guardado:</strong>{' '}
+                    Um escudo cobriu ontem. Ao resolver a questão de hoje, você continuará com{' '}
+                    <strong className="text-blue-700 font-bold">1 escudo de reserva</strong> para emergências.
                   </div>
                 </div>
               ) : (
                 <div className="flex items-start gap-2 text-stone-700">
                   <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="font-bold text-stone-900">Seu protetor foi acionado:</strong>{' '}
-                    Ele está segurando sua chama hoje. Resolva a questão agora para confirmar sua presença e não perder a ofensiva!
+                    <strong className="font-bold text-stone-900">⚠️ Atenção para hoje:</strong>{' '}
+                    Seu escudo cobriu o dia de ontem. Resolva a questão de hoje agora para não perder sua ofensiva!
                   </div>
                 </div>
               )
@@ -140,25 +140,25 @@ export const ShieldRescueModal: React.FC<ShieldRescueModalProps> = ({
                 <div className="flex items-start gap-2 text-stone-700">
                   <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="font-bold text-stone-900">2 Protetores consumidos:</strong>{' '}
-                    Seus 2 protetores cobriram os 2 dias de ausência e sua chama foi salva! Continue firme para acumular novos protetores a cada 7 dias de ofensiva.
+                    <strong className="font-bold text-stone-900">✅ Salvo no limite!</strong>{' '}
+                    Seus 2 escudos salvaram seus 2 dias de ausência. Continue firme para acumular novos escudos a cada 7 dias de ofensiva.
                   </div>
                 </div>
               ) : remainingShields >= 1 ? (
                 <div className="flex items-start gap-2 text-stone-700">
                   <Shield className="w-4 h-4 text-blue-600 fill-blue-500/20 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="font-bold text-stone-900">1 Protetor consumido:</strong>{' '}
-                    Sua falta de ontem foi salva e você ainda possui{' '}
-                    <strong className="text-blue-700 font-bold">{remainingShields} {remainingShields === 1 ? 'protetor de reserva ativo' : 'protetores de reserva ativos'}</strong>.
+                    <strong className="font-bold text-stone-900">✅ Ofensiva garantida!</strong>{' '}
+                    O escudo salvou ontem e você ainda tem{' '}
+                    <strong className="text-blue-700 font-bold">{remainingShields} {remainingShields === 1 ? 'escudo de reserva guardado' : 'escudos de reserva guardados'}</strong>.
                   </div>
                 </div>
               ) : (
                 <div className="flex items-start gap-2 text-stone-700">
                   <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="font-bold text-stone-900">Sem protetores restantes:</strong>{' '}
-                    Seu último protetor cobriu o dia anterior. Continue firme para acumular novos protetores a cada 7 dias de ofensiva!
+                    <strong className="font-bold text-stone-900">✅ Ofensiva garantida!</strong>{' '}
+                    Seu escudo salvou a falta de ontem. Como você gastou seu último escudo, continue firme: você ganha um novo escudo a cada 7 dias de ofensiva.
                   </div>
                 </div>
               )
@@ -177,7 +177,7 @@ export const ShieldRescueModal: React.FC<ShieldRescueModalProps> = ({
 
           {/* Dica de rodapé */}
           <p className="text-[11px] text-stone-400 mt-3">
-            Cada Protetor de Ofensiva protege 1 dia de imprevisto (acumule até 2 protetores para cobrir até 2 dias seguidos).
+            💡 <strong>Como funciona:</strong> cada Escudo de Ofensiva protege 1 dia esquecido. Você pode acumular até 2 escudos.
           </p>
         </motion.div>
       </div>

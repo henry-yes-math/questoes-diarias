@@ -167,17 +167,17 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Avisos de Protetor de Ofensiva */}
+            {/* Avisos de Escudo de Ofensiva */}
             {wasShieldUsed && (
               <div className="bg-blue-50/90 border border-blue-200/90 rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 text-xs text-blue-900 shadow-2xs">
                 <Shield className="w-4 h-4 text-blue-600 fill-blue-500/20 shrink-0" />
                 <span>
                   <strong className="font-bold text-blue-950">
-                    {shieldsUsed >= 2 ? '2 Protetores de Ofensiva Acionados:' : 'Protetor de Ofensiva Acionado:'}
+                    {shieldsUsed >= 2 ? '🛡️ 2 Escudos de Ofensiva Usados:' : '🛡️ Escudo de Ofensiva Usado:'}
                   </strong>{' '}
                   {shieldsUsed >= 2
-                    ? 'Suas faltas dos últimos 2 dias foram salvas pelos seus 2 protetores e sua chama continua viva!'
-                    : 'Sua falta anterior foi salva pelo seu protetor e sua chama continua viva!'}
+                    ? 'Seus 2 escudos protegeram as 2 faltas anteriores e seu fogo continua aceso!'
+                    : 'O seu escudo protegeu a falta de ontem e o seu fogo continua aceso!'}
                 </span>
               </div>
             )}
@@ -185,7 +185,8 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
               <div className="bg-emerald-50/90 border border-emerald-200/90 rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 text-xs text-emerald-900 shadow-2xs">
                 <Shield className="w-4 h-4 text-emerald-600 fill-emerald-500/20 shrink-0" />
                 <span>
-                  <strong className="font-bold text-emerald-950">Novo Protetor Desbloqueado! 🛡️</strong> Parabéns pela consistência, você ganhou +1 protetor de reserva!
+                  <strong className="font-bold text-emerald-950">Novo Escudo de Ofensiva Desbloqueado! 🛡️</strong>{' '}
+                  Pela sua consistência, você ganhou +1 escudo para proteger seu fogo caso tenha algum imprevisto!
                 </span>
               </div>
             )}
@@ -349,13 +350,13 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Card de Bônus: Ganhe 1 Escudo Anti-Falta via WhatsApp (Apenas se streakShields < 2 e não for Dia 1) */}
+            {/* Card de Bônus: Ganhe 1 Escudo de Ofensiva via WhatsApp (Apenas se streakShields < 2 e não for Dia 1) */}
             {!isFirstQuestion && streakShields < 2 && (
               <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
                     <span>🛡️</span>
-                    <span>BÔNUS: +1 ESCUDO ANTI-FALTA</span>
+                    <span>BÔNUS: GANHE +1 ESCUDO DE OFENSIVA</span>
                   </span>
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100/80 text-emerald-800">
                     {streakShields}/2 ativos
