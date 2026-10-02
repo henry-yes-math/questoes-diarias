@@ -295,17 +295,28 @@ export function calculateNewStreak(
 export const DEFAULT_WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/G5qC4QhK64o4h3Y';
 
 /**
- * Gera o texto universal e direto para o aluno convidar amigos via WhatsApp
- * Sem diminutivos ("só"), focado em 3 minutos e destravar pontos no TRI do Enem.
+ * Gera o texto estilo Wordle para o aluno compartilhar a questão do dia e desafiar amigos no WhatsApp
  */
-export function generateStudentInviteWhatsAppUrl(studentNickname: string, baseUrl?: string): string {
+export function generateStudentInviteWhatsAppUrl(
+  studentNickname: string,
+  baseUrl?: string,
+  cycleNumber?: number,
+  streakDays?: number
+): string {
   const origin = baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
   const cleanNick = studentNickname ? encodeURIComponent(studentNickname.trim()) : '';
   const inviteUrl = cleanNick ? `${origin}/?convite=${cleanNick}` : origin;
 
-  const text = `Achei essa questão de matemática muito boa pra treinar pro Enem. É rapidinha.
+  const cycleStr = cycleNumber ? String(cycleNumber).padStart(2, '0') : '01';
+  const streakText = streakDays && streakDays > 1
+    ? `🔥 ${streakDays} dias seguidos`
+    : `🔥 1 dia de ofensiva`;
 
-Tenta resolver aí pra ver se você acerta:
+  const text = `Matemática do ENEM #${cycleStr} 📐
+${streakText}
+🎯 Resolvida!
+
+Duvido você acertar essa de primeira kkk
 👉 ${inviteUrl}`;
 
   return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;

@@ -24,12 +24,12 @@ export const ReferralWelcomeBanner: React.FC<ReferralWelcomeBannerProps> = ({
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full">
               <Sparkles className="w-3 h-3 text-emerald-600" />
-              Convite de {referrerName}
+              Desafio de {referrerName}
             </span>
           </div>
 
           <p className="text-xs sm:text-sm text-stone-700 leading-relaxed font-normal">
-            <strong className="font-semibold text-stone-900">{referrerName}</strong> compartilhou essa questão com você. Tenta resolver aqui embaixo (tem dicas se travar)! 👇
+            <strong className="font-semibold text-stone-900">{referrerName}</strong> te desafiou a acertar a questão de matemática de hoje do Enem. Tenta resolver aí (leva uns 3 min e tem dicas se travar)! 👇
           </p>
         </div>
 

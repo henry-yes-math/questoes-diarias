@@ -24,6 +24,7 @@ interface Props {
   studentName: string;
   orderIndex: number;
   streakDays: number;
+  cycleNumber?: number;
   streakShields?: number;
   whatsappGroupUrl?: string;
   milestoneInfo: MilestoneInfo;
@@ -40,6 +41,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
   studentName,
   orderIndex,
   streakDays,
+  cycleNumber = 1,
   streakShields = 0,
   whatsappGroupUrl,
   milestoneInfo,
@@ -350,33 +352,35 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Card de Bônus: Ganhe 1 Escudo de Ofensiva via WhatsApp (Apenas se streakShields < 2 e não for Dia 1) */}
+            {/* Card de Bônus: Ganhe 1 Escudo de Proteção via WhatsApp (Apenas se streakShields < 2 e não for Dia 1) */}
             {!isFirstQuestion && streakShields < 2 && (
-              <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 space-y-2">
+              <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                  <span className="text-xs font-extrabold text-emerald-900 flex items-center gap-1.5">
                     <span>🛡️</span>
-                    <span>BÔNUS: GANHE +1 ESCUDO DE OFENSIVA</span>
+                    <span>Ganhe +1 Escudo de Proteção</span>
                   </span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100/80 text-emerald-800">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
                     {streakShields}/2 ativos
                   </span>
                 </div>
 
+                <p className="text-[11px] text-emerald-800 font-medium leading-tight">
+                  Protege sua ofensiva se você faltar algum dia.
+                </p>
+
                 <a
-                  href={generateStudentInviteWhatsAppUrl(studentName)}
+                  href={generateStudentInviteWhatsAppUrl(studentName, undefined, cycleNumber, streakDays)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-2.5 px-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-lg transition-all shadow-2xs flex items-center justify-center gap-2 text-xs sm:text-sm text-center group cursor-pointer"
                 >
-                  <span className="text-sm leading-none">🟢</span>
+                  <svg className="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24">
+                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zM12.04 20.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c.01 4.54-3.68 8.23-8.22 8.23z"/>
+                  </svg>
                   <span>Desafiar Amigo no WhatsApp</span>
                   <ExternalLink className="w-3.5 h-3.5 opacity-80 group-hover:translate-x-0.5 transition-transform" />
                 </a>
-
-                <p className="text-[11px] text-center text-emerald-900/80 font-medium leading-tight">
-                  Ativado assim que seu amigo concluir a questão de hoje.
-                </p>
               </div>
             )}
 

@@ -231,6 +231,7 @@ export default function App() {
           studentName={nickname || 'Estudante'}
           orderIndex={todayMySubmission?.orderIndex || todaySubmissions.length}
           streakDays={profile?.streakDays || 1}
+          cycleNumber={currentCycle?.currentCycleNumber}
           streakShields={streakShields}
           whatsappGroupUrl={currentCycle?.whatsappGroupUrl}
           milestoneInfo={milestoneInfo}
