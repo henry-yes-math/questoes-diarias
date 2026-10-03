@@ -68,6 +68,7 @@ export interface DailySubmission {
   cycleNumber?: number; // Número do ciclo/edição manual
   questionId: string;
   streakDays: number;
+  totalSolved?: number; // Total acumulado de questões
   orderIndex: number; // 1 para #1, 2 para #2, etc.
   completedAt: string; // ISO string
   unlockedMilestone?: number; // ex: 3, 7

@@ -107,7 +107,13 @@ console.log('\nTeste 3: Mensagens do WhatsApp com formatação *negrito*');
 const messages = generateWhatsAppMessages({
   yesterdayList: [
     { nickname: 'Lucas', streakDays: 3, unlockedMilestone: 3 },
-    { nickname: 'Maria', streakDays: 1 },
+    { nickname: 'Beatriz', streakDays: 5, unlockedMilestone: 5 },
+    { nickname: 'Rodrigo', streakDays: 1 },
+    { nickname: 'Ana', streakDays: 1 },
+    { nickname: 'Mariana', streakDays: 2 },
+    { nickname: 'Gabriel', streakDays: 4 },
+    { nickname: 'Thiago', streakDays: 8 },
+    { nickname: 'Bruna', streakDays: 8 },
   ],
   todayList: [
     { nickname: 'Carlos', streakDays: 4 },
@@ -118,15 +124,23 @@ const messages = generateWhatsAppMessages({
 });
 
 assert(messages.message1.includes('⚔️ *BOM DIA! MURAL DE ONTEM* 🎯'), 'Mensagem 1 deve ter título em *negrito* sem identificação de dia');
-assert(messages.message1.includes('*2 mentes focadas mantiveram o ritmo firme*'), 'Mensagem 1 deve usar mentes focadas');
+assert(messages.message1.includes('*8 mentes focadas mantiveram o ritmo firme*'), 'Mensagem 1 deve usar mentes focadas');
 assert(messages.message1.includes('👏 Parabéns a quem manteve o ritmo firme!'), 'Mensagem 1 deve usar parabéns a quem');
 assert(!messages.message1.includes('alunos'), 'Mensagem 1 não deve usar termo alunos');
 assert(!messages.message1.includes('DIA #'), 'Mensagem 1 não deve conter identificador de dia');
-assert(messages.message1.includes('01. *Lucas* (🔥 3 dias) 🎖️ *Marco de 3 Questões!*'), 'Mensagem 1 deve destacar apelido e marco em *negrito*');
+assert(messages.message1.includes('🎯 *METAS BATIDAS ONTEM:*'), 'Mensagem 1 deve ter seção de metas batidas');
+assert(messages.message1.includes('• *Beatriz* (Meta de 5 🏆)\n• *Lucas* (Meta de 3 🏆)'), 'Seção 1 deve estar em ordem alfabética');
+assert(messages.message1.includes('🔥 *GARANTIRAM A 1ª QUESTÃO ONTEM:*'), 'Mensagem 1 deve ter seção de primeira questão');
+assert(messages.message1.includes('• *Ana* (🔥 1º dia)\n• *Rodrigo* (🔥 1º dia)'), 'Seção 2 deve estar em ordem alfabética com (🔥 1º dia)');
+assert(messages.message1.includes('⏳ *NA CARA DO GOL (Falta só 1 para a meta):*'), 'Mensagem 1 deve ter seção na cara do gol');
+assert(messages.message1.includes('• *Gabriel* (Meta de 5 🎯)\n• *Mariana* (Meta de 3 🎯)'), 'Seção 3 deve estar em ordem alfabética');
+assert(messages.message1.includes('⚡ *MANTIVERAM A OFENSIVA ACESA:*'), 'Mensagem 1 deve ter seção de ofensiva');
+assert(messages.message1.includes('• *Bruna* (🔥 8 dias)\n• *Thiago* (🔥 8 dias)'), 'Seção 4 deve estar em ordem alfabética com marcadores');
 
 assert(messages.message2.includes('🚀 *QUESTÃO DO DIA LIBERADA!*'), 'Mensagem 2 deve ter cabeçalho em *negrito* sem identificação de dia');
 assert(messages.message2.includes('📌 ENEM — Matemática (com dicas guiadas se travar)'), 'Mensagem 2 deve conter ENEM — Matemática');
 assert(messages.message2.includes('⚠️ *REGRA DO FOGO:*'), 'Mensagem 2 deve conter a seção Regra do Fogo');
+assert(messages.message2.includes('Se pular o dia, *ZERA TUDO!*'), 'Mensagem 2 deve conter alerta de ZERA TUDO');
 assert(messages.message2.includes('Quem vai ser a 1ª pessoa a inaugurar o Mural de hoje? 👀'), 'Mensagem 2 deve usar 1ª pessoa a inaugurar');
 assert(messages.message2.includes('*Quem tá chegando agora:*'), 'Mensagem 2 deve acolher quem está chegando');
 assert(messages.message2.includes('🔗 *FAÇA AGORA (3 a 5 min):*'), 'Mensagem 2 deve destacar link de ação em *negrito*');
@@ -138,7 +152,7 @@ assert(!messages.message3A.includes('guerreiros'), 'Mensagem 3A não deve usar t
 assert(!messages.message3A.includes('DIA #'), 'Mensagem 3A não deve conter identificador de dia');
 assert(messages.message3B.includes('🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*'), 'Mensagem 3B deve destacar chamada da noite em *negrito*');
 assert(messages.message3B.includes('⚠️ *PRAZO: ATÉ A MEIA-NOITE (23h59)*'), 'Mensagem 3B deve conter aviso explícito de prazo até meia-noite');
-assert(messages.message3B.includes('*ZERA A OFENSIVA*'), 'Mensagem 3B deve conter aviso de que zera a ofensiva');
+assert(messages.message3B.includes('Às 23h59 o sistema vira e quem não respondeu *ZERA A OFENSIVA*'), 'Mensagem 3B deve alertar que o sistema vira e zera a ofensiva');
 assert(messages.message3B.includes('somar *+1 dia de ofensiva 🔥*'), 'Mensagem 3B deve conter ganho de ofensiva');
 assert(messages.message3B.includes('👇 Quem ainda vai salvar a chama antes da meia-noite? Manda um 🔥!'), 'Mensagem 3B deve conter CTA de emoji');
 

@@ -332,36 +332,132 @@ export function generateWhatsAppMessages({
   topicTitle = 'Geometria Plana — Áreas e Perímetros (ENEM)',
   cycleNumber = 1,
 }: {
-  yesterdayList: Array<{ nickname: string; streakDays: number; unlockedMilestone?: number }>;
-  todayList: Array<{ nickname: string; streakDays: number; unlockedMilestone?: number }>;
+  yesterdayList: Array<{
+    nickname: string;
+    streakDays: number;
+    totalSolved?: number;
+    unlockedMilestone?: number;
+  }>;
+  todayList: Array<{
+    nickname: string;
+    streakDays: number;
+    totalSolved?: number;
+    unlockedMilestone?: number;
+  }>;
   questionUrl: string;
   topicTitle?: string;
   cycleNumber?: number;
 }) {
-  const previousCycleNum = Math.max(1, cycleNumber - 1);
-
-  // Mensagem 1 - Mural da Edição Anterior
   const countYesterday = yesterdayList.length;
-  let muralLinesYesterday = '';
-  if (countYesterday === 0) {
-    muralLinesYesterday = '01. *Turma Yes Matemática* (🔥 1 dia)';
-  } else {
-    muralLinesYesterday = yesterdayList
-      .map((item, idx) => {
-        const num = String(idx + 1).padStart(2, '0');
-        const badge = item.unlockedMilestone
-          ? ` 🎖️ *Marco de ${item.unlockedMilestone} Questões!*`
-          : '';
-        return `${num}. *${item.nickname}* (🔥 ${item.streakDays} ${item.streakDays === 1 ? 'dia' : 'dias'})${badge}`;
+
+  // Segmentação estrita sem duplicação para a Mensagem 1
+  // 1. Quem bateu meta ontem
+  const metaBatidaItems = yesterdayList.filter((item) => Boolean(item.unlockedMilestone));
+  const metaBatidaNames = new Set(metaBatidaItems.map((i) => i.nickname.toLowerCase()));
+
+  // 2. Quem garantiu a 1ª questão ontem (totalSolved === 1 ou streakDays === 1 sem marco batido)
+  const primeiraItems = yesterdayList.filter((item) => {
+    if (metaBatidaNames.has(item.nickname.toLowerCase())) return false;
+    const total = item.totalSolved ?? item.streakDays;
+    return total === 1;
+  });
+  const primeiraNames = new Set(primeiraItems.map((i) => i.nickname.toLowerCase()));
+
+  // 3. Quem está "Na cara do gol" (falta exatamente 1 questão para bater a meta)
+  const naCaraDoGolItems = yesterdayList.filter((item) => {
+    const nickLower = item.nickname.toLowerCase();
+    if (metaBatidaNames.has(nickLower) || primeiraNames.has(nickLower)) return false;
+    const total = item.totalSolved ?? item.streakDays ?? 1;
+    const target = MILESTONES.find((m) => m > total) || (Math.floor(total / 5) + 1) * 5;
+    return target - total === 1;
+  });
+  const naCaraDoGolNames = new Set(naCaraDoGolItems.map((i) => i.nickname.toLowerCase()));
+
+  // 4. Os demais mantiveram a ofensiva acesa
+  const mantiveramOfensivaItems = yesterdayList.filter((item) => {
+    const nickLower = item.nickname.toLowerCase();
+    return (
+      !metaBatidaNames.has(nickLower) &&
+      !primeiraNames.has(nickLower) &&
+      !naCaraDoGolNames.has(nickLower)
+    );
+  });
+
+  const sortAlphabetically = <T extends { nickname: string }>(items: T[]): T[] => {
+    return [...items].sort((a, b) =>
+      a.nickname.localeCompare(b.nickname, 'pt-BR', { sensitivity: 'base' })
+    );
+  };
+
+  // Montagem dos blocos da Mensagem 1
+  const message1Blocks: string[] = [];
+
+  // Seção 1: Metas Batidas Ontem
+  const metaBatidaSorted = sortAlphabetically(metaBatidaItems);
+  if (metaBatidaSorted.length > 0) {
+    const metaLines = metaBatidaSorted
+      .map((i) => `• *${i.nickname}* (Meta de ${i.unlockedMilestone} 🏆)`)
+      .join('\n');
+
+    message1Blocks.push(`🎯 *METAS BATIDAS ONTEM:*\n${metaLines}`);
+  }
+
+  // Seção 2: Garantiram a 1ª Questão Ontem
+  const primeiraSorted = sortAlphabetically(primeiraItems);
+  if (primeiraSorted.length > 0) {
+    const primeiraLines = primeiraSorted
+      .map((i) => `• *${i.nickname}* (🔥 1º dia)`)
+      .join('\n');
+    message1Blocks.push(
+      `🔥 *GARANTIRAM A 1ª QUESTÃO ONTEM:*\n${primeiraLines}\n\nA primeira já foi! Hoje tem a 2ª para manter o ritmo firme 💪`
+    );
+  }
+
+  // Seção 3: Na Cara do Gol
+  const naCaraDoGolSorted = sortAlphabetically(naCaraDoGolItems);
+  if (naCaraDoGolSorted.length > 0) {
+    const naCaraDoGolLines = naCaraDoGolSorted
+      .map((i) => {
+        const total = i.totalSolved ?? i.streakDays ?? 1;
+        const target = MILESTONES.find((m) => m > total) || (Math.floor(total / 5) + 1) * 5;
+        return `• *${i.nickname}* (Meta de ${target} 🎯)`;
       })
       .join('\n');
+
+    message1Blocks.push(
+      `⏳ *NA CARA DO GOL (Falta só 1 para a meta):*\n${naCaraDoGolLines}\n\nA questão de hoje carimba a meta de vocês! 👀`
+    );
+  }
+
+  // Seção 4: Mantiveram a Ofensiva Acesa (ou lista completa se ninguém caiu nas categorias acima)
+  const itensParaOfensiva =
+    mantiveramOfensivaItems.length > 0
+      ? mantiveramOfensivaItems
+      : message1Blocks.length === 0
+      ? yesterdayList
+      : [];
+
+  const ofensivaSorted = sortAlphabetically(itensParaOfensiva);
+
+  if (ofensivaSorted.length > 0) {
+    const ofensivaLines = ofensivaSorted
+      .map((item) => `• *${item.nickname}* (🔥 ${item.streakDays} ${
+        item.streakDays === 1 ? 'dia' : 'dias'
+      })`)
+      .join('\n');
+
+    message1Blocks.push(`⚡ *MANTIVERAM A OFENSIVA ACESA:*\n${ofensivaLines}`);
+  } else if (countYesterday === 0) {
+    message1Blocks.push('• *Turma Yes Matemática* (🔥 1 dia)');
   }
 
   const message1 = `⚔️ *BOM DIA! MURAL DE ONTEM* 🎯
 
-*${countYesterday} ${countYesterday === 1 ? 'mente focada manteve' : 'mentes focadas mantiveram'} o ritmo firme* e fecharam o dia com a presença garantida! 🎯
+*${countYesterday} ${
+    countYesterday === 1 ? 'mente focada manteve' : 'mentes focadas mantiveram'
+  } o ritmo firme* e fecharam o dia com a presença garantida! 🎯
 
-${muralLinesYesterday}
+${message1Blocks.join('\n\n')}
 
 👏 Parabéns a quem manteve o ritmo firme!
 Viu seu apelido na lista? Deixa um 👍 aqui!`;
@@ -391,7 +487,9 @@ Quem vai ser a 1ª pessoa a inaugurar o Mural de hoje? 👀
     muralLinesToday = todayList
       .map((item, idx) => {
         const num = String(idx + 1).padStart(2, '0');
-        return `${num}. *${item.nickname}* (🔥 ${item.streakDays} ${item.streakDays === 1 ? 'dia' : 'dias'})`;
+        return `${num}. *${item.nickname}* (🔥 ${item.streakDays} ${
+          item.streakDays === 1 ? 'dia' : 'dias'
+        })`;
       })
       .join('\n');
   }
@@ -399,7 +497,9 @@ Quem vai ser a 1ª pessoa a inaugurar o Mural de hoje? 👀
   // Mensagem 3A - Noite (Parte 1: Lista / Prova Social)
   const message3A = `🔥 *QUEM JÁ SALVOU A OFENSIVA HOJE:* 🔥
 
-Já passamos da metade do dia e *${countToday} ${countToday === 1 ? 'fera já garantiu' : 'feras já garantiram'} a presença* no mural de hoje! 🎯
+Já passamos da metade do dia e *${countToday} ${
+    countToday === 1 ? 'fera já garantiu' : 'feras já garantiram'
+  } a presença* no mural de hoje! 🎯
 
 ${muralLinesToday}`;
 

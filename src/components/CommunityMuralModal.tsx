@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Flame, Users, Sparkles, Trophy } from 'lucide-react';
+import { X, Flame, Users, Trophy } from 'lucide-react';
 import { DailySubmission } from '../types';
 
 interface Props {
@@ -7,6 +7,8 @@ interface Props {
   onClose: () => void;
   submissions: DailySubmission[];
   currentStudentNick?: string;
+  currentUserTotalSolved?: number;
+  currentUserStreak?: number;
   cycleNumber?: number;
   hasCompletedToday?: boolean;
   isFirstQuestion?: boolean;
@@ -18,7 +20,6 @@ export const CommunityMuralModal: React.FC<Props> = ({
   onClose,
   submissions,
   currentStudentNick,
-  cycleNumber,
   hasCompletedToday = false,
   isFirstQuestion = false,
   whatsappGroupUrl,
@@ -108,14 +109,14 @@ export const CommunityMuralModal: React.FC<Props> = ({
                       : 'bg-slate-50/70 border-slate-200/80 text-slate-800'
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-xs font-mono font-bold text-slate-400 w-6">
+                  <div className="flex items-center gap-3 min-w-0 mr-2">
+                    <span className="text-xs font-mono font-bold text-slate-400 w-6 shrink-0">
                       {num}.
                     </span>
                     <span className="text-sm font-semibold truncate">
                       {sub.nickname}
                       {isCurrentUser && (
-                        <span className="ml-2 text-[11px] font-normal px-1.5 py-0.5 rounded bg-blue-200/70 text-blue-800">
+                        <span className="ml-2 text-[11px] font-normal px-1.5 py-0.5 rounded bg-blue-200/70 text-blue-800 shrink-0">
                           Você
                         </span>
                       )}
@@ -128,12 +129,12 @@ export const CommunityMuralModal: React.FC<Props> = ({
                         <button
                           type="button"
                           onClick={(e) => handleToggleTooltip(milestoneTooltipId, e)}
-                          title={`Marco de consistência: ${sub.unlockedMilestone} questões resolvidas!`}
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-100/80 hover:bg-amber-200/90 active:scale-95 px-2 py-0.5 rounded-md border border-amber-200/60 cursor-pointer transition-all"
+                          title={`Meta batida: ${sub.unlockedMilestone} questões resolvidas!`}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-100/90 hover:bg-amber-200 active:scale-95 px-2 py-0.5 rounded-md border border-amber-300/80 cursor-pointer transition-all"
                         >
                           <Trophy className="w-3 h-3 text-amber-600 shrink-0" />
                           <span className="sm:hidden">{sub.unlockedMilestone}Q</span>
-                          <span className="hidden sm:inline">Marco de {sub.unlockedMilestone}!</span>
+                          <span className="hidden sm:inline">Meta de {sub.unlockedMilestone}!</span>
                         </button>
 
                         {/* Balão flutuante no toque/clique */}
@@ -142,7 +143,7 @@ export const CommunityMuralModal: React.FC<Props> = ({
                             onClick={(e) => e.stopPropagation()}
                             className="absolute right-0 top-full mt-1.5 z-30 w-52 bg-slate-900 text-white text-[11px] rounded-lg px-2.5 py-1.5 shadow-xl border border-slate-700 leading-snug animate-in fade-in zoom-in-95 duration-150"
                           >
-                            <span className="font-bold text-amber-300">🏆 Marco atingido:</span>{' '}
+                            <span className="font-bold text-amber-300">🎯 Meta batida:</span>{' '}
                             {sub.unlockedMilestone} questões resolvidas no total!
                             <div className="absolute -top-1 right-4 w-2 h-2 bg-slate-900 rotate-45 border-l border-t border-slate-700" />
                           </div>

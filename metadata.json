@@ -1,6 +1,6 @@
 {
   "name": "Yes Matemática",
-  "description": "1 questão por dia. 3 minutos. Você consegue resolver a de hoje?",
+  "description": "1 questão por dia. 3 minutos. Resolva a Questão do Dia e mantenha sua ofensiva!",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

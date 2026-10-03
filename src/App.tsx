@@ -309,6 +309,8 @@ export default function App() {
         onClose={() => setIsMuralModalOpen(false)}
         submissions={todaySubmissions}
         currentStudentNick={nickname}
+        currentUserTotalSolved={profile?.totalSolved}
+        currentUserStreak={profile?.streakDays ?? 0}
         cycleNumber={currentCycle?.currentCycleNumber}
         hasCompletedToday={hasCompletedToday}
         isFirstQuestion={Boolean(milestoneInfo?.isFirstQuestion)}

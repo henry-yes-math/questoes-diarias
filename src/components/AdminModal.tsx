@@ -23,6 +23,7 @@ import {
   setActiveQuestionInFirestore,
   resetAllTestDataForLaunch,
   updateWhatsappGroupUrl,
+  getAllStudentsMap,
 } from '../services/studentService';
 
 interface AdminModalProps {
@@ -84,12 +85,21 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const cycleNum = currentCycle?.currentCycleNumber || 1;
   const previousCycleNum = Math.max(1, cycleNum - 1);
+  const [studentsMap, setStudentsMap] = useState<Record<string, { totalSolved: number }>>({});
 
   useEffect(() => {
     if (isOpen) {
-      getSubmissionsByCycle(previousCycleNum)
-        .then((list) => {
-          setPreviousCycleSubmissions(list);
+      Promise.all([
+        getSubmissionsByCycle(previousCycleNum),
+        getAllStudentsMap(),
+      ])
+        .then(([list, map]) => {
+          setStudentsMap(map);
+          const enriched = list.map((s) => ({
+            ...s,
+            totalSolved: s.totalSolved ?? map[s.studentId]?.totalSolved ?? s.streakDays ?? 1,
+          }));
+          setPreviousCycleSubmissions(enriched);
         })
         .catch(() => {
           setPreviousCycleSubmissions([]);
@@ -186,9 +196,17 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const cleanUrl = new URL(window.location.href);
   cleanUrl.searchParams.delete('admin');
   const questionUrl = cleanUrl.toString().split('#')[0];
+  const enrichedPreviousList = previousCycleSubmissions.map((s) => ({
+    ...s,
+    totalSolved: s.totalSolved ?? studentsMap[s.studentId]?.totalSolved ?? s.streakDays ?? 1,
+  }));
+  const enrichedTodayList = todaySubmissions.map((s) => ({
+    ...s,
+    totalSolved: s.totalSolved ?? studentsMap[s.studentId]?.totalSolved ?? s.streakDays ?? 1,
+  }));
   const { message1, message2, message3A, message3B } = generateWhatsAppMessages({
-    yesterdayList: previousCycleSubmissions,
-    todayList: todaySubmissions,
+    yesterdayList: enrichedPreviousList,
+    todayList: enrichedTodayList,
     questionUrl,
     topicTitle: `${currentQuestion.discipline} — ${currentQuestion.title} (${currentQuestion.exam})`,
     cycleNumber: cycleNum,

@@ -81,6 +81,13 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
     nextMilestonePrompt,
   } = milestoneInfo;
 
+  // Lógica adaptativa de acolhimento e reconhecimento do horário de conclusão
+  const currentHour = new Date().getHours();
+  // Noturno: entre as 19h00 e as 04h59
+  const isNight = currentHour >= 19 || currentHour < 5;
+  // Madrugador: Top 15 da turma durante o dia (antes das 19h)
+  const isEarlyBird = orderIndex > 0 && orderIndex <= 15 && !isNight;
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex flex-col justify-end pointer-events-none">
@@ -111,18 +118,35 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
             {/* Cabeçalho do Card */}
             <div className="flex items-start justify-between gap-3 pt-1">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 mb-1.5 whitespace-nowrap">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Resposta correta</span>
-                </div>
+                {/* Tag de status adaptativa */}
+                {isNight ? (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-900 border border-indigo-200 mb-1.5 whitespace-nowrap">
+                    <span>🌙</span>
+                    <span>Fechou o dia!</span>
+                  </div>
+                ) : isEarlyBird ? (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 mb-1.5 whitespace-nowrap">
+                    <span>⚡</span>
+                    <span>No Top 15!</span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 mb-1.5 whitespace-nowrap">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Resposta correta</span>
+                  </div>
+                )}
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                   PARABÉNS, {studentName.toUpperCase()}! 🎉
                 </h2>
-                <p className="text-sm text-slate-600 mt-0.5">
-                  {orderIndex > 0 ? (
+                <p className="text-sm font-medium text-slate-600 mt-0.5">
+                  {isNight ? (
+                    'Ofensiva garantida antes da meia-noite 🔥'
+                  ) : isEarlyBird ? (
                     <>
-                      Você é a <span className="font-bold text-blue-700">#{orderIndex}ª pessoa</span> a concluir a questão de hoje.
+                      <span className="font-bold text-blue-700">#{orderIndex}ª pessoa</span> a concluir hoje ⚡
                     </>
+                  ) : orderIndex > 0 ? (
+                    'Mais um dia garantido na turma 🎯'
                   ) : (
                     'Questão de hoje concluída com sucesso!'
                   )}

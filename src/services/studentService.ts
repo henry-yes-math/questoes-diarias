@@ -547,6 +547,7 @@ export async function registerDailySubmission(
       cycleNumber: activeCycle,
       questionId,
       streakDays: newStreak,
+      totalSolved: newTotal,
       streakShields: newShields,
       orderIndex,
       completedAt: new Date().toISOString(),
@@ -567,6 +568,7 @@ export async function registerDailySubmission(
       cycleNumber: activeCycle,
       questionId,
       streakDays: newStreak,
+      totalSolved: newTotal,
       streakShields: newShields,
       orderIndex,
       completedAt: new Date().toISOString(),
@@ -752,6 +754,24 @@ export async function resetAllTestDataForLaunch(): Promise<void> {
     localStorage.removeItem(LOCAL_STUDENT_NICK_KEY);
   } catch {
     // ignora em ambientes sem window/localStorage
+  }
+}
+
+/**
+ * Retorna um mapa de studentId -> StudentProfile para cruzamento rápido de dados
+ */
+export async function getAllStudentsMap(): Promise<Record<string, StudentProfile>> {
+  try {
+    const snap = await getDocs(collection(db, STUDENTS_COLLECTION));
+    const map: Record<string, StudentProfile> = {};
+    snap.forEach((d) => {
+      const p = d.data() as StudentProfile;
+      if (p.studentId) map[p.studentId] = p;
+    });
+    return map;
+  } catch (err) {
+    console.warn('Erro ao carregar mapa de alunos:', err);
+    return {};
   }
 }
 
