@@ -129,7 +129,21 @@ export function parseWordPressPost(post: any): QuestionData {
       // It's a container having an img, just remove figcaption or text elements inside
       el.querySelectorAll('figcaption, .wp-caption-text').forEach((cap) => cap.remove());
     } else {
-      el.remove();
+      // If inside a figure.wp-block-table or table, remove the whole container table
+      const tableContainer = el.closest('figure.wp-block-table, table');
+      if (tableContainer) {
+        tableContainer.remove();
+      } else {
+        el.remove();
+      }
+    }
+  });
+
+  // Remove any leftover empty tables or figures
+  doc.querySelectorAll('figure.wp-block-table, table').forEach((table) => {
+    const text = (table.textContent || '').trim();
+    if (text.length === 0 && !table.querySelector('img, iframe, svg')) {
+      table.remove();
     }
   });
 
@@ -240,7 +254,7 @@ export function parseWordPressPost(post: any): QuestionData {
     const isHeadingStep = isHeading && (textLower.includes('dica') || textLower.includes('resposta') || textLower.includes('conclusão'));
     const isParagraphStep = (tagName === 'p') &&
       textTrimmed.length <= 40 &&
-      /^(?:dica\s*\d+|resolu[çc][ãa]o(?:\s+da\s+dica\s*\d+)?|resposta|conclus[ãa]o)/i.test(textTrimmed);
+      /^(?:dica\s*\d+(?:\s*[-–—:]\s*resolu[çc][ãa]o|\s+resolu[çc][ãa]o)?|resolu[çc][ãa]o(?:\s+da\s+dica\s*\d+)?|resposta|gabarito|conclus[ãa]o)\s*[:\-–—]?$/i.test(textTrimmed);
 
     if (isHeadingStep || isParagraphStep) {
       hasStartedHints = true;
@@ -401,6 +415,13 @@ export function parseWordPressPost(post: any): QuestionData {
         }
         break;
       }
+    }
+
+    // Discard empty sections (e.g. residual wrappers, banners with all children stripped)
+    const visibleText = (container.textContent || '').trim();
+    const hasMedia = Boolean(container.querySelector('img, iframe, svg, canvas'));
+    if (!visibleText && !hasMedia) {
+      continue;
     }
 
     const htmlContent = renderLatexInHtml(container.innerHTML);

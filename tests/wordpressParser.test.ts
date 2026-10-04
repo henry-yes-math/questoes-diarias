@@ -239,6 +239,61 @@ runTest('Deve remover as cores de prova com <br> e preservar o texto da pergunta
 });
 
 // ----------------------------------------------------
+// CASO 6: Post com Conclusão em parágrafo e tabela de captura (Castelo de Liechtenstein)
+// ----------------------------------------------------
+console.log('\nCaso 6: Post com Conclusão em parágrafo e tabela de captura');
+const mockPostLiechtenstein: WordPressRawPost = {
+  id: 8511,
+  title: { rendered: 'ENEM 2021 &#8211; Um parque temático brasileiro construiu uma réplica em miniatura do castelo de Liechtenstein' },
+  content: {
+    rendered: `
+      <p>(ENEM 2021) Um parque temático brasileiro construiu uma réplica em miniatura do castelo de Liechtenstein.</p>
+      <figure class="wp-block-image size-full"><img src="https://example.com/castelo.png" alt="castelo" /></figure>
+      <p>O castelo possui uma ponte de 38,4 m de comprimento e 1,68 m de largura.</p>
+      <p>A escala utilizada para fazer a réplica é</p>
+      <p>A 1 : 576<br>B 1 : 240<br>C 1 : 24<br>D 1 : 4,2<br>E 1 : 2,4</p>
+      <h2>Dicas e Resolução</h2>
+      <p>IMPORTANTE: Tente resolver a questão por alguns minutos antes de consultar as dicas.</p>
+      <h2>Dica 1</h2>
+      <p>Converter metros para centímetros.</p>
+      <h2>Resolução da Dica 1</h2>
+      <p>38,4 m = 3840 cm e 1,68 m = 168 cm.</p>
+      <h2>Dica 2</h2>
+      <p>Dividir os valores correspondentes.</p>
+      <h2>Resolução da Dica 2</h2>
+      <p>3840 ÷ 160 = 24. A largura: 168 ÷ 7 = 24.</p>
+      <p>Conclusão: <strong>a escala é de 1 : 24</strong></p>
+      <figure class="wp-block-table"><table><tbody><tr><td><div class="capture uf"><a href="#">QUERO ENTRAR</a></div></td></tr></tbody></table></figure>
+      <h2>Resposta</h2>
+      <p>Alternativa C</p>
+      <p>Essa questão é de nível fácil</p>
+    `
+  }
+};
+const q7 = parseWordPressPost(mockPostLiechtenstein);
+
+runTest('Deve extrair 5 passos coesos sem passos vazios de captura', () => {
+  assert.equal(q7.steps.length, 5);
+  assert.equal(q7.steps[0].type, 'hint');
+  assert.equal(q7.steps[1].type, 'hint-resolution');
+  assert.equal(q7.steps[2].type, 'hint');
+  assert.equal(q7.steps[3].type, 'hint-resolution');
+  assert.equal(q7.steps[4].type, 'resolution');
+});
+
+runTest('Deve manter a frase de conclusão dentro da Resolução da Dica 2', () => {
+  assert.ok(q7.steps[3].htmlContent.includes('Conclusão: <strong>a escala é de 1 : 24</strong>'));
+});
+
+runTest('Deve extrair a alternativa C como correta e remover alternativas do enunciado', () => {
+  assert.equal(q7.correctLetter, 'C');
+  assert.equal(q7.alternatives.length, 5);
+  assert.equal(q7.alternatives[2].letter, 'C');
+  assert.ok(q7.alternatives[2].isCorrect);
+  assert.ok(!q7.enunciadoHtml.includes('A 1 : 576'));
+});
+
+// ----------------------------------------------------
 // Resumo dos Resultados
 // ----------------------------------------------------
 console.log('\n------------------------------------------------------');
