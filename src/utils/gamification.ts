@@ -60,19 +60,15 @@ export function calculateMilestone(
         : unlockedTarget + 5;
   }
 
-  // Base do cálculo percentual para o marco vigente
-  let prevTarget = 0;
-  const currentIdx = MILESTONES.findIndex((m) => m === target);
-  if (currentIdx > 0) {
-    prevTarget = MILESTONES[currentIdx - 1];
-  }
-
-  const range = target - prevTarget;
-  const progressInRange = Math.max(0, currentTotal - prevTarget);
-  const progressPercentage = Math.min(
-    100,
-    Math.round((progressInRange / (range || 1)) * 100)
-  );
+  // Cálculo percentual alinhado diretamente com o placar exibido:
+  // Se acabou de desbloquear um marco, a barra mira no próximo marco (ex: 3 de 5 = 60%).
+  // No dia a dia regular, a barra mira na meta vigente (ex: 8 de 10 = 80%).
+  const effectiveTarget =
+    isMilestoneJustUnlocked && nextTarget ? nextTarget : target;
+  const progressPercentage =
+    effectiveTarget > 0
+      ? Math.min(100, Math.round((currentTotal / effectiveTarget) * 100))
+      : 100;
 
   const remaining = Math.max(0, target - currentTotal);
 

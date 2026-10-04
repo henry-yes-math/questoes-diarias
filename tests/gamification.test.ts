@@ -44,17 +44,20 @@ const m1 = calculateMilestone(1, 0);
 assert(m1.isFirstQuestion === true, '1ª questão deve ser identificada como isFirstQuestion');
 assert(m1.target === 3, 'Meta da 1ª questão deve ser 3');
 assert(m1.remaining === 2, 'Restam 2 para a meta de 3');
+assert(m1.progressPercentage === 33, '1ª questão de 3 deve mostrar 33%');
 
 // Aluno fez a 2ª questão
 const m2 = calculateMilestone(2, 1);
 assert(m2.target === 3, 'Meta da 2ª questão deve continuar 3');
 assert(m2.remaining === 1, 'Resta 1 para bater 3');
+assert(m2.progressPercentage === 67, '2ª questão de 3 deve mostrar 67%');
 
 // Aluno desbloqueou 3 questões
 const m3 = calculateMilestone(3, 2);
 assert(m3.isMilestoneJustUnlocked === true, 'Deve indicar que marco acabou de ser desbloqueado');
 assert(m3.unlockedTarget === 3, 'Marco desbloqueado deve ser 3');
 assert(m3.nextTarget === 5, 'Próxima meta após 3 deve ser 5');
+assert(m3.progressPercentage === 60, 'Ao desbloquear 3 com próxima meta 5, deve mostrar 60% (3/5)');
 assert(
   Boolean(m3.nextMilestonePrompt?.includes('manter o embalo rumo às 5')),
   'Prompt do marco 3 deve convidar a manter o embalo'
@@ -64,6 +67,13 @@ assert(
 const m4 = calculateMilestone(4, 3);
 assert(m4.target === 5, 'Meta atual da 4ª questão deve ser 5');
 assert(m4.remaining === 1, 'Resta 1 para bater 5');
+assert(m4.progressPercentage === 80, '4ª questão de 5 deve mostrar 80% (4/5)');
+
+// Aluno fez a 8ª questão (caminho para o marco de 10)
+const m8 = calculateMilestone(8, 7);
+assert(m8.target === 10, 'Meta ao fazer 8 questões deve ser 10');
+assert(m8.remaining === 2, 'Restam 2 questões para bater 10');
+assert(m8.progressPercentage === 80, '8 questões de 10 deve mostrar exatamente 80% (8/10)');
 
 // Aluno desbloqueou 5 questões
 const m5 = calculateMilestone(5, 4);
