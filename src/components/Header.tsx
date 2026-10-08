@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
                               ? 'Escudo em Ação Hoje!'
                               : streakShields > 0
                               ? `${streakShields} ${streakShields === 1 ? 'Escudo de Ofensiva' : 'Escudos de Ofensiva'}`
-                              : 'Nenhum Escudo Ativo'}
+                              : 'Sem Escudo Ativo'}
                           </span>
                         </div>
                         <p className="text-stone-300">
@@ -134,7 +134,9 @@ export const Header: React.FC<HeaderProps> = ({
                             ? `Se você esquecer de entrar algum dia, o escudo é usado automaticamente e seu fogo não apaga (protege ${
                                 streakShields === 1 ? '1 dia de imprevisto' : 'até 2 dias seguidos de imprevisto'
                               }).`
-                            : 'Ganhe 1 escudo a cada 7 dias seguidos (ou convide um amigo) para proteger seu fogo se esquecer um dia.'}
+                            : totalSolved < 2
+                            ? 'Complete 2 questões para ganhar seu 1º Escudo e proteger seu fogo de imprevistos.'
+                            : 'Ganhe novos escudos a cada 7 dias seguidos ou convidando amigos no WhatsApp.'}
                         </p>
                         {isShieldProtecting && onOpenShieldRescue && (
                           <button

@@ -157,19 +157,29 @@ export function calculateNewStreakWithShield(
   lastCompletedCycle: number | undefined | null,
   currentStreak: number,
   currentCycleNumber: number,
-  currentShields: number = 0
+  currentShields: number = 0,
+  newTotal?: number
 ): StreakShieldCalculationResult {
   const safeCurrentStreak = Math.max(0, currentStreak || 0);
   let safeShields = Math.max(0, Math.min(MAX_STREAK_SHIELDS, currentShields || 0));
 
+  // Helper para verificar se ganha escudo de onboarding na 2ª questão completada
+  const checkEarnedOnSecondQuestion = (earnedSoFar: boolean): { shields: number; earned: boolean } => {
+    if (newTotal === 2 && safeShields < MAX_STREAK_SHIELDS && !earnedSoFar) {
+      return { shields: safeShields + 1, earned: true };
+    }
+    return { shields: safeShields, earned: earnedSoFar };
+  };
+
   // 1. Aluno sem histórico ou iniciando agora
   if (lastCompletedCycle === undefined || lastCompletedCycle === null || lastCompletedCycle <= 0) {
+    const secondQ = checkEarnedOnSecondQuestion(false);
     return {
       newStreak: 1,
-      newShields: safeShields,
+      newShields: secondQ.shields,
       shieldWasUsed: false,
       shieldsUsed: 0,
-      earnedNewShield: false,
+      earnedNewShield: secondQ.earned,
     };
   }
 
@@ -190,6 +200,11 @@ export function calculateNewStreakWithShield(
     let earnedNewShield = false;
     // Concede +1 escudo a cada 7 dias de ofensiva ininterrupta (7, 14, 21...), até o teto de 2
     if (nextStreak % STREAK_DAYS_PER_SHIELD === 0 && safeShields < MAX_STREAK_SHIELDS) {
+      safeShields += 1;
+      earnedNewShield = true;
+    }
+    // Concede +1 escudo na 2ª questão completada na história (onboarding), até o teto de 2
+    if (newTotal === 2 && safeShields < MAX_STREAK_SHIELDS && !earnedNewShield) {
       safeShields += 1;
       earnedNewShield = true;
     }
@@ -216,33 +231,46 @@ export function calculateNewStreakWithShield(
 
     // Se ao salvar atingiu múltiplo de 7, recarrega se o teto permitir
     if (nextStreak % STREAK_DAYS_PER_SHIELD === 0 && consumedShields < MAX_STREAK_SHIELDS) {
+      let finalShields = consumedShields + 1;
+      let earned = true;
+      if (newTotal === 2 && finalShields < MAX_STREAK_SHIELDS) {
+        finalShields += 1;
+      }
       return {
         newStreak: nextStreak,
-        newShields: consumedShields + 1,
+        newShields: finalShields,
         shieldWasUsed: true,
         shieldsUsed,
-        earnedNewShield: true,
+        earnedNewShield: earned,
         usedInCycle: currentCycleNumber - 1,
       };
     }
+
+    let finalShields = consumedShields;
+    if (newTotal === 2 && finalShields < MAX_STREAK_SHIELDS) {
+      finalShields += 1;
+      earnedNewShield = true;
+    }
+
     return {
       newStreak: nextStreak,
-      newShields: consumedShields,
+      newShields: finalShields,
       shieldWasUsed: true,
       shieldsUsed,
-      earnedNewShield: false,
+      earnedNewShield,
       usedInCycle: currentCycleNumber - 1,
     };
   }
 
   // 5. Sem protetores suficientes (ex: 0 protetores, ou faltou mais ciclos do que escudos disponíveis)
   // -> ofensiva reinicia em 1
+  const secondQ = checkEarnedOnSecondQuestion(false);
   return {
     newStreak: 1,
-    newShields: safeShields,
+    newShields: secondQ.shields,
     shieldWasUsed: false,
     shieldsUsed: 0,
-    earnedNewShield: false,
+    earnedNewShield: secondQ.earned,
   };
 }
 
@@ -253,13 +281,15 @@ export function calculateNewStreakByCycle(
   lastCompletedCycle: number | undefined,
   currentStreak: number,
   currentCycleNumber: number,
-  currentShields: number = 0
+  currentShields: number = 0,
+  newTotal?: number
 ): number {
   return calculateNewStreakWithShield(
     lastCompletedCycle,
     currentStreak,
     currentCycleNumber,
-    currentShields
+    currentShields,
+    newTotal
   ).newStreak;
 }
 

@@ -236,5 +236,40 @@ assert(calculateNewStreakByCycle(4, 4, 6, 1) === 5, 'calculateNewStreakByCycle s
 assert(calculateNewStreakByCycle(4, 4, 6, 0) === 1, 'calculateNewStreakByCycle zera sem escudo');
 assert(calculateNewStreakByCycle(5, 5, 6) === 6, 'calculateNewStreakByCycle avança normalmente');
 
+// ====================================================
+// TESTE 5: Concessão do 1º Escudo na 2ª Questão (Onboarding)
+// ====================================================
+console.log('\nTeste 5: Concessão do 1º Escudo na 2ª Questão Feita');
+
+// 5.1 Aluno completando a 1ª questão (newTotal: 1) -> sem escudo
+const q1Res = calculateNewStreakWithShield(undefined, 0, 1, 0, 1);
+assert(q1Res.newShields === 0, '1ª questão não deve conceder escudo');
+assert(q1Res.earnedNewShield === false, 'earnedNewShield deve ser false na 1ª questão');
+
+// 5.2 Aluno completando a 2ª questão consecutiva (newTotal: 2, 0 escudos prévios) -> ganha 1º escudo
+const q2Res = calculateNewStreakWithShield(1, 1, 2, 0, 2);
+assert(q2Res.newShields === 1, '2ª questão deve conceder o 1º escudo de ofensiva');
+assert(q2Res.earnedNewShield === true, 'earnedNewShield deve ser true na 2ª questão');
+assert(q2Res.newStreak === 2, 'Ofensiva avança para 2 dias normalmente');
+
+// 5.3 Aluno completando a 2ª questão tendo faltado ciclos (não consecutivo) -> ganha escudo mesmo assim
+const q2LateRes = calculateNewStreakWithShield(1, 1, 5, 0, 2);
+assert(q2LateRes.newShields === 1, '2ª questão deve conceder escudo mesmo se não for ciclo consecutivo');
+assert(q2LateRes.earnedNewShield === true, 'earnedNewShield deve ser true na 2ª questão não consecutiva');
+
+// 5.4 Aluno que já tinha 1 escudo por convite/amigo ao fazer a 2ª questão -> atinge 2 escudos (teto)
+const q2WithInviteShield = calculateNewStreakWithShield(1, 1, 2, 1, 2);
+assert(q2WithInviteShield.newShields === 2, 'Deve acumular o 2º escudo somado ao escudo de convite');
+assert(q2WithInviteShield.earnedNewShield === true, 'earnedNewShield deve ser true ao acumular');
+
+// 5.5 Aluno que já tinha 2 escudos (teto máximo) ao fazer a 2ª questão -> não ultrapassa teto
+const q2MaxShields = calculateNewStreakWithShield(1, 1, 2, 2, 2);
+assert(q2MaxShields.newShields === 2, 'Não deve ultrapassar o teto máximo de 2 escudos');
+
+// 5.6 Aluno completando a 3ª questão (newTotal: 3) -> não ganha novo escudo de 2ª questão
+const q3Res = calculateNewStreakWithShield(2, 2, 3, 1, 3);
+assert(q3Res.newShields === 1, '3ª questão não deve conceder novo escudo');
+assert(q3Res.earnedNewShield === false, 'earnedNewShield deve ser false na 3ª questão');
+
 console.log('\n------------------------------------------------------');
 console.log(' \x1b[32m✔ TODOS OS TESTES DE METAS E ESCUDOS PASSARAM COM SUCESSO!\x1b[0m\n');

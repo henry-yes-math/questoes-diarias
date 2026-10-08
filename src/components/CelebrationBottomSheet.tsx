@@ -207,14 +207,30 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                 </span>
               </div>
             )}
-            {earnedNewShield && (
-              <div className="bg-emerald-50/90 border border-emerald-200/90 rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 text-xs text-emerald-900 shadow-2xs">
-                <Shield className="w-4 h-4 text-emerald-600 fill-emerald-500/20 shrink-0" />
-                <span>
-                  <strong className="font-bold text-emerald-950">Novo Escudo de Ofensiva Desbloqueado! 🛡️</strong>{' '}
-                  Pela sua consistência, você ganhou +1 escudo para proteger seu fogo caso tenha algum imprevisto!
-                </span>
+            {currentTotal === 2 ? (
+              <div className="bg-blue-50/90 border border-blue-200/90 rounded-xl p-3 flex items-start gap-2.5 text-xs text-blue-900 shadow-2xs">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0 text-blue-600 mt-0.5">
+                  <Shield className="w-4 h-4 fill-blue-500 text-blue-600" />
+                </div>
+                <div>
+                  <div className="font-extrabold text-blue-950 text-xs sm:text-sm">
+                    Você ganhou 1 Escudo! 🛡️
+                  </div>
+                  <p className="text-xs text-blue-900 font-medium mt-0.5 leading-relaxed">
+                    Ele protege seu fogo se rolar um imprevisto rumo à meta de 3 amanhã.
+                  </p>
+                </div>
               </div>
+            ) : (
+              earnedNewShield && (
+                <div className="bg-emerald-50/90 border border-emerald-200/90 rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 text-xs text-emerald-900 shadow-2xs">
+                  <Shield className="w-4 h-4 text-emerald-600 fill-emerald-500/20 shrink-0" />
+                  <span>
+                    <strong className="font-bold text-emerald-950">Novo Escudo de Ofensiva Desbloqueado! 🛡️</strong>{' '}
+                    Pela sua consistência, você ganhou +1 escudo para proteger seu fogo caso tenha algum imprevisto!
+                  </span>
+                </div>
+              )
             )}
 
             {/* Linha Divisória */}

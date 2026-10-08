@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Flame, Target, Trophy, Sparkles, Users, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Flame, Target, Trophy, Sparkles, Users, ArrowRight, CheckCircle2, Shield } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MilestoneInfo } from '../types';
 
@@ -199,6 +199,22 @@ export const CelebrationCard: React.FC<Props> = ({
         {/* CENÁRIO 3: DIA REGULAR DE CAMINHADA */}
         {!isFirstQuestion && !isMilestoneJustUnlocked && (
           <div>
+            {currentTotal === 2 && (
+              <div className="bg-blue-50/90 border border-blue-200/90 rounded-xl p-3 flex items-start gap-2.5 text-xs text-blue-900 shadow-2xs mb-3.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0 text-blue-600 mt-0.5">
+                  <Shield className="w-4 h-4 fill-blue-500 text-blue-600" />
+                </div>
+                <div>
+                  <div className="font-extrabold text-blue-950 text-xs sm:text-sm">
+                    Você ganhou 1 Escudo! 🛡️
+                  </div>
+                  <p className="text-xs text-blue-900 font-medium mt-0.5 leading-relaxed">
+                    Ele protege seu fogo se rolar um imprevisto rumo à meta de 3 amanhã.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5">
               <span className="flex items-center gap-1.5">
                 <Target className="w-4 h-4 text-blue-600" />

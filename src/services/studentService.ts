@@ -442,7 +442,8 @@ export async function registerDailySubmission(
       profile.lastCompletedCycle,
       profile.streakDays || 0,
       activeCycle,
-      currentShields
+      currentShields,
+      newTotal
     );
     const newStreak = streakResult.newStreak;
     const newShields = streakResult.newShields;
