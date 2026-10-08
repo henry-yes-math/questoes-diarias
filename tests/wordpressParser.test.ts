@@ -294,6 +294,48 @@ runTest('Deve extrair a alternativa C como correta e remover alternativas do enu
 });
 
 // ----------------------------------------------------
+// CASO 7: Post com Alternativas em Numerais Romanos (ENEM 2023 PPL - Sabão em Pó)
+// ----------------------------------------------------
+console.log('\nCaso 7: Post com Numerais Romanos (ENEM 2023 PPL - Sabão em Pó)');
+const postSabao = loadFixture('post-sabao-2023.json');
+const qSabao = parseWordPressPost(postSabao);
+
+runTest('Deve detectar o exame como ENEM 2023 PPL', () => {
+  assert.equal(qSabao.exam, 'ENEM 2023 PPL');
+});
+
+runTest('Deve extrair exatamente 5 alternativas com numerais romanos (I. a V.)', () => {
+  assert.equal(qSabao.alternatives.length, 5);
+  assert.deepEqual(qSabao.alternatives.map(a => a.letter), ['A', 'B', 'C', 'D', 'E']);
+  assert.equal(qSabao.alternatives[0].value, 'I.');
+  assert.equal(qSabao.alternatives[1].value, 'II.');
+  assert.equal(qSabao.alternatives[2].value, 'III.');
+  assert.equal(qSabao.alternatives[3].value, 'IV.');
+  assert.equal(qSabao.alternatives[4].value, 'V.');
+});
+
+runTest('Deve identificar a letra B como o gabarito oficial', () => {
+  assert.equal(qSabao.correctLetter, 'B');
+  const correctAlt = qSabao.alternatives.find(a => a.isCorrect);
+  assert.equal(correctAlt?.letter, 'B');
+  assert.equal(correctAlt?.value, 'II.');
+});
+
+runTest('O enunciado não deve conter as alternativas nem parágrafo residual "E V."', () => {
+  // Check text content inside paragraphs
+  const domTemp = new JSDOM(`<div>${qSabao.enunciadoHtml}</div>`);
+  const text = domTemp.window.document.body.textContent || '';
+  assert.ok(!text.includes('A I.'));
+  assert.ok(!text.includes('E V.'));
+});
+
+runTest('Deve extrair 6 passos pedagógicos', () => {
+  assert.equal(qSabao.steps.length, 6);
+  assert.equal(qSabao.steps[0].type, 'hint');
+  assert.equal(qSabao.steps[5].type, 'resolution');
+});
+
+// ----------------------------------------------------
 // Resumo dos Resultados
 // ----------------------------------------------------
 console.log('\n------------------------------------------------------');

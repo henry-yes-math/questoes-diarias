@@ -283,7 +283,7 @@ export function parseWordPressPost(post: any): QuestionData {
   // Must accurately match A), B., (C), A - , or A <value/Roman numerals I-X/math>
   const alternatives: Alternative[] = [];
   const foundLetters = new Set<string>();
-  const altRegex = /^(?:\(([A-Ea-e])\)|([A-Ea-e])(?:\)|\.|\:|\s*[-–—]|\s+(?=[0-9\\(]|R\$|\$|(?:X|IX|IV|V?I{1,3})\b)))\s*(.+)$/;
+  const altRegex = /^(?:\(([A-Ea-e])\)|([A-Ea-e])(?:\)|\.|\:|\s*[-–—]|\s+(?=[0-9\\(]|R\$|\$|(?:X|IX|VIII|VII|VI|V|IV|III|II|I)\b)))\s*(.+)$/i;
 
   for (const el of enunciadoElements) {
     // Clone and replace <br> tags with newlines so textContent preserves line separation
