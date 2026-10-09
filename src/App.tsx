@@ -149,8 +149,6 @@ export default function App() {
     <div className="min-h-screen bg-[#f8f7f4] text-[#1c1917] flex flex-col font-sans selection:bg-amber-100 selection:text-amber-900">
       {/* Top sticky header */}
       <Header
-        fontSize={fontSize}
-        onToggleFontSize={toggleFontSize}
         onOpenAdmin={handleAdminButtonClick}
         showAdminButton={isAdminVisible}
         studentProfile={profile}
@@ -186,6 +184,7 @@ export default function App() {
               setIsCelebrationOpen(false);
             }}
             fontSize={fontSize}
+            onToggleFontSize={toggleFontSize}
             todayCompletedCount={todaySubmissions.length}
             onOpenMural={() => setIsMuralModalOpen(true)}
           />

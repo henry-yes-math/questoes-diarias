@@ -22,6 +22,7 @@ interface QuestionCardProps {
   onScrollToHints: () => void;
   onClearSelection: () => void;
   fontSize: 'normal' | 'large';
+  onToggleFontSize?: () => void;
   todayCompletedCount?: number;
   onOpenMural?: () => void;
 }
@@ -33,6 +34,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   onScrollToHints,
   onClearSelection,
   fontSize,
+  onToggleFontSize,
   todayCompletedCount = 0,
   onOpenMural,
 }) => {
@@ -144,31 +146,58 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   return (
     <article
       id="enem-question-card"
-      className="bg-white rounded-2xl border border-stone-200 shadow-xs p-6 sm:p-9 transition-all font-sans"
+      className="bg-white rounded-2xl border border-stone-200 shadow-xs px-5 py-5 sm:px-9 sm:py-8 pt-4 sm:pt-6 transition-all font-sans"
     >
-      {/* Exam Identification & Termômetro da Turma */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-6 border-b border-stone-200/70 text-xs tracking-wider uppercase">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-stone-700">{question.exam}</span>
-          <span className="text-stone-300">•</span>
-          <span className="text-stone-500 font-medium">{question.discipline}</span>
+      {/* Cabeçalho da Questão (Identificação, Controle de Leitura e Turma) */}
+      <div className="pb-2.5 mb-4 border-b border-stone-200/70 space-y-2">
+        {/* Linha 1: Identificação da Prova & Botão A A */}
+        <div className="flex items-center justify-between gap-2 text-xs tracking-wider uppercase">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-semibold text-stone-700 shrink-0">{question.exam}</span>
+          <span className="text-stone-300 shrink-0">•</span>
+          <span className="text-stone-500 font-medium truncate">
+            {question.discipline
+              ? question.discipline.replace(/matemática e suas tecnologias/i, 'Matemática')
+              : 'Matemática'}
+          </span>
         </div>
 
-        {/* Termômetro da Turma */}
+          {/* Botão de Tamanho da Letra (A A) */}
+          {onToggleFontSize && (
+            <button
+              id="font-size-toggle-btn"
+              type="button"
+              onClick={onToggleFontSize}
+              title={fontSize === 'normal' ? 'Aumentar tamanho do texto' : 'Tamanho de texto normal'}
+              className={`inline-flex items-center justify-center gap-0.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-xs font-semibold tracking-normal transition-all cursor-pointer border shrink-0 ${
+                fontSize === 'large'
+                  ? 'bg-blue-50 text-blue-700 border-blue-300 shadow-2xs font-bold'
+                  : 'bg-stone-50 text-stone-600 hover:text-stone-900 hover:bg-stone-100 border-stone-200/80'
+              }`}
+            >
+              <span className="text-[10px] text-stone-500">A</span>
+              <span className="text-xs sm:text-sm font-bold">A</span>
+            </button>
+          )}
+        </div>
+
+        {/* Termômetro da Turma (Linha exclusiva de destaque, acima do traço) */}
         {todayCompletedCount > 0 && onOpenMural && (
-          <button
-            type="button"
-            onClick={onOpenMural}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/80 text-[11px] font-bold tracking-tight transition-colors cursor-pointer w-fit"
-            title="Ver quem já concluiu no Mural"
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>
-              {todayCompletedCount} {todayCompletedCount === 1 ? 'colega já resolveu hoje' : 'colegas já resolveram hoje'}
-            </span>
-          </button>
+          <div>
+            <button
+              type="button"
+              onClick={onOpenMural}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/80 text-[11px] sm:text-xs font-bold tracking-tight transition-colors cursor-pointer"
+              title="Ver quem já concluiu no Mural"
+            >
+              <Users className="w-3.5 h-3.5 text-blue-600" />
+              <span>
+                {todayCompletedCount} {todayCompletedCount === 1 ? 'colega já resolveu hoje' : 'colegas já resolveram hoje'}
+              </span>
+            </button>
+          </div>
         )}
-      </div>
+    </div>
 
       {/* Main Enunciado */}
       <div

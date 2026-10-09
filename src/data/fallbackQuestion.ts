@@ -5,7 +5,7 @@ export const INITIAL_QUESTION: QuestionData = {
   id: 8627,
   title: 'ENEM 2023 – Um tipo de semente necessita de bastante água nos dois primeiros meses após o plantio',
   exam: 'ENEM 2023',
-  discipline: 'Matemática e suas Tecnologias',
+  discipline: 'Matemática',
   difficulty: 'Nível Fácil',
   sourceUrl: 'https://www.yesmatematica.com/enem-2023-um-tipo-de-semente-necessita-de-bastante-agua-nos-dois-primeiros-meses-apos-o-plantio/',
   enunciadoHtml: `
