@@ -72,10 +72,10 @@ export const Header: React.FC<HeaderProps> = ({
               <span
                 className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold tracking-tight border transition-all shrink-0 select-none ${
                   isShieldProtecting
-                    ? 'bg-gradient-to-b from-amber-100 via-amber-100 to-amber-200/90 text-amber-950 border-amber-300 ring-1 ring-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.25)] animate-pulse'
+                    ? 'bg-white text-stone-900 border-orange-300 ring-1 ring-orange-400/50 shadow-[0_0_8px_rgba(249,115,22,0.2)] animate-pulse'
                     : (studentProfile.streakDays || 0) > 0
-                    ? 'bg-gradient-to-b from-amber-50/90 via-amber-50 to-amber-100/70 text-amber-950 border-amber-200/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(217,119,6,0.08)] hover:border-amber-300 transition-colors'
-                    : 'bg-stone-50/80 text-stone-500 border-stone-200/80 shadow-2xs'
+                    ? 'bg-white text-stone-900 border-orange-200/90 hover:border-orange-300 shadow-2xs'
+                    : 'bg-white text-stone-400 border-stone-200/80 shadow-2xs'
                 }`}
                 title={
                   isShieldProtecting
@@ -99,14 +99,14 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="flex items-baseline gap-0.5 tabular-nums">
                   <span
                     className={`font-extrabold text-[11px] sm:text-[12px] leading-none ${
-                      (studentProfile.streakDays || 0) > 0 ? 'text-amber-950' : 'text-stone-500'
+                      (studentProfile.streakDays || 0) > 0 ? 'text-stone-900' : 'text-stone-400'
                     }`}
                   >
                     {studentProfile.streakDays || 0}
                   </span>
                   <span
                     className={`text-[8.5px] sm:text-[9.5px] font-bold leading-none ${
-                      (studentProfile.streakDays || 0) > 0 ? 'text-amber-750 text-amber-700/80' : 'text-stone-400'
+                      (studentProfile.streakDays || 0) > 0 ? 'text-stone-500' : 'text-stone-400'
                     }`}
                   >
                     d
