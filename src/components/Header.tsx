@@ -70,48 +70,11 @@ export const Header: React.FC<HeaderProps> = ({
             <>
               {/* Ofensiva (Fogo) */}
               <span
-                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold tracking-tight border transition-all shrink-0 select-none ${
-                  isShieldProtecting
-                    ? 'bg-white text-stone-900 border-orange-300 ring-1 ring-orange-400/50 shadow-[0_0_8px_rgba(249,115,22,0.2)] animate-pulse'
-                    : (studentProfile.streakDays || 0) > 0
-                    ? 'bg-white text-stone-900 border-orange-200/90 hover:border-orange-300 shadow-2xs'
-                    : 'bg-white text-stone-400 border-stone-200/80 shadow-2xs'
-                }`}
-                title={
-                  isShieldProtecting
-                    ? `Ofensiva protegida: ${studentProfile.streakDays || 0}d garantidos pelo escudo hoje! Resolva para manter.`
-                    : (studentProfile.streakDays || 0) > 0
-                    ? `Sua ofensiva: ${studentProfile.streakDays || 0} ${
-                        (studentProfile.streakDays || 0) === 1 ? 'dia consecutivo' : 'dias consecutivos'
-                      }!`
-                    : 'Ofensiva: resolva a questão de hoje para acender seu fogo!'
-                }
+                className="text-amber-600 font-semibold text-xs sm:text-sm inline-flex items-center gap-0.5 shrink-0"
+                title="Sua ofensiva de dias seguidos"
               >
-                <Flame
-                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform ${
-                    isShieldProtecting
-                      ? 'fill-amber-500 text-orange-600 drop-shadow-[0_1px_3px_rgba(245,158,11,0.6)]'
-                      : (studentProfile.streakDays || 0) > 0
-                      ? 'fill-amber-400 text-orange-500 drop-shadow-[0_1px_2px_rgba(249,115,22,0.35)]'
-                      : 'fill-stone-300 text-stone-400'
-                  }`}
-                />
-                <span className="flex items-baseline gap-0.5 tabular-nums">
-                  <span
-                    className={`font-extrabold text-[11px] sm:text-[12px] leading-none ${
-                      (studentProfile.streakDays || 0) > 0 ? 'text-stone-900' : 'text-stone-400'
-                    }`}
-                  >
-                    {studentProfile.streakDays || 0}
-                  </span>
-                  <span
-                    className={`text-[8.5px] sm:text-[9.5px] font-bold leading-none ${
-                      (studentProfile.streakDays || 0) > 0 ? 'text-stone-500' : 'text-stone-400'
-                    }`}
-                  >
-                    d
-                  </span>
-                </span>
+                <Flame className="w-3.5 h-3.5 fill-amber-500" />
+                <span>{studentProfile.streakDays || 0}d</span>
               </span>
 
               {/* Protetor de Chama (Escudo) com tooltip interativo */}
@@ -119,12 +82,12 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowShieldTooltip((prev) => !prev)}
-                  className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] cursor-pointer transition-all border shrink-0 ${
+                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] cursor-pointer transition-all ${
                     isShieldProtecting
-                      ? 'bg-gradient-to-b from-amber-100 to-amber-200/90 text-amber-950 border-amber-300 font-bold hover:bg-amber-200 ring-1 ring-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.25)]'
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300 font-bold hover:bg-amber-200'
                       : streakShields > 0
-                      ? 'bg-gradient-to-b from-blue-50/90 via-blue-50 to-blue-100/70 text-blue-950 border-blue-200/90 hover:border-blue-300 hover:from-blue-100/80 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(37,99,235,0.08)]'
-                      : 'bg-stone-50/80 text-stone-400 hover:text-stone-600 hover:bg-stone-100 border-stone-200/80 font-medium shadow-2xs'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200/80 hover:bg-blue-100 font-bold'
+                      : 'bg-stone-100 text-stone-400 hover:text-stone-600 hover:bg-stone-200/60 font-medium'
                   }`}
                   title={
                     isShieldProtecting
@@ -134,17 +97,15 @@ export const Header: React.FC<HeaderProps> = ({
                   aria-label="Escudo de Ofensiva"
                 >
                   <Shield
-                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform ${
+                    className={`w-3 h-3 ${
                       isShieldProtecting
-                        ? 'fill-amber-500 text-orange-600 drop-shadow-[0_1px_3px_rgba(245,158,11,0.5)]'
+                        ? 'fill-amber-500 text-amber-700'
                         : streakShields > 0
-                        ? 'fill-blue-400 text-blue-600 drop-shadow-[0_1px_2px_rgba(37,99,235,0.3)]'
+                        ? 'fill-blue-500 text-blue-600'
                         : 'text-stone-400'
                     }`}
                   />
-                  <span className="tabular-nums font-extrabold text-[11px] sm:text-[12px] leading-none">
-                    {streakShields}
-                  </span>
+                  <span>{streakShields}</span>
                 </button>
 
                 {showShieldTooltip && (
