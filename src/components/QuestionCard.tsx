@@ -149,9 +149,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       className="bg-white rounded-2xl border border-stone-200 shadow-xs px-5 py-5 sm:px-9 sm:py-8 pt-4 sm:pt-6 transition-all font-sans"
     >
       {/* Cabeçalho da Questão (Identificação, Controle de Leitura e Turma) */}
-      <div className="pb-2.5 mb-4 border-b border-stone-200/70 space-y-2">
+      <div className="pb-2.5 mb-4 border-b border-stone-200/70 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
         {/* Linha 1: Identificação da Prova & Botão A A */}
-        <div className="flex items-center justify-between gap-2 text-xs tracking-wider uppercase">
+        <div className="flex items-center justify-between sm:justify-start gap-2 text-xs tracking-wider uppercase">
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-semibold text-stone-700 shrink-0">{question.exam}</span>
           <span className="text-stone-300 shrink-0">•</span>
@@ -162,28 +162,31 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           </span>
         </div>
 
-          {/* Botão de Tamanho da Letra (A A) */}
+          {/* Botão de Tamanho da Letra (A A) - Visível na Linha 1 apenas no mobile */}
           {onToggleFontSize && (
-            <button
-              id="font-size-toggle-btn"
-              type="button"
-              onClick={onToggleFontSize}
-              title={fontSize === 'normal' ? 'Aumentar tamanho do texto' : 'Tamanho de texto normal'}
-              className={`inline-flex items-center justify-center gap-0.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-xs font-semibold tracking-normal transition-all cursor-pointer border shrink-0 ${
-                fontSize === 'large'
-                  ? 'bg-blue-50 text-blue-700 border-blue-300 shadow-2xs font-bold'
-                  : 'bg-stone-50 text-stone-600 hover:text-stone-900 hover:bg-stone-100 border-stone-200/80'
-              }`}
-            >
-              <span className="text-[10px] text-stone-500">A</span>
-              <span className="text-xs sm:text-sm font-bold">A</span>
-            </button>
+            <div className="sm:hidden">
+              <button
+                id="font-size-toggle-btn-mobile"
+                type="button"
+                onClick={onToggleFontSize}
+                title={fontSize === 'normal' ? 'Aumentar tamanho do texto' : 'Tamanho de texto normal'}
+                className={`inline-flex items-center justify-center gap-0.5 px-2 py-0.5 rounded-md text-xs font-semibold tracking-normal transition-all cursor-pointer border shrink-0 ${
+                  fontSize === 'large'
+                    ? 'bg-blue-50 text-blue-700 border-blue-300 shadow-2xs font-bold'
+                    : 'bg-stone-50 text-stone-600 hover:text-stone-900 hover:bg-stone-100 border-stone-200/80'
+                }`}
+              >
+                <span className="text-[10px] text-stone-500">A</span>
+                <span className="text-xs sm:text-sm font-bold">A</span>
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Termômetro da Turma (Linha exclusiva de destaque, acima do traço) */}
-        {todayCompletedCount > 0 && onOpenMural && (
-          <div>
+        {/* Ações da Questão: Turma & Botão A A (unidos em 1 linha no desktop) */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Termômetro da Turma */}
+          {todayCompletedCount > 0 && onOpenMural && (
             <button
               type="button"
               onClick={onOpenMural}
@@ -195,9 +198,29 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 {todayCompletedCount} {todayCompletedCount === 1 ? 'colega já resolveu hoje' : 'colegas já resolveram hoje'}
               </span>
             </button>
-          </div>
-        )}
-    </div>
+          )}
+
+          {/* Botão de Tamanho da Letra (A A) - Visível ao lado da turma no desktop */}
+          {onToggleFontSize && (
+            <div className="hidden sm:block">
+              <button
+                id="font-size-toggle-btn"
+                type="button"
+                onClick={onToggleFontSize}
+                title={fontSize === 'normal' ? 'Aumentar tamanho do texto' : 'Tamanho de texto normal'}
+                className={`inline-flex items-center justify-center gap-0.5 px-2.5 py-1 rounded-md text-xs font-semibold tracking-normal transition-all cursor-pointer border shrink-0 ${
+                  fontSize === 'large'
+                    ? 'bg-blue-50 text-blue-700 border-blue-300 shadow-2xs font-bold'
+                    : 'bg-stone-50 text-stone-600 hover:text-stone-900 hover:bg-stone-100 border-stone-200/80'
+                }`}
+              >
+                <span className="text-[10px] text-stone-500">A</span>
+                <span className="text-xs sm:text-sm font-bold">A</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Main Enunciado */}
       <div
