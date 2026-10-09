@@ -70,10 +70,30 @@ export const Header: React.FC<HeaderProps> = ({
             <>
               {/* Ofensiva (Fogo) */}
               <span
-                className="text-amber-600 font-semibold text-xs sm:text-sm inline-flex items-center gap-0.5 shrink-0"
-                title="Sua ofensiva de dias seguidos"
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold tracking-tight border transition-all shrink-0 ${
+                  isShieldProtecting
+                    ? 'bg-amber-100 text-amber-900 border-amber-300 ring-1 ring-amber-400/40 animate-pulse'
+                    : (studentProfile.streakDays || 0) > 0
+                    ? 'bg-amber-50 text-amber-800 border-amber-200/90 shadow-2xs'
+                    : 'bg-stone-50 text-stone-500 border-stone-200/80'
+                }`}
+                title={
+                  isShieldProtecting
+                    ? `Ofensiva protegida: ${studentProfile.streakDays || 0}d garantidos pelo escudo hoje! Resolva para manter.`
+                    : (studentProfile.streakDays || 0) > 0
+                    ? `Sua ofensiva: ${studentProfile.streakDays || 0} ${
+                        (studentProfile.streakDays || 0) === 1 ? 'dia consecutivo' : 'dias consecutivos'
+                      }!`
+                    : 'Ofensiva: resolva a questão de hoje para acender seu fogo!'
+                }
               >
-                <Flame className="w-3.5 h-3.5 fill-amber-500" />
+                <Flame
+                  className={`w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 ${
+                    (studentProfile.streakDays || 0) > 0 || isShieldProtecting
+                      ? 'fill-amber-500 text-amber-500'
+                      : 'fill-stone-300 text-stone-400'
+                  }`}
+                />
                 <span>{studentProfile.streakDays || 0}d</span>
               </span>
 
@@ -82,12 +102,12 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowShieldTooltip((prev) => !prev)}
-                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] cursor-pointer transition-all ${
+                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] cursor-pointer transition-all border shrink-0 ${
                     isShieldProtecting
-                      ? 'bg-amber-100 text-amber-900 border border-amber-300 font-bold hover:bg-amber-200'
+                      ? 'bg-amber-100 text-amber-900 border-amber-300 font-bold hover:bg-amber-200 ring-1 ring-amber-400/40'
                       : streakShields > 0
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200/80 hover:bg-blue-100 font-bold'
-                      : 'bg-stone-100 text-stone-400 hover:text-stone-600 hover:bg-stone-200/60 font-medium'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200/80 hover:bg-blue-100 font-bold shadow-2xs'
+                      : 'bg-stone-50 text-stone-400 hover:text-stone-600 hover:bg-stone-100 border-stone-200/80 font-medium'
                   }`}
                   title={
                     isShieldProtecting
@@ -97,7 +117,7 @@ export const Header: React.FC<HeaderProps> = ({
                   aria-label="Escudo de Ofensiva"
                 >
                   <Shield
-                    className={`w-3 h-3 ${
+                    className={`w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 ${
                       isShieldProtecting
                         ? 'fill-amber-500 text-amber-700'
                         : streakShields > 0
