@@ -70,12 +70,12 @@ export const Header: React.FC<HeaderProps> = ({
             <>
               {/* Ofensiva (Fogo) */}
               <span
-                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold tracking-tight border transition-all shrink-0 ${
+                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold tracking-tight border transition-all shrink-0 select-none ${
                   isShieldProtecting
-                    ? 'bg-amber-100 text-amber-900 border-amber-300 ring-1 ring-amber-400/40 animate-pulse'
+                    ? 'bg-gradient-to-b from-amber-100 via-amber-100 to-amber-200/90 text-amber-950 border-amber-300 ring-1 ring-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.25)] animate-pulse'
                     : (studentProfile.streakDays || 0) > 0
-                    ? 'bg-amber-50 text-amber-800 border-amber-200/90 shadow-2xs'
-                    : 'bg-stone-50 text-stone-500 border-stone-200/80'
+                    ? 'bg-gradient-to-b from-amber-50/90 via-amber-50 to-amber-100/70 text-amber-950 border-amber-200/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(217,119,6,0.08)] hover:border-amber-300 transition-colors'
+                    : 'bg-stone-50/80 text-stone-500 border-stone-200/80 shadow-2xs'
                 }`}
                 title={
                   isShieldProtecting
@@ -88,13 +88,30 @@ export const Header: React.FC<HeaderProps> = ({
                 }
               >
                 <Flame
-                  className={`w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 ${
-                    (studentProfile.streakDays || 0) > 0 || isShieldProtecting
-                      ? 'fill-amber-500 text-amber-500'
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform ${
+                    isShieldProtecting
+                      ? 'fill-amber-500 text-orange-600 drop-shadow-[0_1px_3px_rgba(245,158,11,0.6)]'
+                      : (studentProfile.streakDays || 0) > 0
+                      ? 'fill-amber-400 text-orange-500 drop-shadow-[0_1px_2px_rgba(249,115,22,0.35)]'
                       : 'fill-stone-300 text-stone-400'
                   }`}
                 />
-                <span>{studentProfile.streakDays || 0}d</span>
+                <span className="flex items-baseline gap-0.5 tabular-nums">
+                  <span
+                    className={`font-extrabold text-[11px] sm:text-[12px] leading-none ${
+                      (studentProfile.streakDays || 0) > 0 ? 'text-amber-950' : 'text-stone-500'
+                    }`}
+                  >
+                    {studentProfile.streakDays || 0}
+                  </span>
+                  <span
+                    className={`text-[8.5px] sm:text-[9.5px] font-bold leading-none ${
+                      (studentProfile.streakDays || 0) > 0 ? 'text-amber-750 text-amber-700/80' : 'text-stone-400'
+                    }`}
+                  >
+                    d
+                  </span>
+                </span>
               </span>
 
               {/* Protetor de Chama (Escudo) com tooltip interativo */}
@@ -102,12 +119,12 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowShieldTooltip((prev) => !prev)}
-                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] cursor-pointer transition-all border shrink-0 ${
+                  className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] cursor-pointer transition-all border shrink-0 ${
                     isShieldProtecting
-                      ? 'bg-amber-100 text-amber-900 border-amber-300 font-bold hover:bg-amber-200 ring-1 ring-amber-400/40'
+                      ? 'bg-gradient-to-b from-amber-100 to-amber-200/90 text-amber-950 border-amber-300 font-bold hover:bg-amber-200 ring-1 ring-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.25)]'
                       : streakShields > 0
-                      ? 'bg-blue-50 text-blue-700 border-blue-200/80 hover:bg-blue-100 font-bold shadow-2xs'
-                      : 'bg-stone-50 text-stone-400 hover:text-stone-600 hover:bg-stone-100 border-stone-200/80 font-medium'
+                      ? 'bg-gradient-to-b from-blue-50/90 via-blue-50 to-blue-100/70 text-blue-950 border-blue-200/90 hover:border-blue-300 hover:from-blue-100/80 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(37,99,235,0.08)]'
+                      : 'bg-stone-50/80 text-stone-400 hover:text-stone-600 hover:bg-stone-100 border-stone-200/80 font-medium shadow-2xs'
                   }`}
                   title={
                     isShieldProtecting
@@ -117,15 +134,17 @@ export const Header: React.FC<HeaderProps> = ({
                   aria-label="Escudo de Ofensiva"
                 >
                   <Shield
-                    className={`w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 ${
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform ${
                       isShieldProtecting
-                        ? 'fill-amber-500 text-amber-700'
+                        ? 'fill-amber-500 text-orange-600 drop-shadow-[0_1px_3px_rgba(245,158,11,0.5)]'
                         : streakShields > 0
-                        ? 'fill-blue-500 text-blue-600'
+                        ? 'fill-blue-400 text-blue-600 drop-shadow-[0_1px_2px_rgba(37,99,235,0.3)]'
                         : 'text-stone-400'
                     }`}
                   />
-                  <span>{streakShields}</span>
+                  <span className="tabular-nums font-extrabold text-[11px] sm:text-[12px] leading-none">
+                    {streakShields}
+                  </span>
                 </button>
 
                 {showShieldTooltip && (
