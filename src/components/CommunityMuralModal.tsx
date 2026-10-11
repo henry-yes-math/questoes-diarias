@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Flame, Users, Trophy } from 'lucide-react';
 import { DailySubmission } from '../types';
+import { ShareChallengeCard } from './ShareChallengeCard';
 
 interface Props {
   isOpen: boolean;
@@ -201,6 +202,13 @@ export const CommunityMuralModal: React.FC<Props> = ({
                 </svg>
                 <span>Entrar no Grupo para garantir a 2ª</span>
               </a>
+            </div>
+          )}
+
+          {/* Card de Compartilhamento no Mural para veteranos que já concluíram hoje */}
+          {hasCompletedToday && !isFirstQuestion && (
+            <div className="mt-3 animate-in fade-in duration-200">
+              <ShareChallengeCard whatsappGroupUrl={whatsappGroupUrl} />
             </div>
           )}
         </div>

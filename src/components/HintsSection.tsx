@@ -14,6 +14,7 @@ import {
   Check
 } from 'lucide-react';
 import { PedagogicalStep } from '../types';
+import { ShareChallengeCard } from './ShareChallengeCard';
 
 interface DynamicHintsSectionProps {
   steps: PedagogicalStep[];
@@ -412,6 +413,14 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
             </a>
           </div>
         </div>
+      )}
+
+      {/* Card de Compartilhamento nos Grupos (Veterano após resolução) */}
+      {hasCompletedToday && !isFirstQuestion && (
+        <ShareChallengeCard
+          whatsappGroupUrl={whatsappGroupUrl}
+          className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300"
+        />
       )}
     </section>
   );

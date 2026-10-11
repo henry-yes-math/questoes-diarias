@@ -6,6 +6,8 @@ import {
   calculateNewStreakByCycle,
   MAX_STREAK_SHIELDS,
   STREAK_DAYS_PER_SHIELD,
+  generateGroupShareWhatsAppUrl,
+  DEFAULT_WHATSAPP_GROUP_URL,
 } from '../src/utils/gamification';
 
 function assert(condition: boolean, message: string) {
@@ -270,6 +272,87 @@ assert(q2MaxShields.newShields === 2, 'Não deve ultrapassar o teto máximo de 2
 const q3Res = calculateNewStreakWithShield(2, 2, 3, 1, 3);
 assert(q3Res.newShields === 1, '3ª questão não deve conceder novo escudo');
 assert(q3Res.earnedNewShield === false, 'earnedNewShield deve ser false na 3ª questão');
+
+// ====================================================
+// TESTE 6: Compartilhamento nos Grupos de Estudo do WhatsApp
+// ====================================================
+console.log('\nTeste 6: Compartilhamento nos Grupos de Estudo do WhatsApp');
+
+const customGroupUrl = 'https://chat.whatsapp.com/Jaw0218SuCz6tMC7pez9UT';
+const shareUrlCustom = generateGroupShareWhatsAppUrl(customGroupUrl);
+
+assert(
+  shareUrlCustom.startsWith('https://api.whatsapp.com/send?text='),
+  'Deve gerar URL com protocolo correto da API do WhatsApp'
+);
+
+const decodedCustom = decodeURIComponent(shareUrlCustom.replace('https://api.whatsapp.com/send?text=', ''));
+assert(
+  decodedCustom.includes('Gente, pra quem tá treinando matemática pro ENEM: tô usando esse grupo e achei muito bom.'),
+  'Deve conter a abertura acolhedora de recomendação pessoal ("Gente, pra quem tá...")'
+);
+assert(
+  decodedCustom.includes('Todo dia eles mandam 1 questão oficial que dá pra resolver em 3 minutos, com dicas passo a passo se você travar.'),
+  'Deve conter o miolo destacando questão oficial, 3 minutos e dicas passo a passo'
+);
+assert(
+  decodedCustom.includes('Achei muito prático pra manter o ritmo todo dia sem tomar tempo:'),
+  'Deve conter o fechamento destacando praticidade e ritmo sem tomar tempo'
+);
+assert(
+  decodedCustom.includes(`👉 ${customGroupUrl}`),
+  'Deve incluir o link dinâmico oficial do grupo do WhatsApp'
+);
+
+// Fallback quando não há URL customizada ou ela está em branco
+const shareUrlFallback = generateGroupShareWhatsAppUrl();
+const decodedFallback = decodeURIComponent(shareUrlFallback.replace('https://api.whatsapp.com/send?text=', ''));
+assert(
+  decodedFallback.includes(`👉 ${DEFAULT_WHATSAPP_GROUP_URL}`),
+  'Deve usar fallback seguro para DEFAULT_WHATSAPP_GROUP_URL quando não informada'
+);
+
+const shareUrlEmpty = generateGroupShareWhatsAppUrl('   ');
+const decodedEmpty = decodeURIComponent(shareUrlEmpty.replace('https://api.whatsapp.com/send?text=', ''));
+assert(
+  decodedEmpty.includes(`👉 ${DEFAULT_WHATSAPP_GROUP_URL}`),
+  'Deve usar fallback seguro quando URL passada for apenas espaços vazios'
+);
+
+// ====================================================
+// TESTE 7: Regras de Exibição Contextual (Clean Code & UX)
+// ====================================================
+console.log('\nTeste 7: Regras de Exibição Contextual dos Cards de Retenção e Compartilhamento');
+
+interface CardVisibilityDecision {
+  showNewbieJoinCard: boolean;
+  showVeteranShareCard: boolean;
+}
+
+function resolvePostQuestionCardVisibility(
+  hasCompletedToday: boolean,
+  isFirstQuestion: boolean
+): CardVisibilityDecision {
+  return {
+    showNewbieJoinCard: Boolean(hasCompletedToday && isFirstQuestion),
+    showVeteranShareCard: Boolean(hasCompletedToday && !isFirstQuestion),
+  };
+}
+
+// 7.1 Aluno Novato (1ª Questão concluída hoje):
+const newbieState = resolvePostQuestionCardVisibility(true, true);
+assert(newbieState.showNewbieJoinCard === true, 'Novato concluindo a 1ª questão deve ver o card de entrar no grupo');
+assert(newbieState.showVeteranShareCard === false, 'Novato NÃO deve ver card de compartilhamento nos grupos antes de entrar');
+
+// 7.2 Aluno Veterano (Questão subsequente concluída hoje):
+const veteranState = resolvePostQuestionCardVisibility(true, false);
+assert(veteranState.showNewbieJoinCard === false, 'Veterano NÃO deve ver card de boas-vindas da 1ª questão');
+assert(veteranState.showVeteranShareCard === true, 'Veterano concluindo hoje deve ver o card "Fortaleça sua Galera"');
+
+// 7.3 Aluno que ainda não completou a questão de hoje:
+const pendingState = resolvePostQuestionCardVisibility(false, false);
+assert(pendingState.showNewbieJoinCard === false, 'Aluno que não concluiu hoje não deve ver card de novato');
+assert(pendingState.showVeteranShareCard === false, 'Aluno que não concluiu hoje não deve ver card de veterano');
 
 console.log('\n------------------------------------------------------');
 console.log(' \x1b[32m✔ TODOS OS TESTES DE METAS E ESCUDOS PASSARAM COM SUCESSO!\x1b[0m\n');

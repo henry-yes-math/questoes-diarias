@@ -321,6 +321,24 @@ export function calculateNewStreak(
 export const DEFAULT_WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/G5qC4QhK64o4h3Y';
 
 /**
+ * Gera a mensagem oficial para o aluno recomendar o grupo do WhatsApp nos seus grupos de estudo
+ */
+export function generateGroupShareWhatsAppUrl(whatsappGroupUrl?: string): string {
+  const cleanGroupUrl = (whatsappGroupUrl && whatsappGroupUrl.trim())
+    ? whatsappGroupUrl.trim()
+    : DEFAULT_WHATSAPP_GROUP_URL;
+
+  const text = `Gente, pra quem tá treinando matemática pro ENEM: tô usando esse grupo e achei muito bom. 
+
+Todo dia eles mandam 1 questão oficial que dá pra resolver em 3 minutos, com dicas passo a passo se você travar.
+
+Achei muito prático pra manter o ritmo todo dia sem tomar tempo:
+👉 ${cleanGroupUrl}`;
+
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+}
+
+/**
  * Gera o texto estilo Wordle para o aluno compartilhar a questão do dia e desafiar amigos no WhatsApp
  */
 export function generateStudentInviteWhatsAppUrl(
