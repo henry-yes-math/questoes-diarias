@@ -225,7 +225,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       {/* Main Enunciado */}
       <div
         id="question-enunciado"
-        className={`font-serif text-stone-900 leading-relaxed tracking-normal select-text space-y-4 ${bodyTextClass}`}
+        className={`question-content font-serif text-stone-900 leading-relaxed tracking-normal select-text space-y-4 ${bodyTextClass}`}
         dangerouslySetInnerHTML={{ __html: cleanEnunciado }}
       />
 
