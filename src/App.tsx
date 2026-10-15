@@ -61,12 +61,25 @@ export default function App() {
     todaySubmissions,
     todayMySubmission,
     milestoneInfo,
+    isSubmitting,
+    pendingSubmissionSync,
+    isLoadingMural,
+    muralLoadError,
+    refreshMural,
+    retryPendingSubmission,
     updateNickname,
     completeQuestion,
   } = useStudentGamification(questionIdStr);
 
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
   const celebrationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Restaura visualmente a alternativa correta marcada caso o aluno já tenha concluído hoje ou esteja com sincronização pendente
+  useEffect(() => {
+    if ((hasCompletedToday || pendingSubmissionSync) && question.correctLetter && selectedLetter === null) {
+      setSelectedLetter(question.correctLetter);
+    }
+  }, [hasCompletedToday, pendingSubmissionSync, question.correctLetter, selectedLetter, setSelectedLetter]);
 
   // Controle de visibilidade e autenticação do Painel do Professor
   // O botão só existe na tela se a URL contiver estritamente ?admin=1 ou ?admin=true
@@ -93,6 +106,13 @@ export default function App() {
     window.addEventListener('popstate', checkAdminParam);
     return () => window.removeEventListener('popstate', checkAdminParam);
   }, []);
+
+  // Atualiza mural ao abrir painel do professor
+  useEffect(() => {
+    if (adminOpen) {
+      refreshMural();
+    }
+  }, [adminOpen, refreshMural]);
 
   const handleAdminButtonClick = () => {
     // Se o professor já autenticou nesta sessão/dispositivo com a senha mestra
@@ -134,7 +154,7 @@ export default function App() {
       const res = await completeQuestion();
 
       // 2. Micro-delay pedagógico (850ms):
-      // Permite o aluno comemorar e absorver visualmente a cor verde da alternativa correta antes da gaveta subir
+      // Só abre a gaveta de celebração se o Firestore confirmou a gravação!
       if (res) {
         celebrationTimeoutRef.current = setTimeout(() => {
           setIsCelebrationOpen(true);
@@ -142,6 +162,15 @@ export default function App() {
       }
     } else {
       setIsCelebrationOpen(false);
+    }
+  };
+
+  const handleRetrySync = async () => {
+    const res = await retryPendingSubmission();
+    if (res) {
+      celebrationTimeoutRef.current = setTimeout(() => {
+        setIsCelebrationOpen(true);
+      }, 450);
     }
   };
 
@@ -187,6 +216,10 @@ export default function App() {
             onToggleFontSize={toggleFontSize}
             todayCompletedCount={todaySubmissions.length}
             onOpenMural={() => setIsMuralModalOpen(true)}
+            isSubmitting={isSubmitting}
+            hasCompletedToday={hasCompletedToday}
+            pendingSubmissionSync={pendingSubmissionSync}
+            onRetrySync={handleRetrySync}
           />
         </section>
 
@@ -205,6 +238,9 @@ export default function App() {
               selectedLetter={selectedLetter}
               onConfirmAnswer={handleConfirmAnswer}
               hasCompletedToday={hasCompletedToday}
+              isSubmitting={isSubmitting}
+              pendingSubmissionSync={pendingSubmissionSync}
+              onRetrySync={handleRetrySync}
               isFirstQuestion={Boolean(milestoneInfo?.isFirstQuestion)}
               whatsappGroupUrl={currentCycle?.whatsappGroupUrl}
             />

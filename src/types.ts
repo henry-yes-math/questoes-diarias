@@ -32,6 +32,7 @@ export interface QuestionData {
 export interface StudentProfile {
   studentId: string;
   nickname: string;
+  nicknameLower?: string;
   totalSolved: number;
   streakDays: number;
   lastSolvedDate: string | null; // Formato YYYY-MM-DD

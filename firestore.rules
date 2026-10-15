@@ -1,9 +1,15 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isValidStudent(data) {
+      return (!('nickname' in data) || (data.nickname is string && data.nickname.size() <= 100)) &&
+             (!('nicknameLower' in data) || (data.nicknameLower is string && data.nicknameLower.size() <= 100));
+    }
+
     // Alunos e perfis
     match /students/{studentId} {
-      allow read, write: if true;
+      allow read, delete: if true;
+      allow create, update: if isValidStudent(request.resource.data);
     }
     
     // Submissões diárias da turma

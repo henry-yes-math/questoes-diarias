@@ -11,7 +11,10 @@ import {
   ArrowRight,
   BookOpen,
   Flame,
-  Check
+  Check,
+  Loader2,
+  RefreshCw,
+  AlertTriangle,
 } from 'lucide-react';
 import { PedagogicalStep } from '../types';
 import { ShareChallengeCard } from './ShareChallengeCard';
@@ -28,6 +31,9 @@ interface DynamicHintsSectionProps {
   selectedLetter?: string | null;
   onConfirmAnswer?: (letter: string) => void;
   hasCompletedToday?: boolean;
+  isSubmitting?: boolean;
+  pendingSubmissionSync?: boolean;
+  onRetrySync?: () => void;
   isFirstQuestion?: boolean;
   whatsappGroupUrl?: string;
 }
@@ -134,6 +140,9 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
   selectedLetter,
   onConfirmAnswer,
   hasCompletedToday = false,
+  isSubmitting = false,
+  pendingSubmissionSync = false,
+  onRetrySync,
   isFirstQuestion = false,
   whatsappGroupUrl,
 }) => {
@@ -307,10 +316,38 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
 
                         const validationCard = (
                           <div className="py-2.5 my-3 border-y border-emerald-100/80">
-                            {selectedLetter === correctLetter ? (
+                            {hasCompletedToday ? (
                               <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
                                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                                 <span>Alternativa {correctLetter} confirmada! Sua ofensiva de hoje foi computada com sucesso.</span>
+                              </div>
+                            ) : pendingSubmissionSync && selectedLetter === correctLetter ? (
+                              <div className="bg-amber-50/95 border border-amber-300/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+                                <div className="flex items-start gap-2.5">
+                                  <span className="p-1.5 rounded-xl bg-amber-100 text-amber-700 mt-0.5 shrink-0">
+                                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                                  </span>
+                                  <div>
+                                    <h4 className="text-xs sm:text-sm font-bold text-amber-950">
+                                      Sincronização pendente com o Mural
+                                    </h4>
+                                    <p className="text-xs text-amber-900 leading-relaxed mt-0.5">
+                                      Sua resposta <strong>{correctLetter}</strong> foi salva localmente, mas a internet oscilou ao registrar sua presença no servidor. Toque abaixo para sincronizar:
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  disabled={isSubmitting}
+                                  onClick={() => (onRetrySync ? onRetrySync() : onConfirmAnswer(correctLetter))}
+                                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-[0.99] disabled:opacity-60 text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer"
+                                >
+                                  <RefreshCw className={`w-4 h-4 ${isSubmitting ? 'animate-spin' : ''}`} />
+                                  <span>
+                                    {isSubmitting ? 'Sincronizando sua ofensiva...' : 'Sincronizar minha presença agora'}
+                                  </span>
+                                </button>
                               </div>
                             ) : (
                               <div className="bg-amber-50/95 border border-amber-300/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
@@ -330,11 +367,21 @@ export const HintsSection: React.FC<DynamicHintsSectionProps> = ({
 
                                 <button
                                   type="button"
+                                  disabled={isSubmitting}
                                   onClick={() => onConfirmAnswer(correctLetter)}
-                                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer group"
+                                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 active:scale-[0.99] disabled:opacity-60 text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer group"
                                 >
-                                  <Flame className="w-4 h-4 fill-amber-400 text-amber-400 group-hover:scale-110 transition-transform" />
-                                  <span>Confirmar Alternativa {correctLetter} e Validar Ofensiva de Hoje</span>
+                                  {isSubmitting ? (
+                                    <>
+                                      <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                                      <span>Registrando sua ofensiva no Mural...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Flame className="w-4 h-4 fill-amber-400 text-amber-400 group-hover:scale-110 transition-transform" />
+                                      <span>Confirmar Alternativa {correctLetter} e Validar Ofensiva de Hoje</span>
+                                    </>
+                                  )}
                                 </button>
                               </div>
                             )}

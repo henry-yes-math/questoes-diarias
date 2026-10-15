@@ -1,0 +1,156 @@
+{
+  "entities": {
+    "StudentProfile": {
+      "title": "StudentProfile",
+      "description": "Perfil e histórico de ofensivas do aluno no desafio diário",
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "description": "Identificador único do dispositivo/aluno",
+          "maxLength": 128
+        },
+        "nickname": {
+          "type": "string",
+          "description": "Apelido ou nome exibido no mural",
+          "maxLength": 100
+        },
+        "nicknameLower": {
+          "type": "string",
+          "description": "Apelido normalizado em minúsculas para busca indexada de login",
+          "maxLength": 100
+        },
+        "totalSolved": {
+          "type": "number",
+          "description": "Total acumulado de questões resolvidas"
+        },
+        "streakDays": {
+          "type": "number",
+          "description": "Dias consecutivos de ofensiva ativa"
+        },
+        "lastSolvedDate": {
+          "type": "string",
+          "description": "Data da última resolução (YYYY-MM-DD)",
+          "maxLength": 20
+        },
+        "lastCompletedCycle": {
+          "type": "number",
+          "description": "Número do último ciclo diário concluído"
+        },
+        "streakShields": {
+          "type": "number",
+          "description": "Quantidade de protetores anti-falta acumulados"
+        },
+        "lastShieldUsedCycle": {
+          "type": "number",
+          "description": "Último ciclo em que um protetor foi utilizado"
+        },
+        "referredByStudentId": {
+          "type": "string",
+          "description": "ID do aluno que convidou",
+          "maxLength": 128
+        },
+        "referredByStudentName": {
+          "type": "string",
+          "description": "Apelido do aluno que convidou",
+          "maxLength": 100
+        },
+        "successfulReferralsCount": {
+          "type": "number",
+          "description": "Total de amigos convidados que concluíram a 1ª questão"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp ISO de criação",
+          "maxLength": 50
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp ISO de atualização",
+          "maxLength": 50
+        }
+      },
+      "required": ["studentId", "nickname", "totalSolved", "streakDays"]
+    },
+    "DailySubmission": {
+      "title": "DailySubmission",
+      "description": "Registro de conclusão de questão no ciclo diário",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "studentId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "nickname": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "cycleNumber": {
+          "type": "number"
+        },
+        "questionId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "streakDays": {
+          "type": "number"
+        },
+        "totalSolved": {
+          "type": "number"
+        },
+        "orderIndex": {
+          "type": "number"
+        },
+        "completedAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["studentId", "nickname", "date", "questionId", "streakDays", "orderIndex", "completedAt"]
+    },
+    "AppSetting": {
+      "title": "AppSetting",
+      "description": "Configuração global do ciclo diário e questão ativa",
+      "type": "object",
+      "properties": {
+        "currentCycleNumber": {
+          "type": "number"
+        },
+        "currentCycleDate": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "startedAt": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "whatsappGroupUrl": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": "StudentProfile",
+      "description": "Coleção de perfis dos alunos"
+    },
+    "/daily_submissions/{submissionId}": {
+      "schema": "DailySubmission",
+      "description": "Coleção de submissões diárias por ciclo"
+    },
+    "/app_settings/{settingId}": {
+      "schema": "AppSetting",
+      "description": "Configurações do ciclo diário e questão ativa"
+    }
+  }
+}

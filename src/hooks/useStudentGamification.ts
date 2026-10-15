@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { StudentProfile, DailySubmission, MilestoneInfo, DailyCycleConfig } from '../types';
 import {
   getLocalStudentId,
@@ -10,8 +10,14 @@ import {
   getOrCreateStudentProfile,
   registerDailySubmission,
   markReferralRewardSeen,
-  subscribeToCurrentCycleSubmissions,
   subscribeToDailyCycle,
+  fetchSubmissionsByCycleWithCache,
+  getCachedDailyCycle,
+  getCachedSubmissionsForCycle,
+  saveCachedSubmissionsForCycle,
+  getPendingSubmission,
+  setPendingSubmission,
+  clearPendingSubmission,
   getPendingReferral,
   setPendingReferral,
   clearPendingReferral,
@@ -48,28 +54,115 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
     }
   }, []);
 
-  const [currentCycle, setCurrentCycle] = useState<DailyCycleConfig>({
-    currentCycleNumber: 1,
-    currentCycleDate: getLocalDateString(),
-    startedAt: new Date().toISOString(),
+  const [currentCycle, setCurrentCycle] = useState<DailyCycleConfig>(() => {
+    const cached = getCachedDailyCycle();
+    if (cached) return cached;
+    return {
+      currentCycleNumber: 1,
+      currentCycleDate: getLocalDateString(),
+      startedAt: new Date().toISOString(),
+    };
   });
+  const [isCycleLoaded, setIsCycleLoaded] = useState<boolean>(() => Boolean(getCachedDailyCycle()));
 
   const [profile, setProfile] = useState<StudentProfile | null>(null);
-  const [todaySubmissions, setTodaySubmissions] = useState<DailySubmission[]>([]);
+  const [todaySubmissions, setTodaySubmissions] = useState<DailySubmission[]>(() => {
+    const cachedCycle = getCachedDailyCycle();
+    if (cachedCycle) {
+      return getCachedSubmissionsForCycle(cachedCycle.currentCycleNumber) || [];
+    }
+    return [];
+  });
   const [todayMySubmission, setTodayMySubmission] = useState<DailySubmission | null>(null);
   const [milestoneInfo, setMilestoneInfo] = useState<MilestoneInfo | null>(null);
   const [hasCompletedToday, setHasCompletedToday] = useState<boolean>(false);
 
-  // Escuta as alterações no ciclo diário gerenciado pelo professor
+  // Estados de sincronização da submissão e do Mural
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [pendingSubmissionSync, setPendingSubmissionSync] = useState<boolean>(() => {
+    const pending = getPendingSubmission();
+    return Boolean(pending && pending.questionId === currentQuestionId);
+  });
+  const [isLoadingMural, setIsLoadingMural] = useState<boolean>(false);
+  const [muralLoadError, setMuralLoadError] = useState<boolean>(false);
+  const isSubmittingRef = useRef<boolean>(false);
+
+  // Atualiza estado de submissão pendente se trocar de questão
+  useEffect(() => {
+    const pending = getPendingSubmission();
+    setPendingSubmissionSync(Boolean(pending && pending.questionId === currentQuestionId));
+  }, [currentQuestionId]);
+
+  // Escuta as alterações no ciclo diário gerenciado pelo professor (apenas 1 documento leve)
   useEffect(() => {
     const unsubCycle = subscribeToDailyCycle((cycle) => {
       setCurrentCycle(cycle);
+      setIsCycleLoaded(true);
     });
     return () => unsubCycle();
   }, []);
 
+  // Busca sob demanda as submissões do Mural (ao entrar, ao acertar e ao abrir o Mural)
+  const refreshMural = useCallback(
+    async (targetCycleNumber?: number) => {
+      const cycleNum = targetCycleNumber ?? currentCycle.currentCycleNumber;
+      if (!cycleNum || cycleNum < 1) return;
+
+      setIsLoadingMural(true);
+      try {
+        const res = await fetchSubmissionsByCycleWithCache(cycleNum);
+        setMuralLoadError(res.error);
+
+        setTodaySubmissions((prev) => {
+          // Se deu erro na rede e já tínhamos submissões em memória para este ciclo, preserva a lista
+          if (res.error && res.submissions.length === 0 && prev.length > 0 && prev[0]?.cycleNumber === cycleNum) {
+            return prev;
+          }
+          return res.submissions;
+        });
+
+        const mine = res.submissions.find((s) => s.studentId === studentId);
+        if (mine) {
+          setTodayMySubmission(mine);
+          setHasCompletedToday(true);
+          clearPendingSubmission();
+          setPendingSubmissionSync(false);
+        } else if (!res.error) {
+          // Só limpa se a consulta ao servidor teve sucesso e realmente não consta submissão
+          setTodayMySubmission((prevMine) => (prevMine?.cycleNumber === cycleNum ? prevMine : null));
+        }
+      } finally {
+        setIsLoadingMural(false);
+      }
+    },
+    [currentCycle.currentCycleNumber, studentId]
+  );
+
+  // 1. Carrega a lista do Mural ao entrar no app (assim que o ciclo oficial estiver carregado)
+  useEffect(() => {
+    if (!isCycleLoaded) return;
+    const cachedList = getCachedSubmissionsForCycle(currentCycle.currentCycleNumber);
+    if (cachedList && cachedList.length > 0) {
+      setTodaySubmissions(cachedList);
+      const mine = cachedList.find((s) => s.studentId === studentId);
+      if (mine) {
+        setTodayMySubmission(mine);
+        setHasCompletedToday(true);
+      }
+    }
+    refreshMural(currentCycle.currentCycleNumber);
+  }, [isCycleLoaded, currentCycle.currentCycleNumber, studentId, refreshMural]);
+
+  // 2. Atualiza a lista do Mural sempre que o aluno abrir o modal do Mural
+  useEffect(() => {
+    if (isMuralModalOpen && isCycleLoaded) {
+      refreshMural(currentCycle.currentCycleNumber);
+    }
+  }, [isMuralModalOpen, isCycleLoaded, currentCycle.currentCycleNumber, refreshMural]);
+
   // 1º Passo (Prioridade Absoluta - ID) e 2º Passo (Fallback inteligente - Nickname)
   useEffect(() => {
+    if (!isCycleLoaded) return;
     let isMounted = true;
 
     async function initStudent() {
@@ -78,7 +171,6 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
       if (!isMounted) return;
 
       if (profileById) {
-        // Encontrou por ID! Usa perfil consolidado diretamente
         setProfile(profileById);
         if (profileById.nickname) {
           setNicknameState(profileById.nickname);
@@ -87,6 +179,12 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
         }
         if (profileById.lastCompletedCycle === currentCycle.currentCycleNumber) {
           setHasCompletedToday(true);
+          clearPendingSubmission();
+          setPendingSubmissionSync(false);
+        } else {
+          setHasCompletedToday((prev) =>
+            todayMySubmission?.cycleNumber === currentCycle.currentCycleNumber ? prev : false
+          );
         }
         const mInfo = calculateMilestone(profileById.totalSolved, Math.max(0, profileById.totalSolved - 1));
         setMilestoneInfo(mInfo);
@@ -99,12 +197,13 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
         if (!isMounted) return;
 
         if (profileByNick) {
-          // Adota o ID do perfil original com histórico
           setLocalStudentId(profileByNick.studentId);
           setStudentId(profileByNick.studentId);
           setProfile(profileByNick);
           if (profileByNick.lastCompletedCycle === currentCycle.currentCycleNumber) {
             setHasCompletedToday(true);
+            clearPendingSubmission();
+            setPendingSubmissionSync(false);
           }
           const mInfo = calculateMilestone(profileByNick.totalSolved, Math.max(0, profileByNick.totalSolved - 1));
           setMilestoneInfo(mInfo);
@@ -132,26 +231,7 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
     return () => {
       isMounted = false;
     };
-  }, [studentId, currentCycle.currentCycleNumber]);
-
-  // Escuta as submissões do ciclo atual em tempo real
-  useEffect(() => {
-    const unsubscribe = subscribeToCurrentCycleSubmissions(currentCycle.currentCycleNumber, (subs) => {
-      setTodaySubmissions(subs);
-      const mine = subs.find((s) => s.studentId === studentId);
-      if (mine) {
-        setTodayMySubmission(mine);
-        setHasCompletedToday(true);
-      } else {
-        setTodayMySubmission(null);
-        setHasCompletedToday(false);
-      }
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [studentId, currentCycle.currentCycleNumber]);
+  }, [studentId, isCycleLoaded, currentCycle.currentCycleNumber]);
 
   // Salvar novo nickname (ou adotar ID existente ao confirmar)
   const updateNickname = useCallback(
@@ -215,18 +295,38 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
         return null;
       }
 
+      if (isSubmittingRef.current) {
+        return null;
+      }
+
+      isSubmittingRef.current = true;
+      setIsSubmitting(true);
+
       try {
         const prevTotal = profile?.totalSolved || 0;
         const res = await registerDailySubmission(
           activeId,
           activeNick,
           currentQuestionId,
-          currentCycle.currentCycleNumber,
+          isCycleLoaded ? currentCycle.currentCycleNumber : undefined,
           referralInfo ? { referrerName: referralInfo.referrerName, referrerId: referralInfo.referrerId } : undefined
         );
+
+        clearPendingSubmission();
+        setPendingSubmissionSync(false);
         setProfile(res.profile);
         setTodayMySubmission(res.submission);
         setHasCompletedToday(true);
+
+        // Atualiza a lista local do Mural imediatamente e busca a versão mais recente do servidor
+        const targetCycle = res.submission.cycleNumber ?? currentCycle.currentCycleNumber;
+        setTodaySubmissions((prev) => {
+          const filtered = prev.filter((s) => s.studentId !== res.submission.studentId);
+          const next = [...filtered, res.submission].sort((a, b) => a.orderIndex - b.orderIndex);
+          saveCachedSubmissionsForCycle(targetCycle, next);
+          return next;
+        });
+        refreshMural(targetCycle);
 
         if (res.shieldWasUsed) {
           setWasShieldUsedInSubmission(true);
@@ -243,27 +343,76 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
 
         return res;
       } catch (err) {
-        console.error('Erro ao registrar conclusão diária:', err);
+        console.error('Erro ao registrar conclusão diária (salvando na fila local):', err);
+        setPendingSubmission({
+          studentId: activeId,
+          nickname: activeNick,
+          questionId: currentQuestionId,
+          cycleNumber: isCycleLoaded ? currentCycle.currentCycleNumber : undefined,
+          storedAt: new Date().toISOString(),
+        });
+        setPendingSubmissionSync(true);
         return null;
+      } finally {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
       }
     },
-    [studentId, nickname, currentQuestionId, currentCycle.currentCycleNumber, profile]
+    [studentId, nickname, currentQuestionId, isCycleLoaded, currentCycle.currentCycleNumber, profile, referralInfo, refreshMural]
   );
+
+  // Reenvia submissão pendente da fila local (manual ou automático)
+  const retryPendingSubmission = useCallback(async () => {
+    const pending = getPendingSubmission();
+    if (!pending || isSubmittingRef.current) return null;
+    const res = await completeQuestion(pending.studentId || studentId, pending.nickname || nickname);
+    return res;
+  }, [completeQuestion, studentId, nickname]);
+
+  // Reenvio automático em segundo plano ao carregar ciclo, reconectar à internet ou voltar para a aba
+  useEffect(() => {
+    if (!isCycleLoaded || hasCompletedToday) return;
+
+    const attemptAutoSync = () => {
+      const pending = getPendingSubmission();
+      if (pending && (pending.nickname || nickname) && !isSubmittingRef.current) {
+        retryPendingSubmission();
+      }
+    };
+
+    attemptAutoSync();
+
+    const handleOnline = () => attemptAutoSync();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        attemptAutoSync();
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isCycleLoaded, hasCompletedToday, nickname, retryPendingSubmission]);
 
   const streakShields = profile?.streakShields ?? 0;
   const missedCycles =
-    profile?.lastCompletedCycle != null && profile.lastCompletedCycle > 0
+    isCycleLoaded && profile?.lastCompletedCycle != null && profile.lastCompletedCycle > 0
       ? Math.max(0, currentCycle.currentCycleNumber - 1 - profile.lastCompletedCycle)
       : 0;
 
   // O aluno está protegido se tiver faltado 1 ou mais ciclos e possuir escudos suficientes para cobrir TODAS as faltas
   const isShieldProtectingCurrentCycle = Boolean(
+    isCycleLoaded &&
     profile &&
     missedCycles > 0 &&
     missedCycles <= streakShields
   );
 
   const wasShieldUsed = wasShieldUsedInSubmission || Boolean(
+    isCycleLoaded &&
     profile &&
     profile.lastShieldUsedCycle === currentCycle.currentCycleNumber - 1 &&
     profile.lastCompletedCycle === currentCycle.currentCycleNumber
@@ -272,6 +421,7 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
   const shieldsUsedCount = shieldsUsedInSubmission || (isShieldProtectingCurrentCycle ? missedCycles : wasShieldUsed ? 1 : 0);
 
   const earnedNewShield = earnedNewShieldInSubmission || Boolean(
+    isCycleLoaded &&
     profile &&
     profile.lastCompletedCycle === currentCycle.currentCycleNumber &&
     profile.streakDays > 0 &&
@@ -281,7 +431,7 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
 
   // Exibe o modal de resgate automaticamente ao entrar no app se o aluno estiver protegido por escudo
   useEffect(() => {
-    if (!profile || !studentId || isNickModalOpen) return;
+    if (!isCycleLoaded || !profile || !studentId || isNickModalOpen) return;
 
     if (isShieldProtectingCurrentCycle) {
       const storageKey = `yes_shield_rescue_seen_${studentId}_cycle_${currentCycle.currentCycleNumber}`;
@@ -290,7 +440,7 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
         setIsShieldRescueModalOpen(true);
       }
     }
-  }, [profile, studentId, isShieldProtectingCurrentCycle, currentCycle.currentCycleNumber, isNickModalOpen]);
+  }, [isCycleLoaded, profile, studentId, isShieldProtectingCurrentCycle, currentCycle.currentCycleNumber, isNickModalOpen]);
 
   // Função para fechar e registrar que o aluno já viu o modal neste ciclo
   const dismissShieldRescueModal = useCallback(() => {
@@ -307,6 +457,7 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
     studentId,
     nickname,
     currentCycle,
+    isCycleLoaded,
     isNickModalOpen,
     setIsNickModalOpen,
     isMuralModalOpen,
@@ -331,6 +482,12 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
     todayMySubmission,
     milestoneInfo,
     hasCompletedToday,
+    isSubmitting,
+    pendingSubmissionSync,
+    isLoadingMural,
+    muralLoadError,
+    refreshMural,
+    retryPendingSubmission,
     updateNickname,
     completeQuestion,
   };

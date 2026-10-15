@@ -8,6 +8,7 @@ import {
   query,
   where,
   getDocs,
+  getCountFromServer,
   orderBy,
   runTransaction,
   serverTimestamp,
@@ -21,6 +22,7 @@ import {
   calculateNewStreakWithShield,
   calculateMilestone,
 } from '../utils/gamification';
+import { INITIAL_QUESTION } from '../data/fallbackQuestion';
 
 const STUDENTS_COLLECTION = 'students';
 const SUBMISSIONS_COLLECTION = 'daily_submissions';
@@ -31,11 +33,80 @@ const ACTIVE_QUESTION_DOC_ID = 'active_question';
 const LOCAL_STUDENT_ID_KEY = 'yesmatematica_student_id';
 const LOCAL_STUDENT_NICK_KEY = 'yesmatematica_student_nick';
 const LOCAL_PENDING_REFERRAL_KEY = 'yesmatematica_pending_referral';
+const LOCAL_CACHED_CYCLE_KEY = 'yesmatematica_cached_cycle_v1';
+const LOCAL_CACHED_SUBMISSIONS_PREFIX = 'yesmatematica_cached_subs_cycle_';
+const LOCAL_PENDING_SUBMISSION_KEY = 'yesmatematica_pending_submission_v1';
 
 export interface PendingReferralInfo {
   referrerName: string;
   referrerId?: string;
   storedAt: string;
+}
+
+export interface PendingSubmissionPayload {
+  studentId: string;
+  nickname: string;
+  questionId: string;
+  cycleNumber?: number;
+  storedAt: string;
+}
+
+export function getPendingSubmission(): PendingSubmissionPayload | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_PENDING_SUBMISSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as PendingSubmissionPayload;
+  } catch {
+    return null;
+  }
+}
+
+export function setPendingSubmission(payload: PendingSubmissionPayload): void {
+  try {
+    localStorage.setItem(LOCAL_PENDING_SUBMISSION_KEY, JSON.stringify(payload));
+  } catch (e) {
+    console.warn('Erro ao salvar submissão pendente localmente:', e);
+  }
+}
+
+export function clearPendingSubmission(): void {
+  try {
+    localStorage.removeItem(LOCAL_PENDING_SUBMISSION_KEY);
+  } catch {}
+}
+
+export function getCachedDailyCycle(): DailyCycleConfig | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_CACHED_CYCLE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as DailyCycleConfig;
+    if (parsed && typeof parsed.currentCycleNumber === 'number' && parsed.currentCycleNumber >= 1) {
+      return parsed;
+    }
+  } catch {}
+  return null;
+}
+
+export function saveCachedDailyCycle(cycle: DailyCycleConfig): void {
+  try {
+    localStorage.setItem(LOCAL_CACHED_CYCLE_KEY, JSON.stringify(cycle));
+  } catch {}
+}
+
+export function getCachedSubmissionsForCycle(cycleNumber: number): DailySubmission[] | null {
+  try {
+    const raw = localStorage.getItem(`${LOCAL_CACHED_SUBMISSIONS_PREFIX}${cycleNumber}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed as DailySubmission[];
+  } catch {}
+  return null;
+}
+
+export function saveCachedSubmissionsForCycle(cycleNumber: number, list: DailySubmission[]): void {
+  try {
+    localStorage.setItem(`${LOCAL_CACHED_SUBMISSIONS_PREFIX}${cycleNumber}`, JSON.stringify(list));
+  } catch {}
 }
 
 export function getPendingReferral(): PendingReferralInfo | null {
@@ -124,7 +195,14 @@ export async function getOrCreateDailyCycle(): Promise<DailyCycleConfig> {
   const snap = await getDoc(cycleRef);
 
   if (snap.exists()) {
-    return snap.data() as DailyCycleConfig;
+    const data = snap.data() as DailyCycleConfig;
+    saveCachedDailyCycle(data);
+    return data;
+  }
+
+  const cached = getCachedDailyCycle();
+  if (cached) {
+    return cached;
   }
 
   const todayStr = getLocalDateString();
@@ -136,6 +214,7 @@ export async function getOrCreateDailyCycle(): Promise<DailyCycleConfig> {
 
   try {
     await setDoc(cycleRef, initialCycle);
+    saveCachedDailyCycle(initialCycle);
   } catch (err) {
     console.warn('Erro ao salvar ciclo inicial no Firestore:', err);
   }
@@ -144,7 +223,7 @@ export async function getOrCreateDailyCycle(): Promise<DailyCycleConfig> {
 }
 
 /**
- * Escuta em tempo real o ciclo diário ativo
+ * Escuta em tempo real o ciclo diário ativo (apenas 1 documento leve)
  */
 export function subscribeToDailyCycle(
   callback: (cycle: DailyCycleConfig) => void
@@ -154,18 +233,22 @@ export function subscribeToDailyCycle(
     cycleRef,
     (snap) => {
       if (snap.exists()) {
-        callback(snap.data() as DailyCycleConfig);
+        const data = snap.data() as DailyCycleConfig;
+        saveCachedDailyCycle(data);
+        callback(data);
       } else {
-        const fallbackCycle: DailyCycleConfig = {
-          currentCycleNumber: 1,
-          currentCycleDate: getLocalDateString(),
-          startedAt: new Date().toISOString(),
-        };
-        callback(fallbackCycle);
+        const cached = getCachedDailyCycle();
+        if (cached) {
+          callback(cached);
+        }
       }
     },
     (err) => {
       console.warn('Erro ao escutar ciclo diário:', err);
+      const cached = getCachedDailyCycle();
+      if (cached) {
+        callback(cached);
+      }
     }
   );
 }
@@ -256,7 +339,15 @@ export async function getStudentProfileById(
     const studentRef = doc(db, STUDENTS_COLLECTION, studentId);
     const snap = await getDoc(studentRef);
     if (snap.exists()) {
-      return snap.data() as StudentProfile;
+      const data = snap.data() as StudentProfile;
+      if (data.nickname) {
+        const expectedLower = data.nickname.trim().toLowerCase();
+        if (data.nicknameLower !== expectedLower) {
+          data.nicknameLower = expectedLower;
+          updateDoc(studentRef, { nicknameLower: expectedLower }).catch(() => {});
+        }
+      }
+      return data;
     }
   } catch (err) {
     console.warn('Erro ao buscar perfil por ID no Firestore:', err);
@@ -277,7 +368,11 @@ export async function findExistingStudentByNickname(
 
   try {
     const cleanLower = clean.toLowerCase();
-    const studentsSnap = await getDocs(collection(db, STUDENTS_COLLECTION));
+    const q = query(
+      collection(db, STUDENTS_COLLECTION),
+      where('nicknameLower', '==', cleanLower)
+    );
+    const studentsSnap = await getDocs(q);
     const matching: StudentProfile[] = [];
 
     studentsSnap.forEach((docSnap) => {
@@ -285,7 +380,10 @@ export async function findExistingStudentByNickname(
       if (excludeStudentId && p.studentId === excludeStudentId) {
         return;
       }
-      if (p.nickname && p.nickname.trim().toLowerCase() === cleanLower) {
+      if (
+        (p.nicknameLower && p.nicknameLower === cleanLower) ||
+        (p.nickname && p.nickname.trim().toLowerCase() === cleanLower)
+      ) {
         matching.push(p);
       }
     });
@@ -317,16 +415,25 @@ export async function getOrCreateStudentProfile(
 ): Promise<StudentProfile> {
   const studentRef = doc(db, STUDENTS_COLLECTION, studentId);
   const snap = await getDoc(studentRef);
+  const cleanLower = nickname.trim().toLowerCase();
 
   if (snap.exists()) {
     const data = snap.data() as StudentProfile;
-    // Se o nickname mudou, atualiza
+    // Se o nickname mudou, atualiza nickname e nicknameLower
     if (nickname && data.nickname !== nickname) {
       await updateDoc(studentRef, {
         nickname,
+        nicknameLower: cleanLower,
         updatedAt: new Date().toISOString(),
       });
       data.nickname = nickname;
+      data.nicknameLower = cleanLower;
+    } else if (data.nickname && data.nicknameLower !== data.nickname.trim().toLowerCase()) {
+      const expectedLower = data.nickname.trim().toLowerCase();
+      await updateDoc(studentRef, {
+        nicknameLower: expectedLower,
+      });
+      data.nicknameLower = expectedLower;
     }
     return data;
   }
@@ -334,6 +441,7 @@ export async function getOrCreateStudentProfile(
   const newProfile: StudentProfile = {
     studentId,
     nickname,
+    nicknameLower: cleanLower,
     totalSolved: 0,
     streakDays: 0,
     streakShields: 0,
@@ -382,16 +490,27 @@ export async function registerDailySubmission(
   earnedNewShield?: boolean;
   referrerRewarded?: { friendName: string; referrerNick: string } | null;
 }> {
-  // Se não passar cicloNumber, obtém o ciclo ativo
-  const activeCycle = cycleNumber || (await getOrCreateDailyCycle()).currentCycleNumber;
   const todayStr = getLocalDateString();
-  
-  // O ID do documento é único por ciclo e aluno
-  const submissionDocId = `cycle_${activeCycle}_${studentId}`;
-  const submissionRef = doc(db, SUBMISSIONS_COLLECTION, submissionDocId);
+  const cycleRef = doc(db, APP_SETTINGS_COLLECTION, DAILY_CYCLE_DOC_ID);
   const studentRef = doc(db, STUDENTS_COLLECTION, studentId);
 
-  return await runTransaction(db, async (transaction) => {
+  const result = await runTransaction(db, async (transaction) => {
+    // 1. Lê o ciclo diário oficial direto do servidor dentro da transação
+    // Isso impede gravações acidentais no cycle_1 quando o cliente ainda não carregou o ciclo
+    const cycleSnap = await transaction.get(cycleRef);
+    let activeCycle = cycleNumber || getCachedDailyCycle()?.currentCycleNumber || 1;
+
+    if (cycleSnap.exists()) {
+      const serverCycleData = cycleSnap.data() as DailyCycleConfig;
+      if (serverCycleData.currentCycleNumber && serverCycleData.currentCycleNumber >= 1) {
+        activeCycle = serverCycleData.currentCycleNumber;
+        saveCachedDailyCycle(serverCycleData);
+      }
+    }
+
+    const submissionDocId = `cycle_${activeCycle}_${studentId}`;
+    const submissionRef = doc(db, SUBMISSIONS_COLLECTION, submissionDocId);
+
     const studentSnap = await transaction.get(studentRef);
     const existingSubmissionSnap = await transaction.get(submissionRef);
 
@@ -402,6 +521,7 @@ export async function registerDailySubmission(
       profile = {
         studentId,
         nickname,
+        nicknameLower: nickname.trim().toLowerCase(),
         totalSolved: 0,
         streakDays: 0,
         lastSolvedDate: null,
@@ -413,6 +533,22 @@ export async function registerDailySubmission(
     // Se já respondeu a questão deste ciclo
     if (existingSubmissionSnap.exists()) {
       const existingSubmission = existingSubmissionSnap.data() as DailySubmission;
+      // Garante que o perfil reflita a conclusão deste ciclo caso estivesse defasado
+      if ((profile.lastCompletedCycle || 0) < activeCycle) {
+        const finalNick = nickname || profile.nickname;
+        const syncedProfile: StudentProfile = {
+          ...profile,
+          nickname: finalNick,
+          nicknameLower: finalNick.trim().toLowerCase(),
+          totalSolved: Math.max(profile.totalSolved || 0, existingSubmission.totalSolved || 1),
+          streakDays: Math.max(profile.streakDays || 0, existingSubmission.streakDays || 1),
+          lastSolvedDate: existingSubmission.date || todayStr,
+          lastCompletedCycle: activeCycle,
+          updatedAt: new Date().toISOString(),
+        };
+        transaction.set(studentRef, cleanFirestoreData(syncedProfile));
+        profile = syncedProfile;
+      }
       return {
         submission: existingSubmission,
         profile,
@@ -425,13 +561,19 @@ export async function registerDailySubmission(
       };
     }
 
-    // Contar quantas submissões já existem neste ciclo para determinar o orderIndex (ex: #1, #2...)
+    // Contar quantas submissões já existem neste ciclo usando agregação leve (1 leitura em vez de N)
     const qCycle = query(
       collection(db, SUBMISSIONS_COLLECTION),
       where('cycleNumber', '==', activeCycle)
     );
-    const cycleSnaps = await getDocs(qCycle);
-    const orderIndex = cycleSnaps.size + 1;
+    let orderIndex = 1;
+    try {
+      const countSnap = await getCountFromServer(qCycle);
+      orderIndex = countSnap.data().count + 1;
+    } catch {
+      const cycleSnaps = await getDocs(qCycle);
+      orderIndex = cycleSnaps.size + 1;
+    }
 
     // Calcular novo total e streak/protetor baseado no ciclo
     const previousTotal = profile.totalSolved || 0;
@@ -501,6 +643,7 @@ export async function registerDailySubmission(
 
           const updatedReferrerData: Record<string, any> = {
             ...referrerData,
+            ...(referrerData.nickname ? { nicknameLower: referrerData.nickname.trim().toLowerCase() } : {}),
             streakShields: nextShields,
             successfulReferralsCount: nextReferralCount,
             lastReferralReward: {
@@ -522,9 +665,11 @@ export async function registerDailySubmission(
       }
     }
 
+    const finalNickname = nickname || profile.nickname;
     const updatedProfile: StudentProfile = {
       ...profile,
-      nickname,
+      nickname: finalNickname,
+      nicknameLower: finalNickname.trim().toLowerCase(),
       totalSolved: newTotal,
       streakDays: newStreak,
       streakShields: newShields,
@@ -592,6 +737,10 @@ export async function registerDailySubmission(
       referrerRewarded: refRewardInfo,
     };
   });
+
+  // Limpa qualquer submissão pendente na fila local após confirmação oficial do Firestore
+  clearPendingSubmission();
+  return result;
 }
 
 /**
@@ -637,11 +786,15 @@ export function subscribeToCurrentCycleSubmissions(
       });
       // Ordena por ordem de chegada (orderIndex)
       list.sort((a, b) => a.orderIndex - b.orderIndex);
+      saveCachedSubmissionsForCycle(cycleNumber, list);
       callback(list);
     },
     (error) => {
       console.warn('Erro ao escutar submissões do ciclo atual:', error);
-      callback([]);
+      const cached = getCachedSubmissionsForCycle(cycleNumber);
+      if (cached) {
+        callback(cached);
+      }
     }
   );
 }
@@ -676,11 +829,11 @@ export function subscribeToTodaySubmissions(
 }
 
 /**
- * Busca as submissões de um ciclo específico
+ * Busca as submissões de um ciclo específico com suporte a cache local e detecção de falha de rede
  */
-export async function getSubmissionsByCycle(
+export async function fetchSubmissionsByCycleWithCache(
   cycleNumber: number
-): Promise<DailySubmission[]> {
+): Promise<{ submissions: DailySubmission[]; fromCache: boolean; error: boolean }> {
   try {
     const q = query(
       collection(db, SUBMISSIONS_COLLECTION),
@@ -692,11 +845,27 @@ export async function getSubmissionsByCycle(
       list.push(docSnap.data() as DailySubmission);
     });
     list.sort((a, b) => a.orderIndex - b.orderIndex);
-    return list;
+    saveCachedSubmissionsForCycle(cycleNumber, list);
+    return { submissions: list, fromCache: false, error: false };
   } catch (err) {
-    console.warn('Erro ao buscar submissões por ciclo:', err);
-    return [];
+    console.warn('Erro ao buscar submissões por ciclo (usando cache local se disponível):', err);
+    const cached = getCachedSubmissionsForCycle(cycleNumber);
+    return {
+      submissions: cached || [],
+      fromCache: true,
+      error: true,
+    };
   }
+}
+
+/**
+ * Busca as submissões de um ciclo específico
+ */
+export async function getSubmissionsByCycle(
+  cycleNumber: number
+): Promise<DailySubmission[]> {
+  const res = await fetchSubmissionsByCycleWithCache(cycleNumber);
+  return res.submissions;
 }
 
 /**

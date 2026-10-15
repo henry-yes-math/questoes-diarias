@@ -11,6 +11,9 @@ import {
   Check,
   RotateCcw,
   Lightbulb,
+  Loader2,
+  RefreshCw,
+  AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { QuestionData, Alternative } from '../types';
@@ -25,6 +28,10 @@ interface QuestionCardProps {
   onToggleFontSize?: () => void;
   todayCompletedCount?: number;
   onOpenMural?: () => void;
+  isSubmitting?: boolean;
+  hasCompletedToday?: boolean;
+  pendingSubmissionSync?: boolean;
+  onRetrySync?: () => void;
 }
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({
@@ -37,6 +44,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   onToggleFontSize,
   todayCompletedCount = 0,
   onOpenMural,
+  isSubmitting = false,
+  hasCompletedToday = false,
+  pendingSubmissionSync = false,
+  onRetrySync,
 }) => {
   // Opção marcada provisoriamente antes de clicar em "Verificar"
   const [tentativeLetter, setTentativeLetter] = useState<string | null>(selectedLetter);
@@ -44,12 +55,14 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   // Lista de alternativas que o estudante já tentou e errou (descartadas)
   const [eliminatedLetters, setEliminatedLetters] = useState<string[]>([]);
 
-  // Sincroniza se o estado for limpo externamente
+  const alternativesRef = React.useRef<HTMLDivElement>(null);
+
+  // Sincroniza se a alternativa correta for confirmada externamente (ex: pelo botão da Resolução ou ao restaurar sessão)
   React.useEffect(() => {
-    if (selectedLetter === null) {
-      setTentativeLetter(null);
+    if (selectedLetter === question.correctLetter) {
+      setTentativeLetter(selectedLetter);
     }
-  }, [selectedLetter]);
+  }, [selectedLetter, question.correctLetter]);
 
   // Reseta seleção provisória e alternativas eliminadas ao trocar de questão
   React.useEffect(() => {
@@ -61,13 +74,17 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   const isCorrectAnswer = selectedLetter === question.correctLetter;
 
   const handleSelectAlternative = (letter: string) => {
-    // Não permite selecionar se a pergunta já foi confirmada ou se a letra já foi eliminada por erro anterior
-    if (isConfirmed || eliminatedLetters.includes(letter)) return;
+    // Não permite alterar se já acertou a questão, se está enviando ou se a letra já foi eliminada por erro anterior
+    if (isCorrectAnswer || isSubmitting || eliminatedLetters.includes(letter)) return;
+    // Se havia um alerta de erro anterior ativo, limpa o estado de erro ao escolher a nova opção com 1 único clique
+    if (selectedLetter !== null && selectedLetter !== question.correctLetter) {
+      onClearSelection();
+    }
     setTentativeLetter(letter);
   };
 
   const handleConfirm = () => {
-    if (!tentativeLetter || isConfirmed) return;
+    if (!tentativeLetter || isCorrectAnswer || isSubmitting || eliminatedLetters.includes(tentativeLetter)) return;
 
     onConfirmAnswer(tentativeLetter);
 
@@ -82,16 +99,18 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         // Safe canvas fallback
       }
     } else {
-      // Se errou, adiciona à lista de alternativas descartadas
+      // Se errou, adiciona à lista de alternativas descartadas e libera a seleção provisória para nova tentativa direta
       if (!eliminatedLetters.includes(tentativeLetter)) {
         setEliminatedLetters((prev) => [...prev, tentativeLetter]);
       }
+      setTentativeLetter(null);
     }
   };
 
   const handleTryRecalculate = () => {
     setTentativeLetter(null);
     onClearSelection();
+    alternativesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
 
   const selectedAlternative = question.alternatives.find(
@@ -230,16 +249,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       />
 
       {/* Alternatives List */}
-      <div className="mt-8 space-y-3" role="radiogroup" aria-label="Alternativas">
+      <div ref={alternativesRef} className="mt-8 space-y-3" role="radiogroup" aria-label="Alternativas">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
-            {isConfirmed
-              ? isCorrectAnswer
-                ? 'Sua resposta registrada:'
-                : 'Resultado da verificação:'
-              : 'Selecione a alternativa e confirme:'}
+            {isCorrectAnswer
+              ? 'Sua resposta registrada:'
+              : isConfirmed
+                ? 'Resultado da verificação (escolha outra opção abaixo):'
+                : 'Selecione a alternativa e confirme:'}
           </span>
-          {!isConfirmed && tentativeLetter && (
+          {!isCorrectAnswer && tentativeLetter && (
             <span className="text-xs font-semibold text-blue-600 animate-pulse">
               Opção ({tentativeLetter}) selecionada
             </span>
@@ -251,36 +270,32 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           const isSelected = selectedLetter === alt.letter;
           const isCorrect = alt.letter === question.correctLetter;
           const isEliminated = eliminatedLetters.includes(alt.letter);
+          const isDisabled = isCorrectAnswer || isSubmitting || isEliminated;
 
           let btnClass = 'border-stone-200 hover:border-stone-300 bg-stone-50/60 text-stone-800';
           let letterClass = 'bg-stone-200 text-stone-700';
 
-          if (isEliminated && !isConfirmed) {
-            // Alternativa já descartada anteriormente por erro
-            btnClass = 'opacity-45 bg-stone-100/60 border-stone-200 text-stone-400 cursor-not-allowed line-through';
-            letterClass = 'bg-stone-200 text-stone-400 line-through';
-          } else if (!isConfirmed) {
-            // Estado de pré-verificação (apenas selecionada)
-            if (isTentative) {
-              btnClass = 'border-blue-500 bg-blue-50/70 text-blue-950 ring-2 ring-blue-500/20 shadow-xs';
-              letterClass = 'bg-blue-600 text-white shadow-xs';
-            }
-          } else {
-            // Estado pós-verificação:
-            if (isSelected) {
-              if (isCorrect) {
-                // ACERTOU: Fica verde vibrante
-                btnClass = 'border-emerald-500 bg-emerald-50/80 text-emerald-950 ring-2 ring-emerald-500/20';
-                letterClass = 'bg-emerald-600 text-white';
-              } else {
-                // ERROU: Destaca em tom de alerta suave (SEM REVELAR A CORRETA!)
-                btnClass = 'border-amber-400 bg-amber-50/80 text-amber-950 ring-2 ring-amber-400/20';
-                letterClass = 'bg-amber-600 text-white';
-              }
+          if (isCorrectAnswer) {
+            if (isSelected && isCorrect) {
+              // ACERTOU: Fica verde vibrante
+              btnClass = 'border-emerald-500 bg-emerald-50/80 text-emerald-950 ring-2 ring-emerald-500/20';
+              letterClass = 'bg-emerald-600 text-white';
             } else {
-              // As demais alternativas mantêm discrição (SEM SPOILER DE VERDE DA CORRETA)
+              // Demais alternativas após acertar
               btnClass = 'opacity-50 border-stone-200 bg-stone-50/30 text-stone-400';
             }
+          } else if (isSelected && !isCorrect) {
+            // Alternativa que acabou de errar: destaca em âmbar suave e já fica bloqueada/descartada
+            btnClass = 'border-amber-400 bg-amber-50/80 text-amber-950 ring-2 ring-amber-400/20';
+            letterClass = 'bg-amber-600 text-white';
+          } else if (isEliminated) {
+            // Alternativa já descartada em tentativa anterior
+            btnClass = 'opacity-45 bg-stone-100/60 border-stone-200 text-stone-400 cursor-not-allowed line-through';
+            letterClass = 'bg-stone-200 text-stone-400 line-through';
+          } else if (isTentative) {
+            // Nova alternativa selecionada pronta para verificar
+            btnClass = 'border-blue-500 bg-blue-50/70 text-blue-950 ring-2 ring-blue-500/20 shadow-xs';
+            letterClass = 'bg-blue-600 text-white shadow-xs';
           }
 
           return (
@@ -289,11 +304,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               id={`alt-${alt.letter.toLowerCase()}-button`}
               type="button"
               role="radio"
-              aria-checked={isTentative}
-              disabled={isConfirmed || (isEliminated && !isConfirmed)}
+              aria-checked={isTentative || (isCorrectAnswer && isSelected)}
+              disabled={isDisabled}
               onClick={() => handleSelectAlternative(alt.letter)}
               className={`w-full text-left p-3.5 sm:p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
-                isConfirmed || isEliminated
+                isDisabled
                   ? 'cursor-default'
                   : 'cursor-pointer hover:translate-x-0.5'
               } ${btnClass}`}
@@ -312,7 +327,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               />
 
               {/* Indicadores Visuais */}
-              {!isConfirmed && isTentative && (
+              {!isCorrectAnswer && isTentative && !isEliminated && (
                 <div className="shrink-0 pt-0.5 text-blue-600">
                   <div className="w-5 h-5 rounded-full border-2 border-blue-600 flex items-center justify-center">
                     <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
@@ -320,8 +335,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 </div>
               )}
 
-              {/* Ícone de descartada na rodada anterior */}
-              {!isConfirmed && isEliminated && (
+              {/* Ícone de descartada em rodada anterior */}
+              {!isCorrectAnswer && isEliminated && !isSelected && (
                 <div className="shrink-0 pt-0.5 text-stone-400 font-semibold text-xs flex items-center gap-1">
                   <span>Descartada</span>
                 </div>
@@ -342,14 +357,14 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         })}
       </div>
 
-      {/* Botão de Ação: "Verificar Resposta" (antes de confirmar) */}
-      {!isConfirmed && (
+      {/* Botão de Ação: "Verificar Resposta" (sempre disponível enquanto não acertou a questão) */}
+      {!isCorrectAnswer && (
         <div className="mt-6 pt-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-stone-500 text-center sm:text-left">
             {eliminatedLetters.length > 0 ? (
               <span>
                 Você já descartou {eliminatedLetters.length}{' '}
-                {eliminatedLetters.length === 1 ? 'opção' : 'opções'}. Escolha outra e verifique.
+                {eliminatedLetters.length === 1 ? 'opção' : 'opções'}. Clique direto em outra alternativa acima e verifique.
               </span>
             ) : tentativeLetter ? (
               'Pronto para testar seu raciocínio? Clique em verificar abaixo.'
@@ -360,16 +375,25 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
           <button
             type="button"
-            disabled={!tentativeLetter}
+            disabled={!tentativeLetter || isSubmitting || eliminatedLetters.includes(tentativeLetter)}
             onClick={handleConfirm}
             className={`w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-              tentativeLetter
+              tentativeLetter && !isSubmitting && !eliminatedLetters.includes(tentativeLetter)
                 ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-md shadow-blue-500/20 cursor-pointer transform hover:-translate-y-0.5'
                 : 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed'
             }`}
           >
-            <Check className="w-4 h-4" />
-            <span>Verificar Resposta</span>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Registrando sua ofensiva...</span>
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4" />
+                <span>Verificar Resposta</span>
+              </>
+            )}
           </button>
         </div>
       )}
@@ -394,43 +418,76 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 <HelpCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               )}
               <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <h4 className="text-sm font-bold">
                     {isCorrectAnswer
                       ? 'Parabéns! Você acertou a resposta.'
                       : 'Ops, ainda não é essa alternativa!'}
                   </h4>
+                  {isCorrectAnswer && isSubmitting && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Salvando ofensiva...</span>
+                    </span>
+                  )}
                 </div>
 
                 <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">
                   {isCorrectAnswer
-                    ? selectedAlternative.explanation || 'Excelente raciocínio! Resposta correta registrada.'
+                    ? hasCompletedToday
+                      ? selectedAlternative.explanation || 'Excelente raciocínio! Sua presença e ofensiva de hoje estão garantidas no Mural.'
+                      : 'Excelente raciocínio! Alternativa correta.'
                     : selectedAlternative.explanation ||
-                      'Não desanime! Reveja os dados do enunciado ou consulte a primeira dica abaixo para identificar onde o cálculo divergiu.'}
+                      'Não desanime! As demais alternativas continuam abertas acima — consulte a dica abaixo ou selecione outra opção diretamente.'}
                 </p>
+
+                {/* Alerta de Sincronização Pendente (se a rede falhou ao gravar no Firestore) */}
+                {isCorrectAnswer && pendingSubmissionSync && !hasCompletedToday && (
+                  <div className="mt-3 p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 space-y-2.5">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <p className="text-xs leading-relaxed font-medium">
+                        Sua resposta foi salva no seu aparelho, mas a internet oscilou ao registrar sua ofensiva no Mural da Turma.
+                      </p>
+                    </div>
+                    {onRetrySync && (
+                      <button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={onRetrySync}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 active:bg-amber-800 disabled:opacity-60 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isSubmitting ? 'animate-spin' : ''}`} />
+                        <span>
+                          {isSubmitting ? 'Sincronizando presença...' : 'Sincronizar minha presença agora'}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* Botões de Ação Pedagógica */}
                 <div className="pt-2 flex flex-wrap items-center gap-2.5">
-                  {/* Se errou: Oferece Recalcular e Consultar Dica */}
+                  {/* Se errou: Oferece Consultar Dica e Recalcular */}
                   {!isCorrectAnswer && (
                     <>
                       <button
                         type="button"
-                        onClick={handleTryRecalculate}
+                        onClick={onScrollToHints}
                         className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-xs cursor-pointer"
                       >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        <span>Recalcular e tentar de novo</span>
+                        <Lightbulb className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Ver Dica de Resolução</span>
+                        <ArrowDown className="w-3 h-3 text-blue-200" />
                       </button>
 
                       <button
                         type="button"
-                        onClick={onScrollToHints}
+                        onClick={handleTryRecalculate}
                         className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-white text-stone-800 border border-stone-300 hover:bg-stone-50 transition-colors cursor-pointer"
                       >
-                        <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-                        <span>Ver Dica de Resolução</span>
-                        <ArrowDown className="w-3 h-3 text-stone-400" />
+                        <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
+                        <span>Recalcular e tentar outra</span>
                       </button>
                     </>
                   )}
