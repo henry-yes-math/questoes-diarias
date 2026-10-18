@@ -27,6 +27,90 @@ export function getYesterdayDateString(): string {
 }
 
 /**
+ * Determina o estado correto de `selectedLetter` sincronizado com o status real
+ * de conclusão do ciclo atual, impedindo que a resposta correta fique marcada
+ * indevidamente por cache residual de ciclos anteriores.
+ */
+export function syncSelectedLetterWithCompletion({
+  selectedLetter,
+  correctLetter,
+  hasCompletedToday,
+  pendingSubmissionSync,
+  isSubmitting,
+  isNickModalOpen,
+}: {
+  selectedLetter: string | null;
+  correctLetter?: string | null;
+  hasCompletedToday: boolean;
+  pendingSubmissionSync: boolean;
+  isSubmitting: boolean;
+  isNickModalOpen: boolean;
+}): string | null {
+  if (!correctLetter) return selectedLetter;
+
+  // 1. Se o aluno realmente concluiu o ciclo de hoje ou está com sincronização pendente desta questão,
+  // garante que a alternativa correta apareça marcada.
+  if (hasCompletedToday || pendingSubmissionSync) {
+    return correctLetter;
+  }
+
+  // 2. Se a alternativa correta está marcada na tela, mas o aluno NÃO concluiu hoje,
+  // NÃO tem sincronização pendente, NÃO está enviando agora e NÃO está no modal de apelido,
+  // trata-se de marcação residual de um ciclo anterior -> limpa imediatamente para null.
+  if (selectedLetter === correctLetter && !isSubmitting && !isNickModalOpen) {
+    return null;
+  }
+
+  // 3. Caso contrário (ex: null, alternativa incorreta sendo testada, ou envio em andamento), preserva.
+  return selectedLetter;
+}
+
+/**
+ * Verifica de forma determinística se o aluno já concluiu especificamente
+ * a questão ativa (`currentQuestionId`) no ciclo atual (`currentCycleNumber`).
+ * Garante que uma nova questão nunca apareça como concluída por herança de outra questão.
+ */
+export function hasStudentCompletedCurrentQuestion({
+  isCycleLoaded,
+  currentCycleNumber,
+  currentQuestionId,
+  mySubmission,
+  profile,
+}: {
+  isCycleLoaded: boolean;
+  currentCycleNumber: number;
+  currentQuestionId: string;
+  mySubmission: { cycleNumber?: number; questionId?: string } | null;
+  profile: { lastCompletedCycle?: number; lastCompletedQuestionId?: string } | null;
+}): boolean {
+  if (!isCycleLoaded || !currentCycleNumber || !currentQuestionId) {
+    return false;
+  }
+
+  const questionIdStr = String(currentQuestionId);
+
+  // 1. Se temos a submissão do aluno para o ciclo atual, ela é a fonte da verdade sobre qual questão foi resolvida
+  if (mySubmission && mySubmission.cycleNumber === currentCycleNumber) {
+    if (!mySubmission.questionId) {
+      return true;
+    }
+    return String(mySubmission.questionId) === questionIdStr;
+  }
+
+  // 2. Se o perfil indica conclusão neste ciclo E registra exatamente o ID desta questão
+  if (
+    profile &&
+    profile.lastCompletedCycle === currentCycleNumber &&
+    profile.lastCompletedQuestionId &&
+    String(profile.lastCompletedQuestionId) === questionIdStr
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Calcula o progresso, metas e comemorações com base no total acumulado
  */
 export function calculateMilestone(

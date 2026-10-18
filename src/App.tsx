@@ -13,6 +13,7 @@ import { ReferralRewardToast } from './components/ReferralRewardToast';
 import { useQuestionProgress } from './hooks/useQuestionProgress';
 import { useStudentGamification } from './hooks/useStudentGamification';
 import { INITIAL_QUESTION } from './data/fallbackQuestion';
+import { syncSelectedLetterWithCompletion } from './utils/gamification';
 
 export default function App() {
   const {
@@ -74,12 +75,33 @@ export default function App() {
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
   const celebrationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Restaura visualmente a alternativa correta marcada caso o aluno já tenha concluído hoje ou esteja com sincronização pendente
+  // Sincroniza visualmente a alternativa correta marcada:
+  // - Restaura se o aluno já concluiu o ciclo atual ou tem sincronização pendente desta questão;
+  // - Limpa imediatamente se a alternativa correta estava marcada por estado residual de ciclo anterior.
   useEffect(() => {
-    if ((hasCompletedToday || pendingSubmissionSync) && question.correctLetter && selectedLetter === null) {
-      setSelectedLetter(question.correctLetter);
+    const nextSelected = syncSelectedLetterWithCompletion({
+      selectedLetter,
+      correctLetter: question.correctLetter,
+      hasCompletedToday,
+      pendingSubmissionSync,
+      isSubmitting,
+      isNickModalOpen,
+    });
+    if (nextSelected !== selectedLetter) {
+      setSelectedLetter(nextSelected);
+      if (nextSelected === null) {
+        setIsCelebrationOpen(false);
+      }
     }
-  }, [hasCompletedToday, pendingSubmissionSync, question.correctLetter, selectedLetter, setSelectedLetter]);
+  }, [
+    hasCompletedToday,
+    pendingSubmissionSync,
+    isSubmitting,
+    isNickModalOpen,
+    question.correctLetter,
+    selectedLetter,
+    setSelectedLetter,
+  ]);
 
   // Controle de visibilidade e autenticação do Painel do Professor
   // O botão só existe na tela se a URL contiver estritamente ?admin=1 ou ?admin=true

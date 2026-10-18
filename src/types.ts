@@ -37,6 +37,7 @@ export interface StudentProfile {
   streakDays: number;
   lastSolvedDate: string | null; // Formato YYYY-MM-DD
   lastCompletedCycle?: number; // Número do último ciclo completado
+  lastCompletedQuestionId?: string; // ID da última questão completada pelo aluno
   unlockedMilestones: number[];
   streakShields?: number; // Quantidade de protetores de chama acumulados (0 a 2)
   lastShieldUsedCycle?: number; // Último ciclo em que o protetor foi acionado para salvar a ofensiva

@@ -58,9 +58,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   const alternativesRef = React.useRef<HTMLDivElement>(null);
 
   // Sincroniza se a alternativa correta for confirmada externamente (ex: pelo botão da Resolução ou ao restaurar sessão)
+  // ou se uma marcação residual de ciclo anterior for limpa de volta para null
   React.useEffect(() => {
     if (selectedLetter === question.correctLetter) {
       setTentativeLetter(selectedLetter);
+    } else if (selectedLetter === null) {
+      setTentativeLetter((prev) => (prev === question.correctLetter ? null : prev));
     }
   }, [selectedLetter, question.correctLetter]);
 

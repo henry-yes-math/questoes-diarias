@@ -37,6 +37,11 @@
           "type": "number",
           "description": "Número do último ciclo diário concluído"
         },
+        "lastCompletedQuestionId": {
+          "type": "string",
+          "description": "ID da última questão concluída pelo aluno",
+          "maxLength": 128
+        },
         "streakShields": {
           "type": "number",
           "description": "Quantidade de protetores anti-falta acumulados"

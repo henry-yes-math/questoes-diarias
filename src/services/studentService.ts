@@ -533,8 +533,12 @@ export async function registerDailySubmission(
     // Se já respondeu a questão deste ciclo
     if (existingSubmissionSnap.exists()) {
       const existingSubmission = existingSubmissionSnap.data() as DailySubmission;
-      // Garante que o perfil reflita a conclusão deste ciclo caso estivesse defasado
-      if ((profile.lastCompletedCycle || 0) < activeCycle) {
+      const isDifferentQuestion =
+        existingSubmission.questionId &&
+        String(existingSubmission.questionId) !== String(questionId);
+
+      // Garante que o perfil e a submissão reflitam a conclusão da questão atual neste ciclo
+      if ((profile.lastCompletedCycle || 0) < activeCycle || isDifferentQuestion || profile.lastCompletedQuestionId !== String(questionId)) {
         const finalNick = nickname || profile.nickname;
         const syncedProfile: StudentProfile = {
           ...profile,
@@ -544,11 +548,38 @@ export async function registerDailySubmission(
           streakDays: Math.max(profile.streakDays || 0, existingSubmission.streakDays || 1),
           lastSolvedDate: existingSubmission.date || todayStr,
           lastCompletedCycle: activeCycle,
+          lastCompletedQuestionId: String(questionId),
           updatedAt: new Date().toISOString(),
         };
         transaction.set(studentRef, cleanFirestoreData(syncedProfile));
         profile = syncedProfile;
       }
+
+      if (isDifferentQuestion) {
+        const updatedExistingSub: DailySubmission = {
+          ...existingSubmission,
+          questionId: String(questionId),
+          completedAt: new Date().toISOString(),
+        };
+        transaction.set(
+          submissionRef,
+          cleanFirestoreData({
+            ...updatedExistingSub,
+            serverTime: serverTimestamp(),
+          })
+        );
+        return {
+          submission: updatedExistingSub,
+          profile,
+          milestoneUnlocked: updatedExistingSub.unlockedMilestone,
+          isFirstQuestion: profile.totalSolved === 1,
+          shieldWasUsed: false,
+          shieldsUsed: 0,
+          earnedNewShield: false,
+          referrerRewarded: null,
+        };
+      }
+
       return {
         submission: existingSubmission,
         profile,
@@ -675,6 +706,7 @@ export async function registerDailySubmission(
       streakShields: newShields,
       lastSolvedDate: todayStr,
       lastCompletedCycle: activeCycle,
+      lastCompletedQuestionId: String(questionId),
       unlockedMilestones: newMilestones,
       updatedAt: new Date().toISOString(),
       ...(finalReferredByName ? { referredByStudentName: finalReferredByName } : {}),

@@ -8,6 +8,8 @@ import {
   STREAK_DAYS_PER_SHIELD,
   generateGroupShareWhatsAppUrl,
   DEFAULT_WHATSAPP_GROUP_URL,
+  syncSelectedLetterWithCompletion,
+  hasStudentCompletedCurrentQuestion,
 } from '../src/utils/gamification';
 
 function assert(condition: boolean, message: string) {
@@ -353,6 +355,135 @@ assert(veteranState.showVeteranShareCard === true, 'Veterano concluindo hoje dev
 const pendingState = resolvePostQuestionCardVisibility(false, false);
 assert(pendingState.showNewbieJoinCard === false, 'Aluno que não concluiu hoje não deve ver card de novato');
 assert(pendingState.showVeteranShareCard === false, 'Aluno que não concluiu hoje não deve ver card de veterano');
+
+// ====================================================
+// TESTE 8: Sincronização de Alternativa Marcada vs Conclusão do Ciclo (Caso Belle)
+// ====================================================
+console.log('\nTeste 8: Prevenção de Questão Marcada Indevidamente (Sync de Ciclo)');
+
+// 8.1 Aluna abre o app no novo dia: tinha alternativa correta marcada por cache residual, mas hasCompletedToday = false
+const staleCleared = syncSelectedLetterWithCompletion({
+  selectedLetter: 'C',
+  correctLetter: 'C',
+  hasCompletedToday: false,
+  pendingSubmissionSync: false,
+  isSubmitting: false,
+  isNickModalOpen: false,
+});
+assert(
+  staleCleared === null,
+  'Deve limpar selectedLetter (retornar null) quando a alternativa certa estava marcada mas hasCompletedToday é false'
+);
+
+// 8.2 Aluna já concluiu a questão de hoje (hasCompletedToday = true): deve restaurar a alternativa correta
+const restoredCompleted = syncSelectedLetterWithCompletion({
+  selectedLetter: null,
+  correctLetter: 'D',
+  hasCompletedToday: true,
+  pendingSubmissionSync: false,
+  isSubmitting: false,
+  isNickModalOpen: false,
+});
+assert(
+  restoredCompleted === 'D',
+  'Deve restaurar a alternativa correta quando hasCompletedToday é true'
+);
+
+// 8.3 Aluna respondeu offline e tem sincronização pendente (pendingSubmissionSync = true): deve manter alternativa correta
+const restoredPendingSync = syncSelectedLetterWithCompletion({
+  selectedLetter: null,
+  correctLetter: 'A',
+  hasCompletedToday: false,
+  pendingSubmissionSync: true,
+  isSubmitting: false,
+  isNickModalOpen: false,
+});
+assert(
+  restoredPendingSync === 'A',
+  'Deve manter/restaurar a alternativa correta quando pendingSubmissionSync é true'
+);
+
+// 8.4 Aluna acabou de clicar em Verificar Resposta e está enviando (isSubmitting = true): não deve limpar
+const submittingKeep = syncSelectedLetterWithCompletion({
+  selectedLetter: 'B',
+  correctLetter: 'B',
+  hasCompletedToday: false,
+  pendingSubmissionSync: false,
+  isSubmitting: true,
+  isNickModalOpen: false,
+});
+assert(
+  submittingKeep === 'B',
+  'Deve preservar a alternativa correta enquanto isSubmitting é true'
+);
+
+// 8.5 Aluna sem apelido clicou na alternativa correta e abriu o modal de identificação (isNickModalOpen = true): mantém até salvar
+const nickModalKeep = syncSelectedLetterWithCompletion({
+  selectedLetter: 'E',
+  correctLetter: 'E',
+  hasCompletedToday: false,
+  pendingSubmissionSync: false,
+  isSubmitting: false,
+  isNickModalOpen: true,
+});
+assert(
+  nickModalKeep === 'E',
+  'Deve preservar a alternativa correta enquanto o modal de apelido está aberto'
+);
+
+// 8.6 Aluna marcou uma alternativa INCORRETA durante o estudo (hasCompletedToday = false): deve preservar o feedback de erro
+const wrongAttemptKeep = syncSelectedLetterWithCompletion({
+  selectedLetter: 'A',
+  correctLetter: 'C',
+  hasCompletedToday: false,
+  pendingSubmissionSync: false,
+  isSubmitting: false,
+  isNickModalOpen: false,
+});
+assert(
+  wrongAttemptKeep === 'A',
+  'Deve preservar alternativa incorreta selecionada pela aluna para exibir feedback pedagógico'
+);
+
+// 8.7 Verificação cruzada por questionId + cycleNumber (hasStudentCompletedCurrentQuestion):
+// Cenário: Professor trocou para a questão nova ("2002"), mas o ciclo ainda é o 10 (ou a submissão do ciclo 10 era da questão "1001")
+const sameCycleNewQuestion = hasStudentCompletedCurrentQuestion({
+  isCycleLoaded: true,
+  currentCycleNumber: 10,
+  currentQuestionId: '2002',
+  mySubmission: { cycleNumber: 10, questionId: '1001' },
+  profile: { lastCompletedCycle: 10, lastCompletedQuestionId: '1001' },
+});
+assert(
+  sameCycleNewQuestion === false,
+  'NÃO deve considerar concluída se a questão ativa (2002) for diferente da questão respondida no ciclo (1001)'
+);
+
+// 8.8 Cenário: Ciclo ainda não carregou do servidor (isCycleLoaded = false)
+const cycleNotLoadedYet = hasStudentCompletedCurrentQuestion({
+  isCycleLoaded: false,
+  currentCycleNumber: 10,
+  currentQuestionId: '1001',
+  mySubmission: { cycleNumber: 10, questionId: '1001' },
+  profile: { lastCompletedCycle: 10, lastCompletedQuestionId: '1001' },
+});
+assert(
+  cycleNotLoadedYet === false,
+  'NÃO deve considerar concluída enquanto o ciclo oficial não for confirmado pelo servidor'
+);
+
+// 8.9 Cenário: Aluna realmente concluiu a questão ativa ("2002") no ciclo ativo (11)
+const completedCurrentQuestionAndCycle = hasStudentCompletedCurrentQuestion({
+  isCycleLoaded: true,
+  currentCycleNumber: 11,
+  currentQuestionId: '2002',
+  mySubmission: { cycleNumber: 11, questionId: '2002' },
+  profile: { lastCompletedCycle: 11, lastCompletedQuestionId: '2002' },
+});
+assert(
+  completedCurrentQuestionAndCycle === true,
+  'Deve considerar concluída quando ciclo e questionId correspondem à questão ativa de hoje'
+);
 
 console.log('\n------------------------------------------------------');
 console.log(' \x1b[32m✔ TODOS OS TESTES DE METAS E ESCUDOS PASSARAM COM SUCESSO!\x1b[0m\n');

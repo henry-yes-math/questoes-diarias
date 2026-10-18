@@ -105,13 +105,12 @@ export function useQuestionProgress() {
     const unsubscribe = subscribeToActiveQuestion((firestoreQuestion) => {
       if (firestoreQuestion && firestoreQuestion.id && Array.isArray(firestoreQuestion.alternatives)) {
         const sanitized = sanitizeQuestionData(firestoreQuestion);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+        } catch (_) {}
         setQuestion((prev) => {
-          // Só reseta a seleção se for uma questão diferente da que está aberta
-          if (String(prev?.id) !== String(sanitized.id)) {
-            handleReset(sanitized);
-            try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
-            } catch (_) {}
+          if (String(prev?.id) === String(sanitized.id) && prev?.correctLetter === sanitized.correctLetter) {
+            return prev;
           }
           return sanitized;
         });
@@ -120,6 +119,18 @@ export function useQuestionProgress() {
 
     return () => unsubscribe();
   }, []);
+
+  // Reseta a seleção e dicas abertas sempre que o ID da questão ativa mudar
+  const prevQuestionIdRef = useRef<string>(String(question?.id ?? ''));
+  useEffect(() => {
+    const currentId = String(question?.id ?? '');
+    if (prevQuestionIdRef.current !== currentId) {
+      prevQuestionIdRef.current = currentId;
+      setSelectedLetter(null);
+      const firstStep = question?.steps?.[0];
+      setUnlockedStepIds(firstStep ? new Set([firstStep.id]) : new Set());
+    }
+  }, [question?.id, question?.steps]);
 
   const handleReset = (targetQuestion?: QuestionData) => {
     setSelectedLetter(null);
