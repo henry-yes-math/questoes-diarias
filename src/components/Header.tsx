@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Settings, Flame, Target, Users, Shield } from 'lucide-react';
 import { StudentProfile } from '../types';
-import { MILESTONES } from '../utils/gamification';
+import { MILESTONES, getQuestionsUntilNextShield, MAX_STREAK_SHIELDS } from '../utils/gamification';
 
 interface HeaderProps {
   onOpenAdmin: () => void;
@@ -42,6 +42,10 @@ export const Header: React.FC<HeaderProps> = ({
   const targetMilestone =
     MILESTONES.find((m) => m > totalSolved) || 3;
   const streakShields = studentProfile?.streakShields || 0;
+  const { remainingQuestions: questionsToNextShield } = getQuestionsUntilNextShield(
+    totalSolved,
+    streakShields
+  );
 
   return (
     <header className="border-b border-stone-200 bg-white/95 backdrop-blur-md sticky top-0 z-20 transition-colors">
@@ -52,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
             Yes Matemática
           </span>
 
-          {nickname && (
+          {nickname ? (
             <button
               type="button"
               onClick={onOpenNickModal}
@@ -60,6 +64,18 @@ export const Header: React.FC<HeaderProps> = ({
               title="Clique para alterar seu apelido"
             >
               {nickname}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenNickModal}
+              className="text-[11px] sm:text-xs text-left leading-tight mt-0.5 cursor-pointer group whitespace-nowrap"
+              title="Clique para recuperar sua ofensiva"
+            >
+              <span className="text-stone-500 font-normal">Já participa? </span>
+              <span className="font-semibold text-blue-600 group-hover:text-blue-800 group-hover:underline">
+                Recuperar ofensiva
+              </span>
             </button>
           )}
         </div>
@@ -131,13 +147,19 @@ export const Header: React.FC<HeaderProps> = ({
                     <p className="text-stone-300">
                       {isShieldProtecting
                         ? 'Você não entrou ontem, mas seu escudo segurou seu fogo! Resolva a questão de hoje para não zerar sua ofensiva.'
-                        : streakShields > 0
-                        ? `Se você esquecer de entrar algum dia, o escudo é usado automaticamente e seu fogo não apaga (protege ${
-                            streakShields === 1 ? '1 dia de imprevisto' : 'até 2 dias seguidos de imprevisto'
-                          }).`
+                        : streakShields >= MAX_STREAK_SHIELDS
+                        ? 'Se você esquecer de entrar algum dia, o escudo é usado automaticamente e seu fogo não apaga (protege até 2 dias seguidos de imprevisto).'
+                        : streakShields === 1
+                        ? `Protege 1 dia de imprevisto para seu fogo não apagar. Resolva mais ${questionsToNextShield} ${
+                            questionsToNextShield === 1 ? 'questão' : 'questões'
+                          } para ganhar seu 2º escudo!`
                         : totalSolved < 2
-                        ? 'Complete 2 questões para ganhar seu 1º Escudo e proteger seu fogo de imprevistos.'
-                        : 'Ganhe novos escudos a cada 7 dias seguidos ou convidando amigos no WhatsApp.'}
+                        ? `Resolva mais ${questionsToNextShield} ${
+                            questionsToNextShield === 1 ? 'questão' : 'questões'
+                          } para ganhar seu 1º Escudo e proteger seu fogo de imprevistos.`
+                        : `Resolva mais ${questionsToNextShield} ${
+                            questionsToNextShield === 1 ? 'questão' : 'questões'
+                          } para ganhar +1 Escudo (a cada 6 questões resolvidas).`}
                     </p>
                     {isShieldProtecting && onOpenShieldRescue && (
                       <button

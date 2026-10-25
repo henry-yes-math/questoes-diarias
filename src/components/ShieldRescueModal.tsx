@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, Flame, ArrowRight, X, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { getQuestionsUntilNextShield } from '../utils/gamification';
 
 interface ShieldRescueModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface ShieldRescueModalProps {
   onActionClick?: () => void;
   streakDays: number;
   remainingShields: number;
+  totalSolved?: number;
   isAlreadyResolvedToday?: boolean;
   missedDays?: number;
   shieldsUsed?: number;
@@ -19,6 +21,7 @@ export const ShieldRescueModal: React.FC<ShieldRescueModalProps> = ({
   onActionClick,
   streakDays,
   remainingShields,
+  totalSolved = 0,
   isAlreadyResolvedToday = false,
   missedDays = 1,
   shieldsUsed = 1,
@@ -33,6 +36,7 @@ export const ShieldRescueModal: React.FC<ShieldRescueModalProps> = ({
   };
 
   const isTwoDaysAbsence = missedDays >= 2 || shieldsUsed >= 2;
+  const { remainingQuestions } = getQuestionsUntilNextShield(totalSolved, remainingShields);
 
   return (
     <AnimatePresence>
@@ -141,7 +145,24 @@ export const ShieldRescueModal: React.FC<ShieldRescueModalProps> = ({
                   <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
                     <strong className="font-bold text-stone-900">✅ Salvo no limite!</strong>{' '}
-                    Seus 2 escudos salvaram seus 2 dias de ausência. Continue firme para acumular novos escudos a cada 7 dias de ofensiva.
+                    {remainingShields >= 1 ? (
+                      <>
+                        Seus 2 escudos salvaram seus 2 dias de ausência e, ao completar esta questão, você já conquistou{' '}
+                        <strong className="text-blue-700 font-bold">+1 escudo de reserva</strong>! Faltam{' '}
+                        <strong className="text-blue-700 font-bold">
+                          {remainingQuestions} {remainingQuestions === 1 ? 'questão' : 'questões'}
+                        </strong>{' '}
+                        para o 2º escudo.
+                      </>
+                    ) : (
+                      <>
+                        Seus 2 escudos salvaram seus 2 dias de ausência. Resolva mais{' '}
+                        <strong className="text-blue-700 font-bold">
+                          {remainingQuestions} {remainingQuestions === 1 ? 'questão' : 'questões'}
+                        </strong>{' '}
+                        para ganhar um novo escudo (a cada 6 questões resolvidas).
+                      </>
+                    )}
                   </div>
                 </div>
               ) : remainingShields >= 1 ? (
@@ -150,7 +171,18 @@ export const ShieldRescueModal: React.FC<ShieldRescueModalProps> = ({
                   <div>
                     <strong className="font-bold text-stone-900">✅ Ofensiva garantida!</strong>{' '}
                     O escudo salvou ontem e você ainda tem{' '}
-                    <strong className="text-blue-700 font-bold">{remainingShields} {remainingShields === 1 ? 'escudo de reserva guardado' : 'escudos de reserva guardados'}</strong>.
+                    <strong className="text-blue-700 font-bold">
+                      {remainingShields} {remainingShields === 1 ? 'escudo de reserva guardado' : 'escudos de reserva guardados'}
+                    </strong>
+                    {remainingShields < 2 && (
+                      <>
+                        . Faltam{' '}
+                        <strong className="text-blue-700 font-bold">
+                          {remainingQuestions} {remainingQuestions === 1 ? 'questão' : 'questões'}
+                        </strong>{' '}
+                        para ganhar seu 2º escudo.
+                      </>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -158,7 +190,11 @@ export const ShieldRescueModal: React.FC<ShieldRescueModalProps> = ({
                   <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
                     <strong className="font-bold text-stone-900">✅ Ofensiva garantida!</strong>{' '}
-                    Seu escudo salvou a falta de ontem. Como você gastou seu último escudo, continue firme: você ganha um novo escudo a cada 7 dias de ofensiva.
+                    Seu escudo salvou a falta de ontem. Como você gastou seu último escudo, continue firme: faltam{' '}
+                    <strong className="text-blue-700 font-bold">
+                      {remainingQuestions} {remainingQuestions === 1 ? 'questão' : 'questões'}
+                    </strong>{' '}
+                    para você ganhar um novo escudo (a cada 6 questões resolvidas).
                   </div>
                 </div>
               )

@@ -411,7 +411,8 @@ export async function findExistingStudentByNickname(
  */
 export async function getOrCreateStudentProfile(
   studentId: string,
-  nickname: string
+  nickname: string,
+  currentCycleNumber?: number
 ): Promise<StudentProfile> {
   const studentRef = doc(db, STUDENTS_COLLECTION, studentId);
   const snap = await getDoc(studentRef);
@@ -428,6 +429,13 @@ export async function getOrCreateStudentProfile(
       });
       data.nickname = nickname;
       data.nicknameLower = cleanLower;
+
+      // Se o aluno já possui submissão registrada no ciclo atual, sincroniza o novo apelido no Mural
+      const targetCycle = currentCycleNumber || data.lastCompletedCycle;
+      if (targetCycle && targetCycle >= 1) {
+        const subRef = doc(db, SUBMISSIONS_COLLECTION, `cycle_${targetCycle}_${studentId}`);
+        updateDoc(subRef, { nickname }).catch(() => {});
+      }
     } else if (data.nickname && data.nicknameLower !== data.nickname.trim().toLowerCase()) {
       const expectedLower = data.nickname.trim().toLowerCase();
       await updateDoc(studentRef, {
@@ -696,6 +704,7 @@ export async function registerDailySubmission(
       }
     }
 
+    const nowIso = new Date().toISOString();
     const finalNickname = nickname || profile.nickname;
     const updatedProfile: StudentProfile = {
       ...profile,
@@ -708,7 +717,8 @@ export async function registerDailySubmission(
       lastCompletedCycle: activeCycle,
       lastCompletedQuestionId: String(questionId),
       unlockedMilestones: newMilestones,
-      updatedAt: new Date().toISOString(),
+      createdAt: profile.createdAt || nowIso,
+      updatedAt: nowIso,
       ...(finalReferredByName ? { referredByStudentName: finalReferredByName } : {}),
       ...(finalReferredById ? { referredByStudentId: finalReferredById } : {}),
       ...(lastShieldCycleValue !== undefined ? { lastShieldUsedCycle: lastShieldCycleValue } : {}),

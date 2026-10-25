@@ -207,7 +207,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                 </span>
               </div>
             )}
-            {currentTotal === 2 ? (
+            {earnedNewShield && currentTotal === 2 ? (
               <div className="bg-blue-50/90 border border-blue-200/90 rounded-xl p-3 flex items-start gap-2.5 text-xs text-blue-900 shadow-2xs">
                 <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0 text-blue-600 mt-0.5">
                   <Shield className="w-4 h-4 fill-blue-500 text-blue-600" />
@@ -227,7 +227,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                   <Shield className="w-4 h-4 text-emerald-600 fill-emerald-500/20 shrink-0" />
                   <span>
                     <strong className="font-bold text-emerald-950">Novo Escudo de Ofensiva Desbloqueado! 🛡️</strong>{' '}
-                    Pela sua consistência, você ganhou +1 escudo para proteger seu fogo caso tenha algum imprevisto!
+                    Você completou {currentTotal} questões resolvidas e ganhou +1 escudo para proteger seu fogo contra imprevistos!
                   </span>
                 </div>
               )

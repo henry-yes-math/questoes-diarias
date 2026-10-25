@@ -73,7 +73,9 @@ export default function App() {
   } = useStudentGamification(questionIdStr);
 
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
+  const [isPendingNickModal, setIsPendingNickModal] = useState(false);
   const celebrationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const nickModalTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sincroniza visualmente a alternativa correta marcada:
   // - Restaura se o aluno já concluiu o ciclo atual ou tem sincronização pendente desta questão;
@@ -85,7 +87,7 @@ export default function App() {
       hasCompletedToday,
       pendingSubmissionSync,
       isSubmitting,
-      isNickModalOpen,
+      isNickModalOpen: isNickModalOpen || isPendingNickModal,
     });
     if (nextSelected !== selectedLetter) {
       setSelectedLetter(nextSelected);
@@ -98,6 +100,7 @@ export default function App() {
     pendingSubmissionSync,
     isSubmitting,
     isNickModalOpen,
+    isPendingNickModal,
     question.correctLetter,
     selectedLetter,
     setSelectedLetter,
@@ -158,6 +161,10 @@ export default function App() {
     if (celebrationTimeoutRef.current) {
       clearTimeout(celebrationTimeoutRef.current);
     }
+    if (nickModalTimeoutRef.current) {
+      clearTimeout(nickModalTimeoutRef.current);
+    }
+    setIsPendingNickModal(false);
     baseHandleReset();
     setIsCelebrationOpen(false);
   };
@@ -169,10 +176,24 @@ export default function App() {
     if (celebrationTimeoutRef.current) {
       clearTimeout(celebrationTimeoutRef.current);
     }
+    if (nickModalTimeoutRef.current) {
+      clearTimeout(nickModalTimeoutRef.current);
+    }
 
     // Se acertou a alternativa:
     if (letter === question.correctLetter) {
-      // Registra a conclusão no Firebase
+      // Se o aluno ainda não tem apelido, aguarda 600ms para celebrar o acerto verde + confetes
+      // antes de abrir o Modal de Conquista solicitando o apelido
+      if (!nickname || !nickname.trim()) {
+        setIsPendingNickModal(true);
+        nickModalTimeoutRef.current = setTimeout(() => {
+          setIsNickModalOpen(true);
+          setIsPendingNickModal(false);
+        }, 600);
+        return;
+      }
+
+      // Se já tem apelido, registra a conclusão no Firebase imediatamente
       const res = await completeQuestion();
 
       // 2. Micro-delay pedagógico (850ms):
@@ -183,6 +204,7 @@ export default function App() {
         }, 850);
       }
     } else {
+      setIsPendingNickModal(false);
       setIsCelebrationOpen(false);
     }
   };
@@ -231,6 +253,10 @@ export default function App() {
               if (celebrationTimeoutRef.current) {
                 clearTimeout(celebrationTimeoutRef.current);
               }
+              if (nickModalTimeoutRef.current) {
+                clearTimeout(nickModalTimeoutRef.current);
+              }
+              setIsPendingNickModal(false);
               setSelectedLetter(null);
               setIsCelebrationOpen(false);
             }}
@@ -312,6 +338,7 @@ export default function App() {
         onClose={dismissShieldRescueModal}
         streakDays={profile?.streakDays || 1}
         remainingShields={streakShields}
+        totalSolved={profile?.totalSolved || 0}
         missedDays={missedCycles || 1}
         shieldsUsed={shieldsUsedCount || 1}
         isAlreadyResolvedToday={hasCompletedToday}
@@ -345,16 +372,29 @@ export default function App() {
         isOpen={isNickModalOpen}
         initialNickname={nickname}
         currentStudentId={studentId}
+        isCompletingQuestion={Boolean(
+          selectedLetter && selectedLetter === question.correctLetter && !hasCompletedToday
+        )}
         onSave={async (newNick, adoptedStudentId) => {
-          const updated = await updateNickname(newNick, adoptedStudentId);
-          // Se o aluno já estava confirmando a resposta correta:
-          if (selectedLetter && selectedLetter === question.correctLetter) {
-            const res = await completeQuestion(updated.studentId, updated.nickname);
-            if (res) {
-              celebrationTimeoutRef.current = setTimeout(() => {
-                setIsCelebrationOpen(true);
-              }, 400);
+          const isCompleting = Boolean(
+            selectedLetter && selectedLetter === question.correctLetter && !hasCompletedToday
+          );
+          if (isCompleting) {
+            setIsPendingNickModal(true);
+          }
+          try {
+            const updated = await updateNickname(newNick, adoptedStudentId);
+            // Se o aluno já estava confirmando a resposta correta:
+            if (isCompleting) {
+              const res = await completeQuestion(updated.studentId, updated.nickname);
+              if (res) {
+                celebrationTimeoutRef.current = setTimeout(() => {
+                  setIsCelebrationOpen(true);
+                }, 400);
+              }
             }
+          } finally {
+            setIsPendingNickModal(false);
           }
         }}
         onClose={() => setIsNickModalOpen(false)}
@@ -365,6 +405,7 @@ export default function App() {
         isOpen={isMuralModalOpen}
         onClose={() => setIsMuralModalOpen(false)}
         submissions={todaySubmissions}
+        currentStudentId={studentId}
         currentStudentNick={nickname}
         currentUserTotalSolved={profile?.totalSolved}
         currentUserStreak={profile?.streakDays ?? 0}

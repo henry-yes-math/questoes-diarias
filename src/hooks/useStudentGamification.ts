@@ -33,7 +33,7 @@ import { INITIAL_QUESTION } from '../data/fallbackQuestion';
 export function useStudentGamification(currentQuestionId: string = String(INITIAL_QUESTION.id)) {
   const [studentId, setStudentId] = useState<string>(() => getLocalStudentId());
   const [nickname, setNicknameState] = useState<string>(() => getLocalStudentNick());
-  const [isNickModalOpen, setIsNickModalOpen] = useState<boolean>(() => !getLocalStudentNick());
+  const [isNickModalOpen, setIsNickModalOpen] = useState<boolean>(false);
   const [isMuralModalOpen, setIsMuralModalOpen] = useState<boolean>(false);
 
   // Informações de indicação (quem convidou este aluno)
@@ -248,17 +248,6 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
           setIsNickModalOpen(false);
           return;
         }
-
-        // Se não encontrou nem por ID nem por nick, inicializa o novo
-        const newP = await getOrCreateStudentProfile(studentId, nickname);
-        if (isMounted) {
-          setProfile(newP);
-          const mInfo = calculateMilestone(newP.totalSolved, Math.max(0, newP.totalSolved - 1));
-          setMilestoneInfo(mInfo);
-        }
-      } else {
-        // Sem ID válido e sem nickname: solicita identificação
-        setIsNickModalOpen(true);
       }
     }
 
@@ -281,18 +270,41 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
       setNicknameState(newNick);
       setIsNickModalOpen(false);
 
-      try {
-        const p = await getOrCreateStudentProfile(targetStudentId, newNick);
-        setProfile(p);
-        const mInfo = calculateMilestone(p.totalSolved, Math.max(0, p.totalSolved - 1));
-        setMilestoneInfo(mInfo);
-        return { profile: p, studentId: targetStudentId, nickname: newNick };
-      } catch (err) {
-        console.warn('Erro ao atualizar perfil com novo nick:', err);
-        return { profile: null, studentId: targetStudentId, nickname: newNick };
+      // Atualiza imediatamente o apelido na submissão local do Mural de hoje (se o aluno já tiver concluído hoje)
+      setTodayMySubmission((prev) =>
+        prev && prev.studentId === targetStudentId ? { ...prev, nickname: newNick } : prev
+      );
+      setTodaySubmissions((prev) => {
+        if (!prev.some((s) => s.studentId === targetStudentId)) return prev;
+        const next = prev.map((s) =>
+          s.studentId === targetStudentId ? { ...s, nickname: newNick } : s
+        );
+        saveCachedSubmissionsForCycle(currentCycle.currentCycleNumber, next);
+        return next;
+      });
+
+      // Só busca/atualiza no Firestore agora se estiver adotando um perfil existente
+      // ou se o aluno já possui um perfil gravado no banco (evitando criar perfis com totalSolved = 0).
+      if (adoptedStudentId || profile) {
+        try {
+          const p = await getOrCreateStudentProfile(
+            targetStudentId,
+            newNick,
+            currentCycle.currentCycleNumber
+          );
+          setProfile(p);
+          const mInfo = calculateMilestone(p.totalSolved, Math.max(0, p.totalSolved - 1));
+          setMilestoneInfo(mInfo);
+          return { profile: p, studentId: targetStudentId, nickname: newNick };
+        } catch (err) {
+          console.warn('Erro ao atualizar perfil com novo nick:', err);
+          return { profile: null, studentId: targetStudentId, nickname: newNick };
+        }
       }
+
+      return { profile: null, studentId: targetStudentId, nickname: newNick };
     },
-    [studentId]
+    [studentId, profile, currentCycle.currentCycleNumber]
   );
 
   // Estado do Modal de Resgate de Protetor de Ofensiva (Ufa! Sua chama continua viva!)
@@ -300,6 +312,13 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
   const [wasShieldUsedInSubmission, setWasShieldUsedInSubmission] = useState(false);
   const [shieldsUsedInSubmission, setShieldsUsedInSubmission] = useState<number>(0);
   const [earnedNewShieldInSubmission, setEarnedNewShieldInSubmission] = useState(false);
+
+  // Limpa os indicadores de submissão do ciclo anterior quando o ciclo diário avança
+  useEffect(() => {
+    setWasShieldUsedInSubmission(false);
+    setShieldsUsedInSubmission(0);
+    setEarnedNewShieldInSubmission(false);
+  }, [currentCycle.currentCycleNumber]);
 
   // Notificação de Escudo ganho por indicação de amigo (?convite)
   const [pendingRewardFriendName, setPendingRewardFriendName] = useState<string | null>(null);
@@ -338,7 +357,6 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
       setIsSubmitting(true);
 
       try {
-        const prevTotal = profile?.totalSolved || 0;
         const res = await registerDailySubmission(
           activeId,
           activeNick,
@@ -346,6 +364,11 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
           isCycleLoaded ? currentCycle.currentCycleNumber : undefined,
           referralInfo ? { referrerName: referralInfo.referrerName, referrerId: referralInfo.referrerId } : undefined
         );
+
+        const prevTotal =
+          profile && profile.studentId === activeId && profile.totalSolved < res.profile.totalSolved
+            ? profile.totalSolved
+            : Math.max(0, res.profile.totalSolved - 1);
 
         clearPendingSubmission();
         setPendingSubmissionSync(false);
@@ -362,15 +385,9 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
         });
         refreshMural(targetCycle);
 
-        if (res.shieldWasUsed) {
-          setWasShieldUsedInSubmission(true);
-          if (res.shieldsUsed) {
-            setShieldsUsedInSubmission(res.shieldsUsed);
-          }
-        }
-        if (res.earnedNewShield) {
-          setEarnedNewShieldInSubmission(true);
-        }
+        setWasShieldUsedInSubmission(Boolean(res.shieldWasUsed));
+        setShieldsUsedInSubmission(res.shieldWasUsed ? (res.shieldsUsed || 1) : 0);
+        setEarnedNewShieldInSubmission(Boolean(res.earnedNewShield));
 
         const mInfo = calculateMilestone(res.profile.totalSolved, prevTotal);
         setMilestoneInfo(mInfo);
@@ -454,14 +471,7 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
 
   const shieldsUsedCount = shieldsUsedInSubmission || (isShieldProtectingCurrentCycle ? missedCycles : wasShieldUsed ? 1 : 0);
 
-  const earnedNewShield = earnedNewShieldInSubmission || Boolean(
-    isCycleLoaded &&
-    profile &&
-    profile.lastCompletedCycle === currentCycle.currentCycleNumber &&
-    profile.streakDays > 0 &&
-    profile.streakDays % 7 === 0 &&
-    streakShields > 0
-  );
+  const earnedNewShield = earnedNewShieldInSubmission;
 
   // Exibe o modal de resgate automaticamente ao entrar no app se o aluno estiver protegido por escudo
   useEffect(() => {

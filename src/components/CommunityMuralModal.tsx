@@ -7,6 +7,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   submissions: DailySubmission[];
+  currentStudentId?: string;
   currentStudentNick?: string;
   currentUserTotalSolved?: number;
   currentUserStreak?: number;
@@ -20,6 +21,7 @@ export const CommunityMuralModal: React.FC<Props> = ({
   isOpen,
   onClose,
   submissions,
+  currentStudentId,
   currentStudentNick,
   hasCompletedToday = false,
   isFirstQuestion = false,
@@ -93,9 +95,11 @@ export const CommunityMuralModal: React.FC<Props> = ({
           ) : (
             submissions.map((sub, index) => {
               const num = String(index + 1).padStart(2, '0');
-              const isCurrentUser =
-                currentStudentNick &&
-                sub.nickname.toLowerCase() === currentStudentNick.toLowerCase();
+              const isCurrentUser = Boolean(
+                (currentStudentId && sub.studentId === currentStudentId) ||
+                  (currentStudentNick &&
+                    sub.nickname.toLowerCase() === currentStudentNick.toLowerCase())
+              );
 
               const subId = sub.id || `${sub.studentId}_${index}`;
               const milestoneTooltipId = `milestone_${subId}`;

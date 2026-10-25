@@ -9,6 +9,7 @@ interface Props {
   onSave: (nickname: string, adoptedStudentId?: string) => void;
   isOpen: boolean;
   onClose?: () => void;
+  isCompletingQuestion?: boolean;
 }
 
 export const StudentIdentificationModal: React.FC<Props> = ({
@@ -17,6 +18,7 @@ export const StudentIdentificationModal: React.FC<Props> = ({
   onSave,
   isOpen,
   onClose,
+  isCompletingQuestion = false,
 }) => {
   const [name, setName] = useState(initialNickname);
   const [error, setError] = useState('');
@@ -84,24 +86,43 @@ export const StudentIdentificationModal: React.FC<Props> = ({
     }
   };
 
-  const handleDifferentSubmit = (e: React.FormEvent) => {
+  const handleDifferentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
       setError('Por favor, digite seu nome com sobrenome ou inicial.');
       return;
     }
+    if (trimmed.length > 25) {
+      setError('O apelido deve ter no máximo 25 caracteres.');
+      return;
+    }
     if (existingProfile && trimmed.toLowerCase() === existingProfile.nickname.trim().toLowerCase()) {
       setError(`Adicione seu sobrenome ou inicial para diferenciar (ex: ${trimmed} S.)`);
       return;
     }
-    onSave(trimmed);
+
+    setError('');
+    setIsChecking(true);
+    try {
+      const found = await findExistingStudentByNickname(trimmed, currentStudentId);
+      if (found && ((found.streakDays && found.streakDays > 0) || (found.totalSolved && found.totalSolved > 0))) {
+        setError(`Já existe um(a) "${found.nickname}" na turma! Escolha outra variação ou sobrenome.`);
+        return;
+      }
+      onSave(trimmed);
+    } catch (err) {
+      console.warn('Erro ao verificar nickname diferenciado:', err);
+      onSave(trimmed);
+    } finally {
+      setIsChecking(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-stone-200 p-6 sm:p-7 relative transition-all">
-        {Boolean(initialNickname) && onClose && mode === 'input' && (
+        {!isCompletingQuestion && onClose && (
           <button
             type="button"
             onClick={onClose}
@@ -112,15 +133,26 @@ export const StudentIdentificationModal: React.FC<Props> = ({
           </button>
         )}
 
-        {/* MODO 1: Digitação Padrão */}
+        {/* MODO 1: Digitação Padrão ou Pós-Acerto */}
         {mode === 'input' && (
           <div>
+            {isCompletingQuestion && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 mb-3">
+                <span>🎉</span>
+                <span>RESPOSTA CORRETA!</span>
+              </div>
+            )}
+
             <h3 className="text-xl font-bold text-stone-900 tracking-tight">
-              Quem é você na turma?
+              {isCompletingQuestion
+                ? 'Para quem vai esse +1 dia de ofensiva? 🔥'
+                : 'Quem é você na turma?'}
             </h3>
 
             <p className="mt-1.5 text-sm text-stone-600 leading-relaxed">
-              Digite seu nome ou apelido para marcar presença no desafio de hoje.
+              {isCompletingQuestion
+                ? 'Digite seu nome ou apelido para registrar sua presença no Mural de hoje.'
+                : 'Digite seu nome ou apelido para recuperar sua ofensiva ou participar do desafio.'}
             </p>
 
             <form onSubmit={handleSubmit} className="mt-5 space-y-4">
@@ -146,7 +178,13 @@ export const StudentIdentificationModal: React.FC<Props> = ({
                 disabled={isChecking}
                 className="w-full py-3.5 px-5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
               >
-                <span>{isChecking ? 'Verificando...' : 'Entrar no Desafio'}</span>
+                <span>
+                  {isChecking
+                    ? 'Verificando...'
+                    : isCompletingQuestion
+                      ? 'Garantir minha ofensiva 🔥'
+                      : 'Entrar no Desafio'}
+                </span>
                 {!isChecking && <ArrowRight className="w-4 h-4" />}
               </button>
             </form>
@@ -181,7 +219,7 @@ export const StudentIdentificationModal: React.FC<Props> = ({
               )}
             </div>
 
-            <div className="mt-5 space-y-2.5">
+            <div className="mt-5 space-y-2">
               <button
                 type="button"
                 onClick={handleConfirmRestore}
@@ -198,9 +236,20 @@ export const StudentIdentificationModal: React.FC<Props> = ({
                   setError('');
                   setMode('differentiate');
                 }}
-                className="w-full py-2.5 px-4 text-xs font-medium text-stone-500 hover:text-stone-800 transition-colors cursor-pointer"
+                className="w-full py-2 px-4 text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
               >
                 Não sou eu, sou outro(a) {existingProfile.nickname}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setError('');
+                  setMode('input');
+                }}
+                className="w-full py-1.5 px-4 text-xs font-medium text-stone-400 hover:text-stone-600 transition-colors cursor-pointer"
+              >
+                Voltar e digitar outro nome
               </button>
             </div>
           </div>
@@ -236,6 +285,7 @@ export const StudentIdentificationModal: React.FC<Props> = ({
                   placeholder={`Ex: ${existingProfile?.nickname} Silva, ${existingProfile?.nickname} Med...`}
                   className="w-full px-4 py-3 text-stone-900 text-base bg-stone-50 border border-stone-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all placeholder:text-stone-400 font-medium"
                   autoFocus
+                  disabled={isChecking}
                 />
                 {error && <p className="mt-1.5 text-xs text-rose-600 font-medium">{error}</p>}
               </div>
@@ -255,11 +305,12 @@ export const StudentIdentificationModal: React.FC<Props> = ({
                     <button
                       key={sug}
                       type="button"
+                      disabled={isChecking}
                       onClick={() => {
                         setName(sug);
                         if (error) setError('');
                       }}
-                      className="px-2.5 py-1 text-xs font-medium bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-stone-700 border border-stone-200 rounded-lg transition-all cursor-pointer shadow-2xs"
+                      className="px-2.5 py-1 text-xs font-medium bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-stone-700 border border-stone-200 rounded-lg transition-all cursor-pointer shadow-2xs disabled:opacity-60"
                     >
                       {sug}
                     </button>
@@ -270,23 +321,27 @@ export const StudentIdentificationModal: React.FC<Props> = ({
               <div className="flex items-center gap-2.5 pt-1">
                 <button
                   type="button"
+                  disabled={isChecking}
                   onClick={() => setMode('confirm')}
-                  className="py-3.5 px-4 text-sm font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-xl transition-colors cursor-pointer"
+                  className="py-3.5 px-4 text-sm font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-xl transition-colors cursor-pointer disabled:opacity-60"
                 >
                   Voltar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3.5 px-5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base"
+                  disabled={isChecking}
+                  className="flex-1 py-3.5 px-5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base disabled:opacity-70"
                 >
-                  <span>Iniciar Minha Ofensiva</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>{isChecking ? 'Verificando...' : 'Iniciar Minha Ofensiva'}</span>
+                  {!isChecking && <ArrowRight className="w-4 h-4" />}
                 </button>
               </div>
 
-              <p className="text-center text-[11px] text-stone-600 font-medium pt-0.5">
-                ⚡ Sua resposta de hoje já conta presença e pontua no Mural!
-              </p>
+              {isCompletingQuestion && (
+                <p className="text-center text-[11px] text-stone-600 font-medium pt-0.5">
+                  ⚡ Sua resposta de hoje já conta presença e pontua no Mural!
+                </p>
+              )}
             </form>
           </div>
         )}
