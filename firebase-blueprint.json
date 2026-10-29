@@ -28,6 +28,10 @@
           "type": "number",
           "description": "Dias consecutivos de ofensiva ativa"
         },
+        "maxStreakDays": {
+          "type": "number",
+          "description": "Maior ofensiva consecutiva atingida pelo aluno no histórico"
+        },
         "lastSolvedDate": {
           "type": "string",
           "description": "Data da última resolução (YYYY-MM-DD)",
@@ -111,6 +115,12 @@
         "totalSolved": {
           "type": "number"
         },
+        "wasRescued": {
+          "type": "boolean"
+        },
+        "previousStreakDays": {
+          "type": "number"
+        },
         "orderIndex": {
           "type": "number"
         },
@@ -140,6 +150,9 @@
         "whatsappGroupUrl": {
           "type": "string",
           "maxLength": 500
+        },
+        "isRescueDay": {
+          "type": "boolean"
         }
       }
     }

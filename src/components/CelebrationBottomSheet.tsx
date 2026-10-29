@@ -33,6 +33,8 @@ interface Props {
   wasShieldUsed?: boolean;
   shieldsUsed?: number;
   earnedNewShield?: boolean;
+  wasRescued?: boolean;
+  rescuedFromStreak?: number;
 }
 
 export const CelebrationBottomSheet: React.FC<Props> = ({
@@ -50,6 +52,8 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
   wasShieldUsed,
   shieldsUsed = 1,
   earnedNewShield,
+  wasRescued = false,
+  rescuedFromStreak,
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -119,7 +123,12 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
             <div className="flex items-start justify-between gap-3 pt-1">
               <div>
                 {/* Tag de status adaptativa */}
-                {isNight ? (
+                {wasRescued ? (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-linear-to-r from-amber-100 to-purple-100 text-purple-950 border border-purple-300 mb-1.5 whitespace-nowrap">
+                    <span>⚡</span>
+                    <span>Chama Resgatada!</span>
+                  </div>
+                ) : isNight ? (
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-900 border border-indigo-200 mb-1.5 whitespace-nowrap">
                     <span>🌙</span>
                     <span>Fechou o dia!</span>
@@ -139,7 +148,9 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                   PARABÉNS, {studentName.toUpperCase()}! 🎉
                 </h2>
                 <p className="text-sm font-medium text-slate-600 mt-0.5">
-                  {isNight ? (
+                  {wasRescued ? (
+                    'Operação Resgate concluída com sucesso! 🔥⚡'
+                  ) : isNight ? (
                     'Ofensiva garantida antes da meia-noite 🔥'
                   ) : isEarlyBird ? (
                     <>
@@ -170,7 +181,7 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                 </div>
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
-                    Ofensiva
+                    {wasRescued ? 'Ofensiva Resgatada ⚡' : 'Ofensiva'}
                   </div>
                   <div className="text-base sm:text-lg font-black text-slate-900 leading-tight">
                     {streakDays} {streakDays === 1 ? 'Dia Iniciado' : 'Dias Ativos'}
@@ -193,8 +204,27 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
               </div>
             </div>
 
+            {/* Banner Especial: Chama Resgatada no Dia do Resgate */}
+            {wasRescued && (
+              <div className="bg-linear-to-r from-amber-50 via-orange-50 to-purple-50 border border-amber-300/90 rounded-xl p-3 flex items-start gap-2.5 text-xs text-amber-950 shadow-2xs">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 text-orange-600 flex items-center justify-center shrink-0 mt-0.5 font-extrabold text-sm">
+                  ⚡
+                </div>
+                <div>
+                  <div className="font-extrabold text-amber-950 text-xs sm:text-sm">
+                    Recorde Histórico Recuperado! 🔥
+                  </div>
+                  <p className="text-xs text-amber-900 font-medium mt-0.5 leading-relaxed">
+                    Você aproveitou o <strong>Dia do Resgate da Chama</strong>, recuperou sua ofensiva de{' '}
+                    <strong>{rescuedFromStreak || Math.max(2, streakDays - 1)} dias</strong> e subiu para{' '}
+                    <strong>{streakDays} dias seguidos</strong>!
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Avisos de Escudo de Ofensiva */}
-            {wasShieldUsed && (
+            {wasShieldUsed && !wasRescued && (
               <div className="bg-blue-50/90 border border-blue-200/90 rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 text-xs text-blue-900 shadow-2xs">
                 <Shield className="w-4 h-4 text-blue-600 fill-blue-500/20 shrink-0" />
                 <span>

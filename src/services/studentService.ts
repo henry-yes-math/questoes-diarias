@@ -15,7 +15,13 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { StudentProfile, DailySubmission, DailyCycleConfig, QuestionData } from '../types';
+import {
+  StudentProfile,
+  DailySubmission,
+  DailyCycleConfig,
+  QuestionData,
+  RescueCandidateInfo,
+} from '../types';
 import {
   getLocalDateString,
   calculateNewStreakByCycle,
@@ -210,6 +216,7 @@ export async function getOrCreateDailyCycle(): Promise<DailyCycleConfig> {
     currentCycleNumber: 1,
     currentCycleDate: todayStr,
     startedAt: new Date().toISOString(),
+    isRescueDay: false,
   };
 
   try {
@@ -254,13 +261,17 @@ export function subscribeToDailyCycle(
 }
 
 /**
- * Avança o ciclo para o próximo dia (ação exclusiva do professor)
+ * Avança o ciclo para o próximo dia (ação exclusiva do professor).
+ * Define atomicamente desde o segundo zero se o novo ciclo nasce como Dia Normal ou Dia do Resgate.
  */
-export async function advanceToNextCycle(questionId?: string): Promise<DailyCycleConfig> {
+export async function advanceToNextCycle(
+  questionId?: string,
+  isRescueDay: boolean = false
+): Promise<DailyCycleConfig> {
   const cycleRef = doc(db, APP_SETTINGS_COLLECTION, DAILY_CYCLE_DOC_ID);
   const todayStr = getLocalDateString();
 
-  return await runTransaction(db, async (transaction) => {
+  const updatedCycle = await runTransaction(db, async (transaction) => {
     const snap = await transaction.get(cycleRef);
     let nextNumber = 1;
     let existingWhatsappUrl: string | undefined = undefined;
@@ -275,6 +286,7 @@ export async function advanceToNextCycle(questionId?: string): Promise<DailyCycl
       currentCycleNumber: nextNumber,
       currentCycleDate: todayStr,
       startedAt: new Date().toISOString(),
+      isRescueDay: Boolean(isRescueDay),
       ...(questionId ? { questionId } : {}),
       ...(existingWhatsappUrl ? { whatsappGroupUrl: existingWhatsappUrl } : {}),
     };
@@ -282,6 +294,9 @@ export async function advanceToNextCycle(questionId?: string): Promise<DailyCycl
     transaction.set(cycleRef, newCycle);
     return newCycle;
   });
+
+  saveCachedDailyCycle(updatedCycle);
+  return updatedCycle;
 }
 
 /**
@@ -496,22 +511,51 @@ export async function registerDailySubmission(
   shieldWasUsed?: boolean;
   shieldsUsed?: number;
   earnedNewShield?: boolean;
+  wasRescued?: boolean;
+  previousStreakDays?: number;
   referrerRewarded?: { friendName: string; referrerNick: string } | null;
 }> {
   const todayStr = getLocalDateString();
   const cycleRef = doc(db, APP_SETTINGS_COLLECTION, DAILY_CYCLE_DOC_ID);
   const studentRef = doc(db, STUDENTS_COLLECTION, studentId);
 
+  // Pré-consulta leve para garantir o recorde histórico (maxStreakDays) a partir das submissões do aluno (por ID e apelido)
+  let precomputedHistoricalMax = 0;
+  try {
+    const cleanNick = (nickname || '').trim();
+    const queries = [
+      getDocs(query(collection(db, SUBMISSIONS_COLLECTION), where('studentId', '==', studentId))),
+    ];
+    if (cleanNick) {
+      queries.push(
+        getDocs(query(collection(db, SUBMISSIONS_COLLECTION), where('nickname', '==', cleanNick)))
+      );
+    }
+    const snaps = await Promise.all(queries);
+    for (const subsSnap of snaps) {
+      subsSnap.forEach((d) => {
+        const sub = d.data() as DailySubmission;
+        if (sub.streakDays && sub.streakDays > precomputedHistoricalMax) {
+          precomputedHistoricalMax = sub.streakDays;
+        }
+      });
+    }
+  } catch {
+    // Fallback silencioso para o maxStreakDays já gravado no perfil
+  }
+
   const result = await runTransaction(db, async (transaction) => {
     // 1. Lê o ciclo diário oficial direto do servidor dentro da transação
-    // Isso impede gravações acidentais no cycle_1 quando o cliente ainda não carregou o ciclo
     const cycleSnap = await transaction.get(cycleRef);
-    let activeCycle = cycleNumber || getCachedDailyCycle()?.currentCycleNumber || 1;
+    const cachedCycle = getCachedDailyCycle();
+    let activeCycle = cycleNumber || cachedCycle?.currentCycleNumber || 1;
+    let isRescueDay = Boolean(cachedCycle?.isRescueDay);
 
     if (cycleSnap.exists()) {
       const serverCycleData = cycleSnap.data() as DailyCycleConfig;
       if (serverCycleData.currentCycleNumber && serverCycleData.currentCycleNumber >= 1) {
         activeCycle = serverCycleData.currentCycleNumber;
+        isRescueDay = Boolean(serverCycleData.isRescueDay);
         saveCachedDailyCycle(serverCycleData);
       }
     }
@@ -532,11 +576,18 @@ export async function registerDailySubmission(
         nicknameLower: nickname.trim().toLowerCase(),
         totalSolved: 0,
         streakDays: 0,
+        maxStreakDays: precomputedHistoricalMax,
         lastSolvedDate: null,
         lastCompletedCycle: 0,
         unlockedMilestones: [],
       };
     }
+
+    const effectiveHistoricalMax = Math.max(
+      profile.maxStreakDays || 0,
+      profile.streakDays || 0,
+      precomputedHistoricalMax
+    );
 
     // Se já respondeu a questão deste ciclo
     if (existingSubmissionSnap.exists()) {
@@ -546,14 +597,20 @@ export async function registerDailySubmission(
         String(existingSubmission.questionId) !== String(questionId);
 
       // Garante que o perfil e a submissão reflitam a conclusão da questão atual neste ciclo
-      if ((profile.lastCompletedCycle || 0) < activeCycle || isDifferentQuestion || profile.lastCompletedQuestionId !== String(questionId)) {
+      if (
+        (profile.lastCompletedCycle || 0) < activeCycle ||
+        isDifferentQuestion ||
+        profile.lastCompletedQuestionId !== String(questionId)
+      ) {
         const finalNick = nickname || profile.nickname;
+        const syncedStreak = Math.max(profile.streakDays || 0, existingSubmission.streakDays || 1);
         const syncedProfile: StudentProfile = {
           ...profile,
           nickname: finalNick,
           nicknameLower: finalNick.trim().toLowerCase(),
           totalSolved: Math.max(profile.totalSolved || 0, existingSubmission.totalSolved || 1),
-          streakDays: Math.max(profile.streakDays || 0, existingSubmission.streakDays || 1),
+          streakDays: syncedStreak,
+          maxStreakDays: Math.max(effectiveHistoricalMax, syncedStreak),
           lastSolvedDate: existingSubmission.date || todayStr,
           lastCompletedCycle: activeCycle,
           lastCompletedQuestionId: String(questionId),
@@ -584,6 +641,8 @@ export async function registerDailySubmission(
           shieldWasUsed: false,
           shieldsUsed: 0,
           earnedNewShield: false,
+          wasRescued: Boolean(updatedExistingSub.wasRescued),
+          previousStreakDays: updatedExistingSub.previousStreakDays,
           referrerRewarded: null,
         };
       }
@@ -596,6 +655,8 @@ export async function registerDailySubmission(
         shieldWasUsed: false,
         shieldsUsed: 0,
         earnedNewShield: false,
+        wasRescued: Boolean(existingSubmission.wasRescued),
+        previousStreakDays: existingSubmission.previousStreakDays,
         referrerRewarded: null,
       };
     }
@@ -614,7 +675,7 @@ export async function registerDailySubmission(
       orderIndex = cycleSnaps.size + 1;
     }
 
-    // Calcular novo total e streak/protetor baseado no ciclo
+    // Calcular novo total e streak/protetor/resgate baseado no ciclo
     const previousTotal = profile.totalSolved || 0;
     const newTotal = previousTotal + 1;
     const currentShields = profile.streakShields || 0;
@@ -624,9 +685,12 @@ export async function registerDailySubmission(
       profile.streakDays || 0,
       activeCycle,
       currentShields,
-      newTotal
+      newTotal,
+      isRescueDay,
+      effectiveHistoricalMax
     );
     const newStreak = streakResult.newStreak;
+    const newMaxStreak = streakResult.newMaxStreak;
     const newShields = streakResult.newShields;
 
     const milestoneCalc = calculateMilestone(newTotal, previousTotal);
@@ -712,6 +776,7 @@ export async function registerDailySubmission(
       nicknameLower: finalNickname.trim().toLowerCase(),
       totalSolved: newTotal,
       streakDays: newStreak,
+      maxStreakDays: newMaxStreak,
       streakShields: newShields,
       lastSolvedDate: todayStr,
       lastCompletedCycle: activeCycle,
@@ -740,6 +805,10 @@ export async function registerDailySubmission(
       orderIndex,
       completedAt: new Date().toISOString(),
       serverTime: serverTimestamp(),
+      ...(streakResult.wasRescued ? { wasRescued: true } : {}),
+      ...(streakResult.previousStreakBeforeRescue !== undefined
+        ? { previousStreakDays: streakResult.previousStreakBeforeRescue }
+        : {}),
       ...(finalReferredByName ? { referredByStudentName: finalReferredByName } : {}),
       ...(finalReferredById ? { referredByStudentId: finalReferredById } : {}),
     };
@@ -760,6 +829,10 @@ export async function registerDailySubmission(
       streakShields: newShields,
       orderIndex,
       completedAt: new Date().toISOString(),
+      ...(streakResult.wasRescued ? { wasRescued: true } : {}),
+      ...(streakResult.previousStreakBeforeRescue !== undefined
+        ? { previousStreakDays: streakResult.previousStreakBeforeRescue }
+        : {}),
       ...(milestoneUnlocked !== undefined ? { unlockedMilestone: milestoneUnlocked } : {}),
       ...(finalReferredByName ? { referredByStudentName: finalReferredByName } : {}),
       ...(finalReferredById ? { referredByStudentId: finalReferredById } : {}),
@@ -776,6 +849,8 @@ export async function registerDailySubmission(
       shieldWasUsed: streakResult.shieldWasUsed,
       shieldsUsed: streakResult.shieldsUsed,
       earnedNewShield: streakResult.earnedNewShield,
+      wasRescued: streakResult.wasRescued,
+      previousStreakDays: streakResult.previousStreakBeforeRescue,
       referrerRewarded: refRewardInfo,
     };
   });
@@ -784,6 +859,262 @@ export async function registerDailySubmission(
   clearPendingSubmission();
   return result;
 }
+
+/**
+ * Sincroniza o recorde histórico de ofensiva (maxStreakDays) de um aluno individual
+ * a partir de suas submissões no Firestore caso ainda não esteja persistido no perfil.
+ */
+export async function ensureStudentMaxStreakSynced(
+  profile: StudentProfile
+): Promise<StudentProfile> {
+  if (!profile || !profile.studentId) return profile;
+
+  try {
+    const cleanNick = (profile.nickname || '').trim();
+    const queries = [
+      getDocs(
+        query(collection(db, SUBMISSIONS_COLLECTION), where('studentId', '==', profile.studentId))
+      ),
+    ];
+
+    if (cleanNick) {
+      queries.push(
+        getDocs(query(collection(db, SUBMISSIONS_COLLECTION), where('nickname', '==', cleanNick)))
+      );
+    }
+
+    const snaps = await Promise.all(queries);
+    let maxFromSubs = 0;
+    for (const snap of snaps) {
+      snap.forEach((d) => {
+        const sub = d.data() as DailySubmission;
+        if (sub.streakDays && sub.streakDays > maxFromSubs) {
+          maxFromSubs = sub.streakDays;
+        }
+      });
+    }
+
+    const computedMax = Math.max(profile.maxStreakDays || 0, profile.streakDays || 0, maxFromSubs);
+    if (profile.maxStreakDays !== computedMax && computedMax > 0) {
+      const studentRef = doc(db, STUDENTS_COLLECTION, profile.studentId);
+      await updateDoc(studentRef, {
+        maxStreakDays: computedMax,
+      }).catch(() => {});
+      return {
+        ...profile,
+        maxStreakDays: computedMax,
+      };
+    }
+  } catch (err) {
+    console.warn('Erro ao sincronizar maxStreakDays do aluno:', err);
+  }
+
+  return profile;
+}
+
+/**
+ * Calcula a lista oficial de alunos elegíveis ao Dia do Resgate da Chama no ciclo atual,
+ * sincronizando `maxStreakDays` nos perfis e identificando quem já resgatou hoje vs. quem ainda pode resgatar.
+ */
+export async function getRescueCandidatesAndSyncMaxStreaks(
+  currentCycleNumber: number
+): Promise<{
+  candidates: RescueCandidateInfo[];
+  studentsMap: Record<string, StudentProfile>;
+}> {
+  try {
+    const [studentsSnap, subsSnap] = await Promise.all([
+      getDocs(collection(db, STUDENTS_COLLECTION)),
+      getDocs(collection(db, SUBMISSIONS_COLLECTION)),
+    ]);
+
+    const studentsMap: Record<string, StudentProfile> = {};
+    const allProfiles: StudentProfile[] = [];
+    studentsSnap.forEach((d) => {
+      const p = d.data() as StudentProfile;
+      if (p.studentId) {
+        studentsMap[p.studentId] = p;
+        allProfiles.push(p);
+      }
+    });
+
+    const allSubs: DailySubmission[] = [];
+    subsSnap.forEach((d) => {
+      allSubs.push(d.data() as DailySubmission);
+    });
+
+    // Agrupa por apelido normalizado (excluindo conta do professor Henry Prof)
+    const groupsByNick = new Map<
+      string,
+      {
+        profiles: StudentProfile[];
+        subs: DailySubmission[];
+      }
+    >();
+
+    const getGroup = (nickLower: string) => {
+      let g = groupsByNick.get(nickLower);
+      if (!g) {
+        g = { profiles: [], subs: [] };
+        groupsByNick.set(nickLower, g);
+      }
+      return g;
+    };
+
+    const studentIdToNickLower = new Map<string, string>();
+
+    for (const p of allProfiles) {
+      const cleanNick = (p.nickname || '').trim();
+      if (!cleanNick) continue;
+      const nickLower = cleanNick.toLowerCase();
+      if (nickLower === 'henry prof') continue;
+      studentIdToNickLower.set(p.studentId, nickLower);
+      getGroup(nickLower).profiles.push(p);
+    }
+
+    for (const s of allSubs) {
+      const mappedNick = studentIdToNickLower.get(s.studentId);
+      const cleanNick = (s.nickname || '').trim();
+      const nickLower = mappedNick || cleanNick.toLowerCase();
+      if (!nickLower || nickLower === 'henry prof') continue;
+      getGroup(nickLower).subs.push(s);
+    }
+
+    const candidates: RescueCandidateInfo[] = [];
+
+    for (const [, group] of groupsByNick.entries()) {
+      if (group.profiles.length === 0 && group.subs.length === 0) continue;
+
+      // Ordena perfis priorizando o mais recente/ativo
+      const sortedProfiles = [...group.profiles].sort((a, b) => {
+        const cycleDiff = (b.lastCompletedCycle || 0) - (a.lastCompletedCycle || 0);
+        if (cycleDiff !== 0) return cycleDiff;
+        const streakDiff = (b.streakDays || 0) - (a.streakDays || 0);
+        if (streakDiff !== 0) return streakDiff;
+        return (b.totalSolved || 0) - (a.totalSolved || 0);
+      });
+
+      const primaryProfile = sortedProfiles[0];
+      const displayNickname =
+        primaryProfile?.nickname?.trim() || group.subs[0]?.nickname?.trim() || 'Estudante';
+      const primaryStudentId = primaryProfile?.studentId || group.subs[0]?.studentId || '';
+
+      // Submissões anteriores ao ciclo atual vs. submissões no ciclo atual
+      const subsBeforeToday = group.subs
+        .filter((s) => (s.cycleNumber || 0) > 0 && (s.cycleNumber || 0) < currentCycleNumber)
+        .sort((a, b) => (b.cycleNumber || 0) - (a.cycleNumber || 0));
+
+      const subsToday = group.subs
+        .filter((s) => s.cycleNumber === currentCycleNumber)
+        .sort((a, b) => (b.streakDays || 0) - (a.streakDays || 0));
+
+      const subToday = subsToday[0];
+
+      // Calcula a maior ofensiva histórica ANTES do ciclo de hoje (maxStreakBeforeToday)
+      let maxStreakBeforeToday = 0;
+      for (const s of subsBeforeToday) {
+        if ((s.streakDays || 0) > maxStreakBeforeToday) {
+          maxStreakBeforeToday = s.streakDays || 0;
+        }
+      }
+      for (const p of group.profiles) {
+        // Se o perfil já tinha maxStreakDays gravado de antes (ou se ainda não concluiu hoje)
+        if ((p.lastCompletedCycle || 0) < currentCycleNumber) {
+          if ((p.streakDays || 0) > maxStreakBeforeToday) {
+            maxStreakBeforeToday = p.streakDays || 0;
+          }
+          if ((p.maxStreakDays || 0) > maxStreakBeforeToday) {
+            maxStreakBeforeToday = p.maxStreakDays || 0;
+          }
+        } else if (subToday?.previousStreakDays && subToday.previousStreakDays > maxStreakBeforeToday) {
+          maxStreakBeforeToday = subToday.previousStreakDays;
+        }
+      }
+
+      const overallMaxStreak = Math.max(
+        maxStreakBeforeToday,
+        subToday?.streakDays || 0,
+        primaryProfile?.streakDays || 0,
+        primaryProfile?.maxStreakDays || 0
+      );
+
+      // Sincroniza maxStreakDays no perfil principal em segundo plano se necessário
+      if (primaryProfile && primaryProfile.maxStreakDays !== overallMaxStreak && overallMaxStreak > 0) {
+        primaryProfile.maxStreakDays = overallMaxStreak;
+        studentsMap[primaryProfile.studentId] = primaryProfile;
+        updateDoc(doc(db, STUDENTS_COLLECTION, primaryProfile.studentId), {
+          maxStreakDays: overallMaxStreak,
+        }).catch(() => {});
+      }
+
+      // Critério de elegibilidade para o Resgate no ciclo atual:
+      // 1. Recorde histórico antes de hoje >= 2 dias
+      if (maxStreakBeforeToday < 2) continue;
+
+      // 2. Verifica qual era o estado do aluno imediatamente antes de responder o ciclo de hoje
+      const lastSubBeforeToday = subsBeforeToday[0];
+      const profileBeforeToday = sortedProfiles.find(
+        (p) => (p.lastCompletedCycle || 0) < currentCycleNumber
+      );
+
+      const prevCycle = Math.max(
+        lastSubBeforeToday?.cycleNumber || 0,
+        profileBeforeToday?.lastCompletedCycle || 0
+      );
+      const prevStreak =
+        lastSubBeforeToday &&
+        (lastSubBeforeToday.cycleNumber || 0) >= (profileBeforeToday?.lastCompletedCycle || 0)
+          ? lastSubBeforeToday.streakDays || 0
+          : profileBeforeToday?.streakDays || 0;
+      const prevShields =
+        lastSubBeforeToday?.streakShields ??
+        profileBeforeToday?.streakShields ??
+        primaryProfile?.streakShields ??
+        0;
+
+      const normalSim = calculateNewStreakWithShield(
+        prevCycle,
+        prevStreak,
+        currentCycleNumber,
+        prevShields,
+        (primaryProfile?.totalSolved || 0) + 1,
+        false,
+        maxStreakBeforeToday
+      );
+
+      const wasEligibleBeforeToday =
+        Boolean(subToday?.wasRescued) || normalSim.newStreak < maxStreakBeforeToday + 1;
+
+      if (!wasEligibleBeforeToday) continue;
+
+      const hasCompletedCurrentCycle = Boolean(
+        subToday || (primaryProfile && primaryProfile.lastCompletedCycle === currentCycleNumber)
+      );
+
+      candidates.push({
+        studentId: primaryStudentId,
+        nickname: displayNickname,
+        maxStreakDays: maxStreakBeforeToday,
+        currentStreakDays: primaryProfile?.streakDays || 0,
+        totalSolved: primaryProfile?.totalSolved || group.subs.length,
+        lastCompletedCycle: primaryProfile?.lastCompletedCycle || prevCycle,
+        hasRescuedToday: hasCompletedCurrentCycle,
+        newStreakAfterRescue: Math.max(subToday?.streakDays || 0, maxStreakBeforeToday + 1),
+      });
+    }
+
+    candidates.sort((a, b) =>
+      a.nickname.localeCompare(b.nickname, 'pt-BR', { sensitivity: 'base' })
+    );
+
+    return { candidates, studentsMap };
+  } catch (err) {
+    console.warn('Erro ao calcular candidatos do Dia do Resgate:', err);
+    return { candidates: [], studentsMap: {} };
+  }
+}
+
+
 
 /**
  * Marca a notificação de escudo ganho por indicação como vista
@@ -958,6 +1289,7 @@ export async function resetAllTestDataForLaunch(): Promise<void> {
     currentCycleNumber: 1,
     currentCycleDate: todayStr,
     startedAt: new Date().toISOString(),
+    isRescueDay: false,
   });
 
   // 4. Limpar identificador local do professor/testador para não ficar com ofensiva de teste presa

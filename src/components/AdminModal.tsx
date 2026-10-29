@@ -13,9 +13,12 @@ import {
   SunMedium,
   RotateCw,
   Trash2,
+  Flame,
+  Zap,
+  Clock,
 } from 'lucide-react';
 import { fetchWordPressPost, parseWordPressPost } from '../utils/wordpressParser';
-import { QuestionData, DailySubmission, DailyCycleConfig } from '../types';
+import { QuestionData, DailySubmission, DailyCycleConfig, RescueCandidateInfo } from '../types';
 import { generateWhatsAppMessages, DEFAULT_WHATSAPP_GROUP_URL } from '../utils/gamification';
 import {
   getSubmissionsByCycle,
@@ -23,7 +26,7 @@ import {
   setActiveQuestionInFirestore,
   resetAllTestDataForLaunch,
   updateWhatsappGroupUrl,
-  getAllStudentsMap,
+  getRescueCandidatesAndSyncMaxStreaks,
 } from '../services/studentService';
 
 interface AdminModalProps {
@@ -49,12 +52,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [advancingCycle, setAdvancingCycle] = useState(false);
   const [resettingData, setResettingData] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [showAdvanceConfirm, setShowAdvanceConfirm] = useState(false);
+  const [pendingNewDayMode, setPendingNewDayMode] = useState<'normal' | 'rescue' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Dados do WhatsApp
+  // Dados do WhatsApp e Modo Dia do Resgate
   const [previousCycleSubmissions, setPreviousCycleSubmissions] = useState<DailySubmission[]>([]);
+  const [rescueCandidates, setRescueCandidates] = useState<RescueCandidateInfo[]>([]);
+  const [loadingRescueCandidates, setLoadingRescueCandidates] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [whatsappLinkInput, setWhatsappLinkInput] = useState<string>(
     currentCycle?.whatsappGroupUrl || DEFAULT_WHATSAPP_GROUP_URL
@@ -85,42 +90,64 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const cycleNum = currentCycle?.currentCycleNumber || 1;
   const previousCycleNum = Math.max(1, cycleNum - 1);
+  const isRescueDay = Boolean(currentCycle?.isRescueDay);
   const [studentsMap, setStudentsMap] = useState<Record<string, { totalSolved: number }>>({});
 
   useEffect(() => {
     if (isOpen) {
+      setLoadingRescueCandidates(true);
       Promise.all([
         getSubmissionsByCycle(previousCycleNum),
-        getAllStudentsMap(),
+        getRescueCandidatesAndSyncMaxStreaks(cycleNum),
       ])
-        .then(([list, map]) => {
-          setStudentsMap(map);
+        .then(([list, rescueData]) => {
+          setStudentsMap(rescueData.studentsMap);
+          setRescueCandidates(rescueData.candidates);
           const enriched = list.map((s) => ({
             ...s,
-            totalSolved: s.totalSolved ?? map[s.studentId]?.totalSolved ?? s.streakDays ?? 1,
+            totalSolved:
+              s.totalSolved ?? rescueData.studentsMap[s.studentId]?.totalSolved ?? s.streakDays ?? 1,
           }));
           setPreviousCycleSubmissions(enriched);
         })
         .catch(() => {
           setPreviousCycleSubmissions([]);
+        })
+        .finally(() => {
+          setLoadingRescueCandidates(false);
         });
     }
-  }, [isOpen, previousCycleNum]);
+  }, [isOpen, previousCycleNum, cycleNum, todaySubmissions.length]);
 
   if (!isOpen) return null;
 
-  const handleStartNewDay = async () => {
-    setShowAdvanceConfirm(false);
+  const handleStartNewDay = async (mode: 'normal' | 'rescue') => {
+    const startAsRescue = mode === 'rescue';
+    setPendingNewDayMode(null);
     setAdvancingCycle(true);
     setError(null);
     setSuccessMessage(null);
 
     try {
-      const updatedCycle = await advanceToNextCycle(String(currentQuestion.id));
-      setSuccessMessage(`Novo dia iniciado com sucesso! Ciclo ativo: Dia #${updatedCycle.currentCycleNumber}`);
-      // Atualiza a lista do mural anterior
-      const prevList = await getSubmissionsByCycle(updatedCycle.currentCycleNumber - 1);
+      const updatedCycle = await advanceToNextCycle(String(currentQuestion.id), startAsRescue);
+      // Atualiza a lista do mural anterior e sincroniza candidatos do novo ciclo
+      const [prevList, rescueData] = await Promise.all([
+        getSubmissionsByCycle(updatedCycle.currentCycleNumber - 1),
+        getRescueCandidatesAndSyncMaxStreaks(updatedCycle.currentCycleNumber),
+      ]);
       setPreviousCycleSubmissions(prevList);
+      setRescueCandidates(rescueData.candidates);
+      setStudentsMap(rescueData.studentsMap);
+
+      if (startAsRescue) {
+        setSuccessMessage(
+          `🔥⚡ Novo Dia do Resgate iniciado com sucesso! Ciclo ativo: Dia #${updatedCycle.currentCycleNumber} (${rescueData.candidates.length} alunos elegíveis convocados nas mensagens abaixo).`
+        );
+      } else {
+        setSuccessMessage(
+          `Novo Dia Normal iniciado com sucesso! Ciclo ativo: Dia #${updatedCycle.currentCycleNumber}.`
+        );
+      }
     } catch (err: any) {
       setError(err?.message || 'Falha ao avançar o ciclo diário.');
     } finally {
@@ -200,16 +227,45 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     ...s,
     totalSolved: s.totalSolved ?? studentsMap[s.studentId]?.totalSolved ?? s.streakDays ?? 1,
   }));
-  const enrichedTodayList = todaySubmissions.map((s) => ({
-    ...s,
-    totalSolved: s.totalSolved ?? studentsMap[s.studentId]?.totalSolved ?? s.streakDays ?? 1,
-  }));
-  const { message1, message2, message3A, message3B } = generateWhatsAppMessages({
+  const enrichedTodayList = todaySubmissions
+    .filter((s) => !s.cycleNumber || s.cycleNumber === cycleNum)
+    .map((s) => ({
+      ...s,
+      totalSolved: s.totalSolved ?? studentsMap[s.studentId]?.totalSolved ?? s.streakDays ?? 1,
+    }));
+
+  // Sincroniza em tempo real se algum candidato acabou de aparecer em todaySubmissions
+  const todayCompletedNames = new Set(
+    enrichedTodayList.map((s) => (s.nickname || '').trim().toLowerCase())
+  );
+  const syncedRescueCandidates = rescueCandidates.map((c) => {
+    const doneToday =
+      c.hasRescuedToday || todayCompletedNames.has((c.nickname || '').trim().toLowerCase());
+    return {
+      ...c,
+      hasRescuedToday: doneToday,
+    };
+  });
+
+  const rescuedTodayCount = syncedRescueCandidates.filter((c) => c.hasRescuedToday).length;
+  const pendingRescueCount = syncedRescueCandidates.length - rescuedTodayCount;
+
+  const {
+    message1,
+    message2,
+    messageLunch,
+    message3A,
+    message3B,
+    messageInviteA,
+    messageInviteB,
+  } = generateWhatsAppMessages({
     yesterdayList: enrichedPreviousList,
     todayList: enrichedTodayList,
     questionUrl,
     topicTitle: `${currentQuestion.discipline} — ${currentQuestion.title} (${currentQuestion.exam})`,
     cycleNumber: cycleNum,
+    isRescueDay,
+    rescueCandidates: syncedRescueCandidates,
   });
 
   const handleCopyText = async (text: string, index: number) => {
@@ -233,7 +289,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               Y
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base font-bold text-stone-900">
                   Painel do Professor — Yes Matemática
                 </h3>
@@ -241,6 +297,12 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   <SunMedium className="w-3 h-3 text-amber-600" />
                   Dia Ativo: #{cycleNum}
                 </span>
+                {isRescueDay && (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-purple-100 text-purple-900 border border-purple-300 flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-purple-600 fill-purple-500" />
+                    Dia do Resgate Ativo
+                  </span>
+                )}
               </div>
               <p className="text-xs text-stone-500 font-medium">
                 Comunidade WhatsApp e Gestão do Ciclo Diário
@@ -255,8 +317,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           </button>
         </div>
 
-        {/* Barra de Controle de Ciclo Diário (Começar Novo Dia) */}
-        <div className="px-5 py-3 bg-amber-50/80 border-b border-amber-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Barra de Controle de Ciclo Diário (Começar Novo Dia Normal vs. Novo Dia do Resgate) */}
+        <div className="px-5 py-3.5 bg-amber-50/80 border-b border-amber-200/70 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-extrabold text-amber-950 uppercase tracking-wider">
@@ -264,7 +326,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-amber-900 leading-snug mt-0.5">
-              Alunos que responderam de madrugada entraram no <strong>Mural #{previousCycleNum}</strong>. Ao clicar em "Começar Novo Dia", o mural é reiniciado para a nova questão e o ciclo avança para o <strong>Dia #{cycleNum + 1}</strong>.
+              Escolha como iniciar o <strong>Dia #{cycleNum + 1}</strong>: como um{' '}
+              <strong>Dia Normal</strong> ou já ativando a <strong>⚡ Operação Resgate</strong> desde o primeiro segundo.
             </p>
           </div>
 
@@ -287,52 +350,28 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 Cancelar
               </button>
             </div>
-          ) : showAdvanceConfirm ? (
-            <div className="flex items-center gap-2 shrink-0 bg-amber-50 p-2 rounded-xl border border-amber-200 animate-in fade-in duration-150">
-              <span className="text-xs font-bold text-amber-900">Iniciar Dia #{cycleNum + 1}?</span>
-              <button
-                type="button"
-                onClick={handleStartNewDay}
-                disabled={advancingCycle}
-                className="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer"
-              >
-                {advancingCycle ? 'Iniciando...' : 'Sim, Iniciar'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowAdvanceConfirm(false)}
-                className="px-2.5 py-1.5 bg-white hover:bg-stone-100 text-stone-700 border border-stone-300 text-xs font-semibold rounded-lg cursor-pointer"
-              >
-                Cancelar
-              </button>
-            </div>
           ) : (
-            <div className="flex items-center gap-2 shrink-0">
-              {/* 
-                BOTÃO OCULTO PARA SEGURANÇA CONTRA CLIQUES ACIDENTAIS DURANTE O ANO LETIVO.
-                A lógica (handleResetAllData) permanece preservada no código para reutilização no início do próximo ciclo anual.
-                Para reativar no próximo ano, basta descomentar o bloco abaixo:
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <button
                 type="button"
-                disabled={resettingData || advancingCycle}
-                onClick={() => setShowResetConfirm(true)}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-stone-100 hover:bg-red-50 text-stone-600 hover:text-red-700 border border-stone-200 hover:border-red-200 active:bg-red-100 disabled:opacity-50 text-xs font-semibold rounded-xl transition-all shadow-2xs shrink-0 cursor-pointer"
-                title="Apaga as respostas e alunos de teste e reinicia o ciclo no Dia #1 oficial"
+                disabled={advancingCycle || resettingData}
+                onClick={() => setPendingNewDayMode('normal')}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-stone-900 hover:bg-stone-800 active:bg-stone-950 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition-all shadow-xs shrink-0 cursor-pointer"
+                title="Iniciar próximo ciclo como um Dia Normal"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Zerar Testes (Dia #1)</span>
+                <RotateCw className="w-3.5 h-3.5" />
+                <span>Novo Dia Normal (Dia #{cycleNum + 1})</span>
               </button>
-              */}
 
               <button
                 type="button"
                 disabled={advancingCycle || resettingData}
-                onClick={() => setShowAdvanceConfirm(true)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition-all shadow-xs shrink-0 cursor-pointer"
-                title="Avançar para o próximo ciclo diário da comunidade"
+                onClick={() => setPendingNewDayMode('rescue')}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 active:from-amber-700 active:to-orange-800 disabled:opacity-60 text-white text-xs font-extrabold rounded-xl transition-all shadow-xs shrink-0 cursor-pointer"
+                title="Iniciar próximo ciclo como Dia do Resgate da Chama"
               >
-                <RotateCw className="w-3.5 h-3.5" />
-                <span>Começar Novo Dia (Dia #{cycleNum + 1})</span>
+                <Zap className="w-3.5 h-3.5 fill-white" />
+                <span>Novo Dia do Resgate (Dia #{cycleNum + 1})</span>
               </button>
             </div>
           )}
@@ -372,7 +411,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               <div className="bg-blue-50/70 border border-blue-200/70 rounded-xl p-3.5 text-xs text-blue-900 flex items-center justify-between gap-3">
                 <div>
                   <span className="font-bold">Estatísticas do Ciclo Atual (Dia #{cycleNum}):</span>{' '}
-                  {todaySubmissions.length} concluíram nesta edição | {previousCycleSubmissions.length} concluíram no Dia #{previousCycleNum}.
+                  {enrichedTodayList.length} concluíram nesta edição | {previousCycleSubmissions.length} concluíram no Dia #{previousCycleNum}.
                 </div>
                 <div className="shrink-0 text-blue-700 font-semibold flex items-center gap-1">
                   <Users className="w-3.5 h-3.5" />
@@ -380,11 +419,67 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 </div>
               </div>
 
-              {/* Mensagem de Sucesso Global */}
+              {/* Mensagem de Sucesso ou Erro Global */}
+              {error && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
+
               {successMessage && (
                 <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2">
                   <Check className="w-4 h-4 shrink-0" />
                   <span>{successMessage}</span>
+                </div>
+              )}
+
+              {/* Card Informativo: Visível quando o ciclo atual foi iniciado como Dia do Resgate */}
+              {isRescueDay && (
+                <div className="rounded-xl p-4 border bg-linear-to-r from-amber-50 via-orange-50/80 to-purple-50 border-amber-300 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-200/80 text-amber-950 flex items-center gap-1">
+                        <Flame className="w-3.5 h-3.5 text-orange-600 fill-orange-500" />
+                        <span>Operação Resgate Ativa</span>
+                      </span>
+                      <h4 className="text-sm font-bold text-stone-900">
+                        Dia do Resgate da Chama (Ciclo #{cycleNum})
+                      </h4>
+                    </div>
+                  </div>
+                  <p className="text-xs text-stone-600 leading-relaxed">
+                    Os alunos com recordes anteriores apagados recuperam sua{' '}
+                    <strong>maior ofensiva histórica + 1 dia</strong> ao concluírem a questão de hoje. As 3 mensagens abaixo (Manhã, Almoço 12h e Noite) já estão configuradas para a Operação Resgate.
+                  </p>
+
+                  {/* Painel rápido de métricas do Resgate */}
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    <div className="bg-white/90 border border-stone-200/80 rounded-lg p-2.5 text-center">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                        Convocados (≥ 2 dias)
+                      </div>
+                      <div className="text-sm sm:text-base font-black text-stone-900 mt-0.5">
+                        {loadingRescueCandidates ? '...' : syncedRescueCandidates.length}
+                      </div>
+                    </div>
+                    <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-lg p-2.5 text-center">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                        Já Resgataram Hoje
+                      </div>
+                      <div className="text-sm sm:text-base font-black text-emerald-900 mt-0.5">
+                        {loadingRescueCandidates ? '...' : rescuedTodayCount}
+                      </div>
+                    </div>
+                    <div className="bg-amber-50/80 border border-amber-200/80 rounded-lg p-2.5 text-center">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                        Faltam Resgatar
+                      </div>
+                      <div className="text-sm sm:text-base font-black text-amber-950 mt-0.5">
+                        {loadingRescueCandidates ? '...' : pendingRescueCount}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -431,18 +526,20 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
               {/* Card Mensagem 1: Manhã (Mural do Ciclo Anterior) */}
               <div className="border border-stone-200 rounded-xl p-4 bg-stone-50/50 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded">
                       Mensagem 1 • Manhã
                     </span>
                     <h4 className="text-sm font-bold text-stone-900">
-                      Mural Oficial da Edição Anterior (Reconhecimento)
+                      {isRescueDay
+                        ? 'Mural de Ontem + Gancho no Topo para o Resgate'
+                        : 'Mural Oficial da Edição Anterior (Reconhecimento)'}
                     </h4>
                   </div>
                   <button
                     onClick={() => handleCopyText(message1, 1)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs cursor-pointer shrink-0"
                   >
                     {copiedIndex === 1 ? (
                       <>
@@ -457,25 +554,27 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     )}
                   </button>
                 </div>
-                <pre className="p-3 bg-white border border-stone-200 rounded-lg text-xs text-stone-700 whitespace-pre-wrap font-sans leading-relaxed max-h-40 overflow-y-auto">
+                <pre className="p-3 bg-white border border-stone-200 rounded-lg text-xs text-stone-700 whitespace-pre-wrap font-sans leading-relaxed max-h-44 overflow-y-auto">
                   {message1}
                 </pre>
               </div>
 
-              {/* Card Mensagem 2: Manhã (Questão do Dia) */}
+              {/* Card Mensagem 2: Manhã (Questão do Dia / Convocação do Resgate) */}
               <div className="border border-stone-200 rounded-xl p-4 bg-stone-50/50 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded">
-                      Mensagem 2 • Manhã (5s depois)
+                      {isRescueDay ? 'Mensagem 2 • Manhã (Convocação)' : 'Mensagem 2 • Manhã (5s depois)'}
                     </span>
                     <h4 className="text-sm font-bold text-stone-900">
-                      Questão do Dia (Link e Desafio)
+                      {isRescueDay
+                        ? 'Questão do Dia + Dia do Resgate (Enxuta p/ enviar com Imagem)'
+                        : 'Questão do Dia (Link e Desafio)'}
                     </h4>
                   </div>
                   <button
                     onClick={() => handleCopyText(message2, 2)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs cursor-pointer shrink-0"
                   >
                     {copiedIndex === 2 ? (
                       <>
@@ -490,10 +589,46 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     )}
                   </button>
                 </div>
-                <pre className="p-3 bg-white border border-stone-200 rounded-lg text-xs text-stone-700 whitespace-pre-wrap font-sans leading-relaxed max-h-40 overflow-y-auto">
+                <pre className="p-3 bg-white border border-stone-200 rounded-lg text-xs text-stone-700 whitespace-pre-wrap font-sans leading-relaxed max-h-48 overflow-y-auto">
                   {message2}
                 </pre>
               </div>
+
+              {/* Card Mensagem Extra: Almoço (Plantão do Meio-Dia - exibido nos Dias do Resgate) */}
+              {isRescueDay && (
+                <div className="border border-orange-200 rounded-xl p-4 bg-orange-50/40 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold uppercase tracking-wider text-orange-800 bg-orange-100 px-2 py-0.5 rounded flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>Mensagem do Almoço • 12h</span>
+                      </span>
+                      <h4 className="text-sm font-bold text-stone-900">
+                        Plantão do Meio-Dia (Enxuto com Total do Mural)
+                      </h4>
+                    </div>
+                    <button
+                      onClick={() => handleCopyText(messageLunch, 5)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs cursor-pointer shrink-0"
+                    >
+                      {copiedIndex === 5 ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-white" />
+                          <span>Copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copiar Msg do Almoço</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <pre className="p-3 bg-white border border-stone-200 rounded-lg text-xs text-stone-700 whitespace-pre-wrap font-sans leading-relaxed max-h-48 overflow-y-auto">
+                    {messageLunch}
+                  </pre>
+                </div>
+              )}
 
               {/* Card Mensagem 3: Noite (Chamada da Noite) */}
               <div className="border border-purple-200 rounded-xl p-4 bg-purple-50/30 space-y-3">
@@ -539,7 +674,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       </pre>
                     </div>
                     <p className="text-[11px] text-stone-500 mt-2">
-                      💡 Envie primeiro no grupo. O WhatsApp cortará com "Ler mais", gerando prova social.
+                      💡 Envie primeiro no grupo. Cada aluno fica em 1 linha curta com sua ofensiva atual.
                     </p>
                   </div>
 
@@ -573,7 +708,91 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       </pre>
                     </div>
                     <p className="text-[11px] text-stone-500 mt-2">
-                      🚀 Envie logo em seguida. O link ficará 100% visível e clicável, sem "Ler mais".
+                      🚀 Envie logo em seguida com o alerta final até as 23h59.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Mensagem de Convite: Crescimento do Grupo (Dividida em 2 partes) */}
+              <div className="border border-emerald-200 rounded-xl p-4 bg-emerald-50/30 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded">
+                      Convite • Crescimento
+                    </span>
+                    <h4 className="text-sm font-bold text-stone-900">
+                      Convite para Alunos Encaminharem (Dividido em 2 partes)
+                    </h4>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  {/* Parte 1: Pedido para a turma */}
+                  <div className="p-3 bg-white border border-stone-200 rounded-xl space-y-2 shadow-2xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-stone-700">
+                          Parte 1: Pedido para a turma
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(messageInviteA, 6)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs cursor-pointer"
+                        >
+                          {copiedIndex === 6 ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-white" />
+                              <span>Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copiar Parte 1</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <pre className="p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-xs text-stone-700 whitespace-pre-wrap font-sans leading-relaxed max-h-36 overflow-y-auto">
+                        {messageInviteA}
+                      </pre>
+                    </div>
+                    <p className="text-[11px] text-stone-500 mt-2">
+                      💡 Envie primeiro no grupo para avisar que a mensagem abaixo está pronta para encaminhar.
+                    </p>
+                  </div>
+
+                  {/* Parte 2: Mensagem pronta para encaminharem */}
+                  <div className="p-3 bg-white border border-stone-200 rounded-xl space-y-2 shadow-2xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-stone-700">
+                          Parte 2: Mensagem p/ encaminhar
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(messageInviteB, 7)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs cursor-pointer"
+                        >
+                          {copiedIndex === 7 ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-white" />
+                              <span>Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copiar Parte 2</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <pre className="p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-xs text-stone-700 whitespace-pre-wrap font-sans leading-relaxed max-h-36 overflow-y-auto">
+                        {messageInviteB}
+                      </pre>
+                    </div>
+                    <p className="text-[11px] text-stone-500 mt-2">
+                      🚀 Envie logo em seguida. Funciona tanto no privado de amigos quanto em grupos de estudo.
                     </p>
                   </div>
                 </div>
@@ -681,6 +900,103 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Pop-up Centralizado de Confirmação de Novo Dia (Normal vs. Resgate) */}
+      {pendingNewDayMode !== null && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-md rounded-2xl border border-stone-200 shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3.5">
+              <div
+                className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
+                  pendingNewDayMode === 'rescue'
+                    ? 'bg-linear-to-br from-amber-500 to-orange-600 text-white'
+                    : 'bg-stone-900 text-white'
+                }`}
+              >
+                {pendingNewDayMode === 'rescue' ? (
+                  <Zap className="w-5 h-5 fill-white" />
+                ) : (
+                  <RotateCw className="w-5 h-5" />
+                )}
+              </div>
+              <div className="space-y-1">
+                <span
+                  className={`inline-block text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded ${
+                    pendingNewDayMode === 'rescue'
+                      ? 'bg-amber-100 text-amber-900'
+                      : 'bg-stone-100 text-stone-700'
+                  }`}
+                >
+                  Virada para o Dia #{cycleNum + 1}
+                </span>
+                <h4 className="text-base font-extrabold text-stone-900 leading-snug">
+                  {pendingNewDayMode === 'rescue'
+                    ? 'Você realmente deseja começar um novo dia do resgate?'
+                    : 'Você realmente deseja começar um novo dia normal?'}
+                </h4>
+              </div>
+            </div>
+
+            <div
+              className={`p-3.5 rounded-xl border text-xs leading-relaxed ${
+                pendingNewDayMode === 'rescue'
+                  ? 'bg-amber-50/80 border-amber-200 text-amber-950'
+                  : 'bg-stone-50 border-stone-200 text-stone-700'
+              }`}
+            >
+              {pendingNewDayMode === 'rescue' ? (
+                <>
+                  O ciclo avançará para o <strong>Dia #{cycleNum + 1}</strong> já com a{' '}
+                  <strong>⚡ Operação Resgate da Chama ativa desde o início</strong>. Todos os alunos que apagaram um recorde antigo poderão recuperar sua maior ofensiva histórica + 1 dia hoje, e as 3 mensagens especiais (Manhã, Almoço 12h e Noite) serão geradas.
+                </>
+              ) : (
+                <>
+                  O ciclo avançará para o <strong>Dia #{cycleNum + 1}</strong> no{' '}
+                  <strong>modo padrão</strong> (sem resgate de recordes antigos) e o mural de hoje será reiniciado para a nova questão.
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={advancingCycle}
+                onClick={() => setPendingNewDayMode(null)}
+                className="px-4 py-2.5 bg-white hover:bg-stone-100 text-stone-700 border border-stone-300 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={advancingCycle}
+                onClick={() => handleStartNewDay(pendingNewDayMode)}
+                className={`px-4 py-2.5 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                  pendingNewDayMode === 'rescue'
+                    ? 'bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700'
+                    : 'bg-stone-900 hover:bg-stone-800'
+                }`}
+              >
+                {advancingCycle ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Iniciando...</span>
+                  </>
+                ) : pendingNewDayMode === 'rescue' ? (
+                  <>
+                    <Zap className="w-3.5 h-3.5 fill-white" />
+                    <span>Sim, começar Dia do Resgate</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Sim, começar Dia Normal</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

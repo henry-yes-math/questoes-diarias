@@ -9,6 +9,7 @@ import {
   findExistingStudentByNickname,
   getOrCreateStudentProfile,
   registerDailySubmission,
+  ensureStudentMaxStreakSynced,
   markReferralRewardSeen,
   subscribeToDailyCycle,
   fetchSubmissionsByCycleWithCache,
@@ -25,6 +26,7 @@ import {
 } from '../services/studentService';
 import {
   calculateMilestone,
+  calculateNewStreakWithShield,
   getLocalDateString,
   hasStudentCompletedCurrentQuestion,
 } from '../utils/gamification';
@@ -195,10 +197,12 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
 
     async function initStudent() {
       // 1. Tenta buscar direto pelo ID no Firestore
-      const profileById = await getStudentProfileById(studentId);
+      const rawProfileById = await getStudentProfileById(studentId);
       if (!isMounted) return;
 
-      if (profileById) {
+      if (rawProfileById) {
+        const profileById = await ensureStudentMaxStreakSynced(rawProfileById);
+        if (!isMounted) return;
         setProfile(profileById);
         if (profileById.nickname) {
           setNicknameState(profileById.nickname);
@@ -224,10 +228,12 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
 
       // 2. Se o ID atual não tem perfil no Firestore, verifica se há um nickname salvo
       if (nickname) {
-        const profileByNick = await findExistingStudentByNickname(nickname, studentId);
+        const rawProfileByNick = await findExistingStudentByNickname(nickname, studentId);
         if (!isMounted) return;
 
-        if (profileByNick) {
+        if (rawProfileByNick) {
+          const profileByNick = await ensureStudentMaxStreakSynced(rawProfileByNick);
+          if (!isMounted) return;
           setLocalStudentId(profileByNick.studentId);
           setStudentId(profileByNick.studentId);
           setProfile(profileByNick);
@@ -287,11 +293,12 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
       // ou se o aluno já possui um perfil gravado no banco (evitando criar perfis com totalSolved = 0).
       if (adoptedStudentId || profile) {
         try {
-          const p = await getOrCreateStudentProfile(
+          const rawProfile = await getOrCreateStudentProfile(
             targetStudentId,
             newNick,
             currentCycle.currentCycleNumber
           );
+          const p = await ensureStudentMaxStreakSynced(rawProfile);
           setProfile(p);
           const mInfo = calculateMilestone(p.totalSolved, Math.max(0, p.totalSolved - 1));
           setMilestoneInfo(mInfo);
@@ -307,17 +314,21 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
     [studentId, profile, currentCycle.currentCycleNumber]
   );
 
-  // Estado do Modal de Resgate de Protetor de Ofensiva (Ufa! Sua chama continua viva!)
+  // Estado do Modal de Resgate de Protetor de Ofensiva (Ufa! Sua chama continua viva!) e do Dia do Resgate
   const [isShieldRescueModalOpen, setIsShieldRescueModalOpen] = useState(false);
   const [wasShieldUsedInSubmission, setWasShieldUsedInSubmission] = useState(false);
   const [shieldsUsedInSubmission, setShieldsUsedInSubmission] = useState<number>(0);
   const [earnedNewShieldInSubmission, setEarnedNewShieldInSubmission] = useState(false);
+  const [wasRescuedInSubmission, setWasRescuedInSubmission] = useState(false);
+  const [rescuedFromStreakInSubmission, setRescuedFromStreakInSubmission] = useState<number | undefined>(undefined);
 
   // Limpa os indicadores de submissão do ciclo anterior quando o ciclo diário avança
   useEffect(() => {
     setWasShieldUsedInSubmission(false);
     setShieldsUsedInSubmission(0);
     setEarnedNewShieldInSubmission(false);
+    setWasRescuedInSubmission(false);
+    setRescuedFromStreakInSubmission(undefined);
   }, [currentCycle.currentCycleNumber]);
 
   // Notificação de Escudo ganho por indicação de amigo (?convite)
@@ -388,6 +399,8 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
         setWasShieldUsedInSubmission(Boolean(res.shieldWasUsed));
         setShieldsUsedInSubmission(res.shieldWasUsed ? (res.shieldsUsed || 1) : 0);
         setEarnedNewShieldInSubmission(Boolean(res.earnedNewShield));
+        setWasRescuedInSubmission(Boolean(res.wasRescued));
+        setRescuedFromStreakInSubmission(res.previousStreakDays);
 
         const mInfo = calculateMilestone(res.profile.totalSolved, prevTotal);
         setMilestoneInfo(mInfo);
@@ -449,25 +462,59 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
   }, [isCycleLoaded, hasCompletedToday, nickname, retryPendingSubmission]);
 
   const streakShields = profile?.streakShields ?? 0;
+  const maxStreakDays = Math.max(profile?.maxStreakDays || 0, profile?.streakDays || 0);
+  const isRescueDay = Boolean(currentCycle?.isRescueDay);
+
   const missedCycles =
     isCycleLoaded && profile?.lastCompletedCycle != null && profile.lastCompletedCycle > 0
       ? Math.max(0, currentCycle.currentCycleNumber - 1 - profile.lastCompletedCycle)
       : 0;
 
+  // Verifica se o aluno é elegível ao resgate da chama hoje (quando isRescueDay está ativo e ainda não respondeu hoje)
+  const normalProjectedStreak = profile
+    ? calculateNewStreakWithShield(
+        profile.lastCompletedCycle,
+        profile.streakDays || 0,
+        currentCycle.currentCycleNumber,
+        streakShields,
+        (profile.totalSolved || 0) + 1,
+        false,
+        maxStreakDays
+      ).newStreak
+    : 1;
+
+  const isEligibleForRescueToday = Boolean(
+    isCycleLoaded &&
+      isRescueDay &&
+      profile &&
+      !hasCompletedToday &&
+      maxStreakDays >= 2 &&
+      normalProjectedStreak < maxStreakDays + 1
+  );
+
+  const wasRescued = Boolean(wasRescuedInSubmission || todayMySubmission?.wasRescued);
+  const rescuedFromStreak =
+    rescuedFromStreakInSubmission ?? todayMySubmission?.previousStreakDays ?? maxStreakDays;
+
   // O aluno está protegido se tiver faltado 1 ou mais ciclos e possuir escudos suficientes para cobrir TODAS as faltas
+  // (Se hoje for Dia do Resgate e ele for elegível a recuperar um recorde maior gratuitamente, o evento tem prioridade sobre o escudo)
   const isShieldProtectingCurrentCycle = Boolean(
     isCycleLoaded &&
     profile &&
     missedCycles > 0 &&
-    missedCycles <= streakShields
+    missedCycles <= streakShields &&
+    !isEligibleForRescueToday
   );
 
-  const wasShieldUsed = wasShieldUsedInSubmission || Boolean(
-    isCycleLoaded &&
-    profile &&
-    profile.lastShieldUsedCycle === currentCycle.currentCycleNumber - 1 &&
-    profile.lastCompletedCycle === currentCycle.currentCycleNumber
-  );
+  const wasShieldUsed =
+    !wasRescued &&
+    (wasShieldUsedInSubmission ||
+      Boolean(
+        isCycleLoaded &&
+          profile &&
+          profile.lastShieldUsedCycle === currentCycle.currentCycleNumber - 1 &&
+          profile.lastCompletedCycle === currentCycle.currentCycleNumber
+      ));
 
   const shieldsUsedCount = shieldsUsedInSubmission || (isShieldProtectingCurrentCycle ? missedCycles : wasShieldUsed ? 1 : 0);
 
@@ -518,6 +565,11 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
     shieldsUsedCount,
     missedCycles,
     earnedNewShield,
+    wasRescued,
+    rescuedFromStreak,
+    maxStreakDays,
+    isRescueDay,
+    isEligibleForRescueToday,
     profile,
     streakShields,
     isShieldProtectingCurrentCycle,

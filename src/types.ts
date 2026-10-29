@@ -35,6 +35,7 @@ export interface StudentProfile {
   nicknameLower?: string;
   totalSolved: number;
   streakDays: number;
+  maxStreakDays?: number; // Maior ofensiva consecutiva histórica do aluno (sem ser totalSolved)
   lastSolvedDate: string | null; // Formato YYYY-MM-DD
   lastCompletedCycle?: number; // Número do último ciclo completado
   lastCompletedQuestionId?: string; // ID da última questão completada pelo aluno
@@ -60,6 +61,7 @@ export interface DailyCycleConfig {
   startedAt: string; // ISO string
   questionId?: string;
   whatsappGroupUrl?: string; // Link direto para a comunidade oficial do WhatsApp
+  isRescueDay?: boolean; // Modo Dia do Resgate da Chama ativo neste ciclo
 }
 
 export interface DailySubmission {
@@ -75,8 +77,21 @@ export interface DailySubmission {
   completedAt: string; // ISO string
   unlockedMilestone?: number; // ex: 3, 7
   streakShields?: number; // Quantidade de escudos ativos no momento
+  wasRescued?: boolean; // Se a ofensiva foi resgatada no Dia do Resgate
+  previousStreakDays?: number; // Recorde anterior recuperado no resgate
   referredByStudentId?: string; // Vinculo de indicação nesta submissão
   referredByStudentName?: string;
+}
+
+export interface RescueCandidateInfo {
+  studentId: string;
+  nickname: string;
+  maxStreakDays: number; // Recorde histórico a ser resgatado (>= 2)
+  currentStreakDays: number; // Ofensiva atual no perfil
+  totalSolved: number;
+  lastCompletedCycle: number;
+  hasRescuedToday: boolean;
+  newStreakAfterRescue: number; // maxStreakDays + 1
 }
 
 export interface MilestoneInfo {

@@ -256,27 +256,49 @@ export function getQuestionsUntilNextShield(
 
 export interface StreakShieldCalculationResult {
   newStreak: number;
+  newMaxStreak: number;
   newShields: number;
   shieldWasUsed: boolean;
   shieldsUsed?: number;
   earnedNewShield: boolean;
   usedInCycle?: number;
+  wasRescued?: boolean;
+  previousStreakBeforeRescue?: number;
 }
 
 /**
- * Calcula a ofensiva (streak) e o gerenciamento de Protetores de Chama (Shields)
- * com base nos ciclos diários acionados pelo professor.
+ * Formata o apelido do aluno para caber rigorosamente em uma única linha curta no WhatsApp mobile,
+ * reduzindo repetições excessivas de caracteres (ex: "reeeeeeeeeeeeeeeeeenato" -> "reeeeenato").
+ */
+export function formatWhatsAppNickname(nickname: string): string {
+  const clean = (nickname || 'Estudante').trim().replace(/\s+/g, ' ');
+  // Reduz qualquer letra repetida mais de 5 vezes seguidas para 5 repetições
+  const collapsed = clean.replace(/(.)\1{5,}/gi, '$1$1$1$1$1');
+  if (collapsed.length <= 22) {
+    return collapsed;
+  }
+  return collapsed.slice(0, 21).trimEnd() + '…';
+}
+
+/**
+ * Calcula a ofensiva (streak), o recorde histórico (maxStreakDays) e o gerenciamento de
+ * Protetores de Chama (Shields) com base nos ciclos diários acionados pelo professor.
  * Concede +1 escudo na 2ª questão (onboarding) e +1 escudo a cada 6 questões resolvidas
  * no total acumulado (6, 12, 18, 24...), sem exigir dias consecutivos, até o teto de 2 escudos.
+ * Quando `isRescueDay` está ativo, alunos com recorde histórico `maxStreakDays >= 2`
+ * cuja ofensiva normal ficaria abaixo de `maxStreakDays + 1` resgatam sua ofensiva para `maxStreakDays + 1`.
  */
 export function calculateNewStreakWithShield(
   lastCompletedCycle: number | undefined | null,
   currentStreak: number,
   currentCycleNumber: number,
   currentShields: number = 0,
-  newTotal?: number
+  newTotal?: number,
+  isRescueDay: boolean = false,
+  maxStreakDays: number = 0
 ): StreakShieldCalculationResult {
   const safeCurrentStreak = Math.max(0, currentStreak || 0);
+  const historicalMax = Math.max(safeCurrentStreak, maxStreakDays || 0);
   const safeShields = Math.max(0, Math.min(MAX_STREAK_SHIELDS, currentShields || 0));
 
   // Verifica se o aluno ganha +1 escudo nesta questão (na 2ª questão ou em múltiplos de 6 questões resolvidas)
@@ -305,26 +327,61 @@ export function calculateNewStreakWithShield(
     return { shields: baseShields, earned: false };
   };
 
+  const applyRescueIfEligible = (
+    baseResult: Omit<StreakShieldCalculationResult, 'newMaxStreak'>
+  ): StreakShieldCalculationResult => {
+    if (
+      isRescueDay &&
+      lastCompletedCycle !== currentCycleNumber &&
+      historicalMax >= 2 &&
+      baseResult.newStreak < historicalMax + 1
+    ) {
+      const rescuedStreak = historicalMax + 1;
+      const earnedCheck = evaluateShieldEarned(safeShields, rescuedStreak);
+      return {
+        ...baseResult,
+        newStreak: rescuedStreak,
+        newMaxStreak: Math.max(historicalMax, rescuedStreak),
+        newShields: earnedCheck.shields,
+        shieldWasUsed: false,
+        shieldsUsed: 0,
+        earnedNewShield: earnedCheck.earned,
+        usedInCycle: undefined,
+        wasRescued: true,
+        previousStreakBeforeRescue: historicalMax,
+      };
+    }
+
+    return {
+      ...baseResult,
+      newMaxStreak: Math.max(historicalMax, baseResult.newStreak),
+      wasRescued: false,
+    };
+  };
+
   // 1. Aluno sem histórico ou iniciando agora
   if (lastCompletedCycle === undefined || lastCompletedCycle === null || lastCompletedCycle <= 0) {
     const earnedCheck = evaluateShieldEarned(safeShields);
-    return {
+    return applyRescueIfEligible({
       newStreak: 1,
       newShields: earnedCheck.shields,
       shieldWasUsed: false,
       shieldsUsed: 0,
       earnedNewShield: earnedCheck.earned,
-    };
+    });
   }
 
   // 2. Se já concluiu este mesmo ciclo anteriormente, mantém a ofensiva e escudos
   if (lastCompletedCycle === currentCycleNumber) {
+    const keptStreak = Math.max(1, safeCurrentStreak);
     return {
-      newStreak: Math.max(1, safeCurrentStreak),
+      newStreak: keptStreak,
+      newMaxStreak: Math.max(historicalMax, keptStreak),
       newShields: safeShields,
       shieldWasUsed: false,
       shieldsUsed: 0,
       earnedNewShield: false,
+      wasRescued: false,
     };
   }
 
@@ -332,47 +389,44 @@ export function calculateNewStreakWithShield(
   if (lastCompletedCycle === currentCycleNumber - 1) {
     const nextStreak = Math.max(1, safeCurrentStreak) + 1;
     const earnedCheck = evaluateShieldEarned(safeShields, nextStreak);
-    return {
+    return applyRescueIfEligible({
       newStreak: nextStreak,
       newShields: earnedCheck.shields,
       shieldWasUsed: false,
       shieldsUsed: 0,
       earnedNewShield: earnedCheck.earned,
-    };
+    });
   }
 
   // 4. Pulou ciclos. Quantos ciclos foram perdidos?
   const missedCycles = currentCycleNumber - 1 - lastCompletedCycle;
 
   // Se faltou 1 ou mais ciclos e tem protetores suficientes para cobrir TODAS as faltas consecutivas:
-  // Ex: faltou 1 dia e tem >= 1 protetor -> consome 1 protetor e salva a ofensiva.
-  // Ex: faltou 2 dias seguidos e tem 2 protetores -> consome os 2 protetores e salva a ofensiva!
   if (missedCycles > 0 && safeShields >= missedCycles) {
     const shieldsUsed = missedCycles;
     const consumedShields = safeShields - shieldsUsed;
     const nextStreak = Math.max(1, safeCurrentStreak) + 1;
     const earnedCheck = evaluateShieldEarned(consumedShields, nextStreak);
 
-    return {
+    return applyRescueIfEligible({
       newStreak: nextStreak,
       newShields: earnedCheck.shields,
       shieldWasUsed: true,
       shieldsUsed,
       earnedNewShield: earnedCheck.earned,
       usedInCycle: currentCycleNumber - 1,
-    };
+    });
   }
 
-  // 5. Sem protetores suficientes (ex: 0 protetores, ou faltou mais ciclos do que escudos disponíveis)
-  // -> ofensiva reinicia em 1, mas o aluno ainda ganha escudo se esta for sua 2ª, 6ª, 12ª, 18ª... questão resolvida!
+  // 5. Sem protetores suficientes -> ofensiva normal reiniciaria em 1 (ou é resgatada se isRescueDay = true)
   const earnedCheck = evaluateShieldEarned(safeShields);
-  return {
+  return applyRescueIfEligible({
     newStreak: 1,
     newShields: earnedCheck.shields,
     shieldWasUsed: false,
     shieldsUsed: 0,
     earnedNewShield: earnedCheck.earned,
-  };
+  });
 }
 
 /**
@@ -383,14 +437,18 @@ export function calculateNewStreakByCycle(
   currentStreak: number,
   currentCycleNumber: number,
   currentShields: number = 0,
-  newTotal?: number
+  newTotal?: number,
+  isRescueDay: boolean = false,
+  maxStreakDays: number = 0
 ): number {
   return calculateNewStreakWithShield(
     lastCompletedCycle,
     currentStreak,
     currentCycleNumber,
     currentShields,
-    newTotal
+    newTotal,
+    isRescueDay,
+    maxStreakDays
   ).newStreak;
 }
 
@@ -468,7 +526,7 @@ Duvido você acertar essa de primeira kkk
 }
 
 /**
- * Gera as mensagens oficiais de WhatsApp com base no ciclo diário
+ * Gera as mensagens oficiais de WhatsApp com base no ciclo diário e no Modo Dia do Resgate da Chama
  */
 export function generateWhatsAppMessages({
   yesterdayList,
@@ -476,31 +534,44 @@ export function generateWhatsAppMessages({
   questionUrl,
   topicTitle = 'Geometria Plana — Áreas e Perímetros (ENEM)',
   cycleNumber = 1,
+  isRescueDay = false,
+  rescueCandidates = [],
 }: {
   yesterdayList: Array<{
     nickname: string;
     streakDays: number;
     totalSolved?: number;
     unlockedMilestone?: number;
+    wasRescued?: boolean;
   }>;
   todayList: Array<{
     nickname: string;
     streakDays: number;
     totalSolved?: number;
     unlockedMilestone?: number;
+    wasRescued?: boolean;
   }>;
   questionUrl: string;
   topicTitle?: string;
   cycleNumber?: number;
+  isRescueDay?: boolean;
+  rescueCandidates?: Array<{
+    studentId: string;
+    nickname: string;
+    maxStreakDays: number;
+    currentStreakDays: number;
+    totalSolved: number;
+    lastCompletedCycle: number;
+    hasRescuedToday: boolean;
+    newStreakAfterRescue: number;
+  }>;
 }) {
   const countYesterday = yesterdayList.length;
 
   // Segmentação estrita sem duplicação para a Mensagem 1
-  // 1. Quem bateu meta ontem
   const metaBatidaItems = yesterdayList.filter((item) => Boolean(item.unlockedMilestone));
   const metaBatidaNames = new Set(metaBatidaItems.map((i) => i.nickname.toLowerCase()));
 
-  // 2. Quem garantiu a 1ª questão ontem (totalSolved === 1 ou streakDays === 1 sem marco batido)
   const primeiraItems = yesterdayList.filter((item) => {
     if (metaBatidaNames.has(item.nickname.toLowerCase())) return false;
     const total = item.totalSolved ?? item.streakDays;
@@ -508,7 +579,6 @@ export function generateWhatsAppMessages({
   });
   const primeiraNames = new Set(primeiraItems.map((i) => i.nickname.toLowerCase()));
 
-  // 3. Quem está "Na cara do gol" (falta exatamente 1 questão para bater a meta)
   const naCaraDoGolItems = yesterdayList.filter((item) => {
     const nickLower = item.nickname.toLowerCase();
     if (metaBatidaNames.has(nickLower) || primeiraNames.has(nickLower)) return false;
@@ -518,7 +588,6 @@ export function generateWhatsAppMessages({
   });
   const naCaraDoGolNames = new Set(naCaraDoGolItems.map((i) => i.nickname.toLowerCase()));
 
-  // 4. Os demais mantiveram a ofensiva acesa
   const mantiveramOfensivaItems = yesterdayList.filter((item) => {
     const nickLower = item.nickname.toLowerCase();
     return (
@@ -534,38 +603,35 @@ export function generateWhatsAppMessages({
     );
   };
 
-  // Montagem dos blocos da Mensagem 1
+  // Montagem dos blocos da Mensagem 1 (sempre 1 linha curta por aluno)
   const message1Blocks: string[] = [];
 
-  // Seção 1: Metas Batidas Ontem
   const metaBatidaSorted = sortAlphabetically(metaBatidaItems);
   if (metaBatidaSorted.length > 0) {
     const metaLines = metaBatidaSorted
-      .map((i) => `• *${i.nickname}* (Meta de ${i.unlockedMilestone} 🏆)`)
+      .map((i) => `• *${formatWhatsAppNickname(i.nickname)}* (Meta ${i.unlockedMilestone} 🏆)`)
       .join('\n');
 
     message1Blocks.push(`🎯 *METAS BATIDAS ONTEM:*\n${metaLines}`);
   }
 
-  // Seção 2: Garantiram a 1ª Questão Ontem
   const primeiraSorted = sortAlphabetically(primeiraItems);
   if (primeiraSorted.length > 0) {
     const primeiraLines = primeiraSorted
-      .map((i) => `• *${i.nickname}* (🔥 1º dia)`)
+      .map((i) => `• *${formatWhatsAppNickname(i.nickname)}* (🔥 1º dia)`)
       .join('\n');
     message1Blocks.push(
       `🔥 *GARANTIRAM A 1ª QUESTÃO ONTEM:*\n${primeiraLines}\n\nA primeira já foi! Hoje tem a 2ª para manter o ritmo firme 💪`
     );
   }
 
-  // Seção 3: Na Cara do Gol
   const naCaraDoGolSorted = sortAlphabetically(naCaraDoGolItems);
   if (naCaraDoGolSorted.length > 0) {
     const naCaraDoGolLines = naCaraDoGolSorted
       .map((i) => {
         const total = i.totalSolved ?? i.streakDays ?? 1;
         const target = MILESTONES.find((m) => m > total) || (Math.floor(total / 5) + 1) * 5;
-        return `• *${i.nickname}* (Meta de ${target} 🎯)`;
+        return `• *${formatWhatsAppNickname(i.nickname)}* (Meta ${target} 🎯)`;
       })
       .join('\n');
 
@@ -574,7 +640,6 @@ export function generateWhatsAppMessages({
     );
   }
 
-  // Seção 4: Mantiveram a Ofensiva Acesa (ou lista completa se ninguém caiu nas categorias acima)
   const itensParaOfensiva =
     mantiveramOfensivaItems.length > 0
       ? mantiveramOfensivaItems
@@ -586,7 +651,7 @@ export function generateWhatsAppMessages({
 
   if (ofensivaSorted.length > 0) {
     const ofensivaLines = ofensivaSorted
-      .map((item) => `• *${item.nickname}* (🔥 ${item.streakDays} ${
+      .map((item) => `• *${formatWhatsAppNickname(item.nickname)}* (🔥 ${item.streakDays} ${
         item.streakDays === 1 ? 'dia' : 'dias'
       })`)
       .join('\n');
@@ -596,19 +661,48 @@ export function generateWhatsAppMessages({
     message1Blocks.push('• *Turma Yes Matemática* (🔥 1 dia)');
   }
 
-  const message1 = `⚔️ *BOM DIA! MURAL DE ONTEM* 🎯
+  const message1 = isRescueDay
+    ? `🏆 *MURAL DE ONTEM + AVISO ESPECIAL!* 🔥⚡
+
+Parabéns aos *${countYesterday} ${
+        countYesterday === 1 ? 'guerreiro que fechou' : 'guerreiros que fecharam'
+      }* o desafio de ontem! 👏
+👀 *ATENÇÃO:* Já deixou sua chama apagar em algum momento? Na mensagem abaixo vou liberar o *DIA DO RESGATE* para você recuperar seu recorde hoje! ⚡
+
+${message1Blocks.join('\n\n')}
+
+👇 *A Questão de Hoje + Dia do Resgate já estão valendo logo abaixo!*
+
+🔗 *Quer convidar um amigo pro nosso grupo?* Mande este link:
+https://tinyurl.com/enem-questoes-diarias`
+    : `⚔️ *BOM DIA! MURAL DE ONTEM* 🎯
 
 *${countYesterday} ${
-    countYesterday === 1 ? 'mente focada manteve' : 'mentes focadas mantiveram'
-  } o ritmo firme* e fecharam o dia com a presença garantida! 🎯
+        countYesterday === 1 ? 'mente focada manteve' : 'mentes focadas mantiveram'
+      } o ritmo firme* e fecharam o dia com a presença garantida! 🎯
 
 ${message1Blocks.join('\n\n')}
 
 👏 Parabéns a quem manteve o ritmo firme!
-Viu seu apelido na lista? Deixa um 👍 aqui!`;
+Viu seu apelido na lista? Deixa um 👍 aqui!
 
-  // Mensagem 2 - Questão do Dia
-  const message2 = `🚀 *QUESTÃO DO DIA LIBERADA!*
+🔗 *Quer convidar um amigo pro nosso grupo?* Mande este link:
+https://tinyurl.com/enem-questoes-diarias`;
+
+  // Mensagem 2 - Manhã (Questão do Dia ou Dia do Resgate Enxuto)
+  const message2 = isRescueDay
+    ? `🚨 *QUESTÃO DO DIA + DIA DO RESGATE!* 🔥⚡
+
+🔗 *RESOLVA AGORA (3 a 5 min):*
+👉 ${questionUrl}
+
+Veja como funciona o desafio de hoje (valendo até as *23h59*):
+
+🔥 *Está no seu recorde atual?* Resolva hoje para somar *+1 dia seguido* e defender sua sequência!
+⚡ *Já deixou sua chama apagar em algum momento?* Hoje você tem uma *Segunda Chance Oficial*! Acertando a questão de hoje, o app devolve toda a sua *maior ofensiva histórica + 1 dia*!
+
+👀 *Abra o link acima para ver sua chama e resolver em 3 min!* 👇`
+    : `🚀 *QUESTÃO DO DIA LIBERADA!*
 
 📌 ENEM — Matemática (com dicas guiadas se travar)
 
@@ -623,8 +717,37 @@ Quem vai ser a 1ª pessoa a inaugurar o Mural de hoje? 👀
 
 👇 Vai manter sua chama acesa? Manda um 🔥!`;
 
-  // Mensagem 3 - Noite
+  // Mensagem Extra do Almoço (Plantão do Meio-Dia)
   const countToday = todayList.length;
+
+  const messageLunch = isRescueDay
+    ? `⏰ *PLANTÃO DO MEIO-DIA — DIA DO RESGATE!* 🔥⚡
+
+Já são *${countToday} ${
+        countToday === 1 ? 'aluno com presença garantida' : 'alunos com presença garantida'
+      }* no Mural de hoje! 🎯
+
+Se você ainda não resolveu a questão de hoje, aproveite *3 minutinhos do almoço*:
+• *Está no seu recorde?* Garanta *+1 dia seguido* 🔥
+• *Já deixou a chama apagar em algum momento?* Recupere toda a sua *maior ofensiva histórica + 1 dia* hoje! ⚡
+
+🔗 *RESOLVA AGORA (3 a 5 min):*
+👉 ${questionUrl}`
+    : `⏰ *PLANTÃO DO MEIO-DIA — QUESTÃO DO DIA!* 🔥
+
+🔗 *LINK DA QUESTÃO DE HOJE:*
+👉 ${questionUrl}
+
+Já são *${countToday} ${
+        countToday === 1 ? 'fera com presença garantida' : 'feras com presença garantida'
+      }* no Mural de hoje! 🎯
+
+Se você ainda não resolveu a questão de hoje, aproveite os 3 minutinhos pós-almoço para garantir *+1 dia de ofensiva 🔥* e ficar livre à noite!
+
+🔗 *RESOLVA AGORA (3 a 5 min):*
+👉 ${questionUrl}`;
+
+  // Mensagem 3 - Noite (Mural de Hoje por Ordem de Chegada - 1 linha curta por aluno, sem asterisco nos resgatados)
   let muralLinesToday = '';
   if (countToday === 0) {
     muralLinesToday = '01. *O próximo pode ser você!*';
@@ -632,7 +755,7 @@ Quem vai ser a 1ª pessoa a inaugurar o Mural de hoje? 👀
     muralLinesToday = todayList
       .map((item, idx) => {
         const num = String(idx + 1).padStart(2, '0');
-        return `${num}. *${item.nickname}* (🔥 ${item.streakDays} ${
+        return `${num}. *${formatWhatsAppNickname(item.nickname)}* (🔥 ${item.streakDays} ${
           item.streakDays === 1 ? 'dia' : 'dias'
         })`;
       })
@@ -649,7 +772,21 @@ Já passamos da metade do dia e *${countToday} ${
 ${muralLinesToday}`;
 
   // Mensagem 3B - Noite (Parte 2: Chamada Noturna + Link)
-  const message3B = `🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*
+  const message3B = isRescueDay
+    ? `🌙 *ÚLTIMAS HORAS (ATÉ 23h59): DEFENDA OU RESGATE SUA CHAMA!* 🔥⚡
+
+👉 ${questionUrl}
+
+Se o seu apelido ainda não está no Mural acima, atenção porque às *23h59* o sistema vira:
+
+🔥 *Está no seu recorde atual?* Garanta sua questão agora para somar *+1 dia* e não zerar!
+⚡ *Já deixou sua chama apagar em algum momento?* Últimas horas do *Dia do Resgate* para acertar a questão de hoje e recuperar toda a sua *maior ofensiva histórica + 1 dia*!
+
+👉 *Resolva em 3 minutinhos antes da meia-noite:*
+${questionUrl}
+
+👇 Quem vai fechar o dia com a chama acesa? Manda um 🔥!`
+    : `🌙 *TURMA DA NOITE: AINDA DÁ TEMPO!*
 
 Se seu apelido ainda não está na lista acima, faça a sua questão já!
 
@@ -661,5 +798,17 @@ ${questionUrl}
 
 👇 Quem ainda vai salvar a chama antes da meia-noite? Manda um 🔥!`;
 
-  return { message1, message2, message3A, message3B };
+  // Mensagem de Convite da Turma (Dividida em 2 partes para encaminhamento fácil)
+  const messageInviteA = `Turma, várias pessoas me pediram no privado o link do nosso grupo para mandar para amigos que também vão fazer o ENEM. Vou deixar a mensagem aqui embaixo pronta: quem quiser ajudar amigos a treinar Matemática todo dia, é só encaminhar a mensagem abaixo pra eles ou pro seu grupo de estudos! 👇`;
+
+  const messageInviteB = `Nesse grupo estamos resolvendo todos os dias *1 questão de Matemática do ENEM*.
+
+O foco é nas questões com *maior peso na TRI* — aquelas que mais jogam a nota pra cima e que ninguém pode errar na prova.
+
+Cada questão conta com *dicas passo a passo* pra ajudar a construir o raciocínio caso você trave na resolução.
+
+Para entrar no grupo, é só acessar:
+https://tinyurl.com/enem-questoes-diarias`;
+
+  return { message1, message2, messageLunch, message3A, message3B, messageInviteA, messageInviteB };
 }

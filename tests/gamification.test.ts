@@ -144,13 +144,14 @@ assert(messages.message1.includes('👏 Parabéns a quem manteve o ritmo firme!'
 assert(!messages.message1.includes('alunos'), 'Mensagem 1 não deve usar termo alunos');
 assert(!messages.message1.includes('DIA #'), 'Mensagem 1 não deve conter identificador de dia');
 assert(messages.message1.includes('🎯 *METAS BATIDAS ONTEM:*'), 'Mensagem 1 deve ter seção de metas batidas');
-assert(messages.message1.includes('• *Beatriz* (Meta de 5 🏆)\n• *Lucas* (Meta de 3 🏆)'), 'Seção 1 deve estar em ordem alfabética');
+assert(messages.message1.includes('• *Beatriz* (Meta 5 🏆)\n• *Lucas* (Meta 3 🏆)'), 'Seção 1 deve estar em ordem alfabética');
 assert(messages.message1.includes('🔥 *GARANTIRAM A 1ª QUESTÃO ONTEM:*'), 'Mensagem 1 deve ter seção de primeira questão');
 assert(messages.message1.includes('• *Ana* (🔥 1º dia)\n• *Rodrigo* (🔥 1º dia)'), 'Seção 2 deve estar em ordem alfabética com (🔥 1º dia)');
 assert(messages.message1.includes('⏳ *NA CARA DO GOL (Falta só 1 para a meta):*'), 'Mensagem 1 deve ter seção na cara do gol');
-assert(messages.message1.includes('• *Gabriel* (Meta de 5 🎯)\n• *Mariana* (Meta de 3 🎯)'), 'Seção 3 deve estar em ordem alfabética');
+assert(messages.message1.includes('• *Gabriel* (Meta 5 🎯)\n• *Mariana* (Meta 3 🎯)'), 'Seção 3 deve estar em ordem alfabética');
 assert(messages.message1.includes('⚡ *MANTIVERAM A OFENSIVA ACESA:*'), 'Mensagem 1 deve ter seção de ofensiva');
 assert(messages.message1.includes('• *Bruna* (🔥 8 dias)\n• *Thiago* (🔥 8 dias)'), 'Seção 4 deve estar em ordem alfabética com marcadores');
+assert(messages.message1.includes('https://tinyurl.com/enem-questoes-diarias'), 'Mensagem 1 deve incluir o link de convite do grupo no rodapé');
 
 assert(messages.message2.includes('🚀 *QUESTÃO DO DIA LIBERADA!*'), 'Mensagem 2 deve ter cabeçalho em *negrito* sem identificação de dia');
 assert(messages.message2.includes('📌 ENEM — Matemática (com dicas guiadas se travar)'), 'Mensagem 2 deve conter ENEM — Matemática');
@@ -170,6 +171,8 @@ assert(messages.message3B.includes('⚠️ *PRAZO: ATÉ A MEIA-NOITE (23h59)*'),
 assert(messages.message3B.includes('Às 23h59 o sistema vira e quem não respondeu *ZERA A OFENSIVA*'), 'Mensagem 3B deve alertar que o sistema vira e zera a ofensiva');
 assert(messages.message3B.includes('somar *+1 dia de ofensiva 🔥*'), 'Mensagem 3B deve conter ganho de ofensiva');
 assert(messages.message3B.includes('👇 Quem ainda vai salvar a chama antes da meia-noite? Manda um 🔥!'), 'Mensagem 3B deve conter CTA de emoji');
+assert(messages.messageInviteA.includes('ajudar amigos a treinar Matemática todo dia, é só encaminhar a mensagem abaixo pra eles ou pro seu grupo de estudos! 👇'), 'Mensagem de convite Parte 1 deve conter o pedido para a turma');
+assert(messages.messageInviteB.includes('Para entrar no grupo, é só acessar:\nhttps://tinyurl.com/enem-questoes-diarias'), 'Mensagem de convite Parte 2 deve conter a chamada universal e o link');
 
 // Teste 4: Regras do Protetor de Chama (Streak Shield) - A cada 6 questões resolvidas
 console.log('\nTeste 4: Regras do Protetor de Chama (Streak Shield - 2ª questão e a cada 6 questões)');

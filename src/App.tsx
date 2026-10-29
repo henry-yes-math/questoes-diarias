@@ -55,6 +55,10 @@ export default function App() {
     shieldsUsedCount,
     missedCycles,
     earnedNewShield,
+    wasRescued,
+    rescuedFromStreak,
+    maxStreakDays,
+    isEligibleForRescueToday,
     profile,
     streakShields,
     isShieldProtectingCurrentCycle,
@@ -242,6 +246,32 @@ export default function App() {
           />
         )}
 
+        {/* Banner de Operação Resgate da Chama para Aluno Elegível */}
+        {isEligibleForRescueToday && (
+          <div className="rounded-2xl border border-amber-300 bg-linear-to-r from-amber-50 via-orange-50/90 to-purple-50 p-4 shadow-xs animate-in fade-in duration-200">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0 text-lg">
+                ⚡
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-200/80 text-amber-950">
+                    Segunda Chance Oficial
+                  </span>
+                  <h2 className="text-sm sm:text-base font-extrabold text-stone-900">
+                    Dia do Resgate da Chama Ativo! 🔥
+                  </h2>
+                </div>
+                <p className="text-xs sm:text-sm text-stone-700 mt-1 leading-relaxed">
+                  Acerte a questão de hoje até as <strong>23h59</strong> para resgatar seu recorde histórico de{' '}
+                  <strong className="text-orange-700">🔥 {maxStreakDays} dias</strong> e subir direto para{' '}
+                  <strong className="text-purple-800">🔥 {maxStreakDays + 1} dias seguidos</strong>!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Question Card */}
         <section aria-label="Questão de Matemática">
           <QuestionCard
@@ -323,6 +353,8 @@ export default function App() {
           wasShieldUsed={wasShieldUsed}
           shieldsUsed={shieldsUsedCount || 1}
           earnedNewShield={earnedNewShield}
+          wasRescued={wasRescued}
+          rescuedFromStreak={rescuedFromStreak}
         />
       )}
 
