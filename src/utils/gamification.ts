@@ -801,13 +801,9 @@ ${questionUrl}
   // Mensagem de Convite da Turma (Dividida em 2 partes para encaminhamento fácil)
   const messageInviteA = `Turma, várias pessoas me pediram no privado o link do nosso grupo para mandar para amigos que também vão fazer o ENEM. Vou deixar a mensagem aqui embaixo pronta: quem quiser ajudar amigos a treinar Matemática todo dia, é só encaminhar a mensagem abaixo pra eles ou pro seu grupo de estudos! 👇`;
 
-  const messageInviteB = `Nesse grupo estamos resolvendo todos os dias *1 questão de Matemática do ENEM*.
+  const messageInviteB = `Tô participando desse grupo de Matemática pro ENEM e tá valendo muito a pena. Todo dia a gente resolve 1 questão que tem alto peso no TRI, com dicas passo a passo se precisar.
 
-O foco é nas questões com *maior peso na TRI* — aquelas que mais jogam a nota pra cima e que ninguém pode errar na prova.
-
-Cada questão conta com *dicas passo a passo* pra ajudar a construir o raciocínio caso você trave na resolução.
-
-Para entrar no grupo, é só acessar:
+Link para entrar:
 https://tinyurl.com/enem-questoes-diarias`;
 
   return { message1, message2, messageLunch, message3A, message3B, messageInviteA, messageInviteB };

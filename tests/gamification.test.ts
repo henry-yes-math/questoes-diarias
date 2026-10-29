@@ -172,7 +172,7 @@ assert(messages.message3B.includes('Às 23h59 o sistema vira e quem não respond
 assert(messages.message3B.includes('somar *+1 dia de ofensiva 🔥*'), 'Mensagem 3B deve conter ganho de ofensiva');
 assert(messages.message3B.includes('👇 Quem ainda vai salvar a chama antes da meia-noite? Manda um 🔥!'), 'Mensagem 3B deve conter CTA de emoji');
 assert(messages.messageInviteA.includes('ajudar amigos a treinar Matemática todo dia, é só encaminhar a mensagem abaixo pra eles ou pro seu grupo de estudos! 👇'), 'Mensagem de convite Parte 1 deve conter o pedido para a turma');
-assert(messages.messageInviteB.includes('Para entrar no grupo, é só acessar:\nhttps://tinyurl.com/enem-questoes-diarias'), 'Mensagem de convite Parte 2 deve conter a chamada universal e o link');
+assert(messages.messageInviteB.includes('Link para entrar:\nhttps://tinyurl.com/enem-questoes-diarias'), 'Mensagem de convite Parte 2 deve conter a chamada espontânea e o link');
 
 // Teste 4: Regras do Protetor de Chama (Streak Shield) - A cada 6 questões resolvidas
 console.log('\nTeste 4: Regras do Protetor de Chama (Streak Shield - 2ª questão e a cada 6 questões)');
