@@ -9,6 +9,7 @@ import {
   getQuestionsUntilNextShield,
   generateGroupShareWhatsAppUrl,
   DEFAULT_WHATSAPP_GROUP_URL,
+  resolveWhatsappGroupUrl,
   syncSelectedLetterWithCompletion,
   hasStudentCompletedCurrentQuestion,
 } from '../src/utils/gamification';
@@ -319,45 +320,50 @@ assert(
 
 const decodedCustom = decodeURIComponent(shareUrlCustom.replace('https://api.whatsapp.com/send?text=', ''));
 assert(
-  decodedCustom.includes('Gente, pra quem tá treinando matemática pro ENEM: tô usando esse grupo e achei muito bom.'),
-  'Deve conter a abertura acolhedora de recomendação pessoal ("Gente, pra quem tá...")'
+  decodedCustom.includes('Tô participando desse grupo de Matemática pro ENEM e tá valendo muito a pena.'),
+  'Deve conter a abertura espontânea na voz do aluno ("Tô participando desse grupo...")'
 );
 assert(
-  decodedCustom.includes('Todo dia eles mandam 1 questão oficial que dá pra resolver em 3 minutos, com dicas passo a passo se você travar.'),
-  'Deve conter o miolo destacando questão oficial, 3 minutos e dicas passo a passo'
+  decodedCustom.includes('Todo dia a gente resolve 1 questão que tem alto peso no TRI, com dicas passo a passo se precisar.'),
+  'Deve conter o miolo destacando 1 questão com alto peso no TRI e dicas passo a passo se precisar'
 );
 assert(
-  decodedCustom.includes('Achei muito prático pra manter o ritmo todo dia sem tomar tempo:'),
-  'Deve conter o fechamento destacando praticidade e ritmo sem tomar tempo'
-);
-assert(
-  decodedCustom.includes(`👉 ${customGroupUrl}`),
-  'Deve incluir o link dinâmico oficial do grupo do WhatsApp'
+  decodedCustom.includes(`Link para entrar:\n${customGroupUrl}`),
+  'Deve incluir o fechamento Link para entrar com o link oficial do grupo do WhatsApp'
 );
 
 // Fallback quando não há URL customizada ou ela está em branco
 const shareUrlFallback = generateGroupShareWhatsAppUrl();
 const decodedFallback = decodeURIComponent(shareUrlFallback.replace('https://api.whatsapp.com/send?text=', ''));
 assert(
-  decodedFallback.includes(`👉 ${DEFAULT_WHATSAPP_GROUP_URL}`),
+  decodedFallback.includes(`Link para entrar:\n${DEFAULT_WHATSAPP_GROUP_URL}`),
   'Deve usar fallback seguro para DEFAULT_WHATSAPP_GROUP_URL quando não informada'
 );
 
 const shareUrlEmpty = generateGroupShareWhatsAppUrl('   ');
 const decodedEmpty = decodeURIComponent(shareUrlEmpty.replace('https://api.whatsapp.com/send?text=', ''));
 assert(
-  decodedEmpty.includes(`👉 ${DEFAULT_WHATSAPP_GROUP_URL}`),
+  decodedEmpty.includes(`Link para entrar:\n${DEFAULT_WHATSAPP_GROUP_URL}`),
   'Deve usar fallback seguro quando URL passada for apenas espaços vazios'
+);
+
+assert(
+  resolveWhatsappGroupUrl('https://chat.whatsapp.com/EDd67eYyB8w8iQ414JgQhO') === DEFAULT_WHATSAPP_GROUP_URL,
+  'Deve atualizar automaticamente o link antigo legado para o link curto oficial (tinyurl)'
+);
+assert(
+  resolveWhatsappGroupUrl(customGroupUrl) === customGroupUrl,
+  'Deve respeitar um novo link personalizado salvo no Painel do Professor'
 );
 
 // ====================================================
 // TESTE 7: Regras de Exibição Contextual (Clean Code & UX)
 // ====================================================
-console.log('\nTeste 7: Regras de Exibição Contextual dos Cards de Retenção e Compartilhamento');
+console.log('\nTeste 7: Regras de Exibição Contextual do Card de Compartilhamento (desde o 1º dia)');
 
 interface CardVisibilityDecision {
-  showNewbieJoinCard: boolean;
-  showVeteranShareCard: boolean;
+  showFirstDayProgressTrail: boolean;
+  showShareCard: boolean;
 }
 
 function resolvePostQuestionCardVisibility(
@@ -365,25 +371,25 @@ function resolvePostQuestionCardVisibility(
   isFirstQuestion: boolean
 ): CardVisibilityDecision {
   return {
-    showNewbieJoinCard: Boolean(hasCompletedToday && isFirstQuestion),
-    showVeteranShareCard: Boolean(hasCompletedToday && !isFirstQuestion),
+    showFirstDayProgressTrail: Boolean(hasCompletedToday && isFirstQuestion),
+    showShareCard: Boolean(hasCompletedToday),
   };
 }
 
-// 7.1 Aluno Novato (1ª Questão concluída hoje):
+// 7.1 Aluno no 1º dia (1ª Questão concluída hoje):
 const newbieState = resolvePostQuestionCardVisibility(true, true);
-assert(newbieState.showNewbieJoinCard === true, 'Novato concluindo a 1ª questão deve ver o card de entrar no grupo');
-assert(newbieState.showVeteranShareCard === false, 'Novato NÃO deve ver card de compartilhamento nos grupos antes de entrar');
+assert(newbieState.showFirstDayProgressTrail === true, 'Aluno no 1º dia deve ver a trilha das 3 primeiras questões na Comemoração');
+assert(newbieState.showShareCard === true, 'Aluno no 1º dia já deve ver o balãozinho de compartilhamento após concluir');
 
 // 7.2 Aluno Veterano (Questão subsequente concluída hoje):
 const veteranState = resolvePostQuestionCardVisibility(true, false);
-assert(veteranState.showNewbieJoinCard === false, 'Veterano NÃO deve ver card de boas-vindas da 1ª questão');
-assert(veteranState.showVeteranShareCard === true, 'Veterano concluindo hoje deve ver o card "Fortaleça sua Galera"');
+assert(veteranState.showFirstDayProgressTrail === false, 'Veterano não vê a trilha exclusiva da 1ª questão');
+assert(veteranState.showShareCard === true, 'Veterano concluindo hoje deve ver o balãozinho de compartilhamento');
 
-// 7.3 Aluno que ainda não completou a questão de hoje:
+// 7.3 Aluno que ainda não completou a questão de hoje (protege leitura do enunciado):
 const pendingState = resolvePostQuestionCardVisibility(false, false);
-assert(pendingState.showNewbieJoinCard === false, 'Aluno que não concluiu hoje não deve ver card de novato');
-assert(pendingState.showVeteranShareCard === false, 'Aluno que não concluiu hoje não deve ver card de veterano');
+assert(pendingState.showFirstDayProgressTrail === false, 'Aluno que não concluiu hoje não deve ver trilha pós-questão');
+assert(pendingState.showShareCard === false, 'Aluno que não concluiu hoje NÃO deve ver card de compartilhamento durante a leitura');
 
 // ====================================================
 // TESTE 8: Sincronização de Alternativa Marcada vs Conclusão do Ciclo (Caso Belle)

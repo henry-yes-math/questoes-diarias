@@ -127,8 +127,9 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
 
   // Busca sob demanda as submissões do Mural (ao entrar, ao acertar e ao abrir o Mural)
   const refreshMural = useCallback(
-    async (targetCycleNumber?: number) => {
+    async (targetCycleNumber?: number, overrideStudentId?: string) => {
       const cycleNum = targetCycleNumber ?? currentCycle.currentCycleNumber;
+      const targetId = overrideStudentId || studentId;
       if (!cycleNum || cycleNum < 1) return;
 
       setIsLoadingMural(true);
@@ -144,14 +145,18 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
           return res.submissions;
         });
 
-        const mine = res.submissions.find((s) => s.studentId === studentId);
+        const mine = res.submissions.find((s) => s.studentId === targetId);
         if (mine && (!mine.questionId || String(mine.questionId) === String(currentQuestionId))) {
           setTodayMySubmission(mine);
           clearPendingSubmission();
           setPendingSubmissionSync(false);
         } else if (!res.error) {
           // Só limpa se a consulta ao servidor teve sucesso e realmente não consta submissão para esta questão neste ciclo
-          setTodayMySubmission(null);
+          setTodayMySubmission((prevMine) =>
+            prevMine && prevMine.studentId === targetId && prevMine.cycleNumber === cycleNum
+              ? prevMine
+              : null
+          );
         }
       } finally {
         setIsLoadingMural(false);
@@ -180,29 +185,38 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
       setTodaySubmissions([]);
       setTodayMySubmission(null);
     }
-    refreshMural(currentCycle.currentCycleNumber);
+    refreshMural(currentCycle.currentCycleNumber, studentId);
   }, [isCycleLoaded, currentCycle.currentCycleNumber, studentId, currentQuestionId, refreshMural]);
 
   // 2. Atualiza a lista do Mural sempre que o aluno abrir o modal do Mural
   useEffect(() => {
     if (isMuralModalOpen && isCycleLoaded) {
-      refreshMural(currentCycle.currentCycleNumber);
+      refreshMural(currentCycle.currentCycleNumber, studentId);
     }
-  }, [isMuralModalOpen, isCycleLoaded, currentCycle.currentCycleNumber, refreshMural]);
+  }, [isMuralModalOpen, isCycleLoaded, currentCycle.currentCycleNumber, studentId, refreshMural]);
 
   // 1º Passo (Prioridade Absoluta - ID) e 2º Passo (Fallback inteligente - Nickname)
   useEffect(() => {
-    if (!isCycleLoaded) return;
+    if (!isCycleLoaded || isSubmittingRef.current) return;
+    // Se o perfil em memória já corresponde ao studentId atual e já completou o ciclo atual, evita releitura redundante
+    if (
+      profile &&
+      profile.studentId === studentId &&
+      profile.lastCompletedCycle === currentCycle.currentCycleNumber &&
+      String(profile.lastCompletedQuestionId) === String(currentQuestionId)
+    ) {
+      return;
+    }
     let isMounted = true;
 
     async function initStudent() {
       // 1. Tenta buscar direto pelo ID no Firestore
       const rawProfileById = await getStudentProfileById(studentId);
-      if (!isMounted) return;
+      if (!isMounted || isSubmittingRef.current) return;
 
       if (rawProfileById) {
         const profileById = await ensureStudentMaxStreakSynced(rawProfileById);
-        if (!isMounted) return;
+        if (!isMounted || isSubmittingRef.current) return;
         setProfile(profileById);
         if (profileById.nickname) {
           setNicknameState(profileById.nickname);
@@ -229,11 +243,11 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
       // 2. Se o ID atual não tem perfil no Firestore, verifica se há um nickname salvo
       if (nickname) {
         const rawProfileByNick = await findExistingStudentByNickname(nickname, studentId);
-        if (!isMounted) return;
+        if (!isMounted || isSubmittingRef.current) return;
 
         if (rawProfileByNick) {
           const profileByNick = await ensureStudentMaxStreakSynced(rawProfileByNick);
-          if (!isMounted) return;
+          if (!isMounted || isSubmittingRef.current) return;
           setLocalStudentId(profileByNick.studentId);
           setStudentId(profileByNick.studentId);
           setProfile(profileByNick);
@@ -268,13 +282,20 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
 
   // Salvar novo nickname (ou adotar ID existente ao confirmar)
   const updateNickname = useCallback(
-    async (newNick: string, adoptedStudentId?: string) => {
+    async (
+      newNick: string,
+      adoptedStudentId?: string,
+      options?: { closeModal?: boolean; skipFirestoreSync?: boolean }
+    ) => {
+      const shouldCloseModal = options?.closeModal ?? true;
       const targetStudentId = adoptedStudentId || studentId;
       setLocalStudentId(targetStudentId);
       setLocalStudentNick(newNick);
       setStudentId(targetStudentId);
       setNicknameState(newNick);
-      setIsNickModalOpen(false);
+      if (shouldCloseModal) {
+        setIsNickModalOpen(false);
+      }
 
       // Atualiza imediatamente o apelido na submissão local do Mural de hoje (se o aluno já tiver concluído hoje)
       setTodayMySubmission((prev) =>
@@ -288,6 +309,12 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
         saveCachedSubmissionsForCycle(currentCycle.currentCycleNumber, next);
         return next;
       });
+
+      // Se a submissão da questão já vai rodar na sequência imediata (skipFirestoreSync),
+      // deixa a própria transação do registerDailySubmission ler/atualizar o perfil em 1 única viagem.
+      if (options?.skipFirestoreSync) {
+        return { profile: null, studentId: targetStudentId, nickname: newNick };
+      }
 
       // Só busca/atualiza no Firestore agora se estiver adotando um perfil existente
       // ou se o aluno já possui um perfil gravado no banco (evitando criar perfis com totalSolved = 0).
@@ -351,7 +378,15 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
 
   // Submeter a resolução da questão do ciclo atual
   const completeQuestion = useCallback(
-    async (overrideStudentId?: string, overrideNickname?: string) => {
+    async (
+      overrideStudentId?: string,
+      overrideNickname?: string,
+      options?: {
+        isKnownNewStudent?: boolean;
+        adoptedProfile?: StudentProfile | null;
+        optimisticInstant?: boolean;
+      }
+    ) => {
       const activeNick = overrideNickname || nickname;
       const activeId = overrideStudentId || studentId;
 
@@ -364,65 +399,209 @@ export function useStudentGamification(currentQuestionId: string = String(INITIA
         return null;
       }
 
-      isSubmittingRef.current = true;
-      setIsSubmitting(true);
+      if (overrideStudentId) {
+        setLocalStudentId(overrideStudentId);
+      }
+      if (overrideNickname) {
+        setLocalStudentNick(overrideNickname);
+      }
 
-      try {
-        const res = await registerDailySubmission(
-          activeId,
-          activeNick,
-          currentQuestionId,
-          isCycleLoaded ? currentCycle.currentCycleNumber : undefined,
-          referralInfo ? { referrerName: referralInfo.referrerName, referrerId: referralInfo.referrerId } : undefined
+      const knownExistingProfile =
+        options?.adoptedProfile ??
+        (profile && profile.studentId === activeId ? profile : null);
+
+      const targetCycleNum = currentCycle.currentCycleNumber || 1;
+      const todayStr = getLocalDateString();
+
+      // Prepara projeção otimista instantânea (0ms) para destravar a UI imediatamente no pós-modal
+      const prevTotalOptimistic = knownExistingProfile?.totalSolved || 0;
+      const newTotalOptimistic = prevTotalOptimistic + 1;
+      const currentShieldsOptimistic = knownExistingProfile?.streakShields || 0;
+      const effectiveHistMaxOptimistic = Math.max(
+        knownExistingProfile?.maxStreakDays || 0,
+        knownExistingProfile?.streakDays || 0
+      );
+
+      const streakCalcOptimistic = calculateNewStreakWithShield(
+        knownExistingProfile?.lastCompletedCycle,
+        knownExistingProfile?.streakDays || 0,
+        targetCycleNum,
+        currentShieldsOptimistic,
+        newTotalOptimistic,
+        Boolean(currentCycle?.isRescueDay),
+        effectiveHistMaxOptimistic
+      );
+
+      const milestoneCalcOptimistic = calculateMilestone(newTotalOptimistic, prevTotalOptimistic);
+      const existingOrder = todaySubmissions.find((s) => s.studentId === activeId)?.orderIndex;
+      const optimisticOrderIndex =
+        existingOrder ||
+        todaySubmissions.filter((s) => s.studentId !== activeId).length + 1;
+
+      const nowIso = new Date().toISOString();
+      const optimisticProfile: StudentProfile = {
+        ...(knownExistingProfile || {}),
+        studentId: activeId,
+        nickname: activeNick,
+        nicknameLower: activeNick.trim().toLowerCase(),
+        totalSolved: newTotalOptimistic,
+        streakDays: streakCalcOptimistic.newStreak,
+        maxStreakDays: streakCalcOptimistic.newMaxStreak,
+        streakShields: streakCalcOptimistic.newShields,
+        lastSolvedDate: todayStr,
+        lastCompletedCycle: targetCycleNum,
+        lastCompletedQuestionId: String(currentQuestionId),
+        unlockedMilestones: knownExistingProfile?.unlockedMilestones || [],
+        createdAt: knownExistingProfile?.createdAt || nowIso,
+        updatedAt: nowIso,
+      };
+
+      const optimisticSubmission: DailySubmission = {
+        id: `cycle_${targetCycleNum}_${activeId}`,
+        studentId: activeId,
+        nickname: activeNick,
+        date: todayStr,
+        cycleNumber: targetCycleNum,
+        questionId: String(currentQuestionId),
+        streakDays: streakCalcOptimistic.newStreak,
+        totalSolved: newTotalOptimistic,
+        streakShields: streakCalcOptimistic.newShields,
+        orderIndex: optimisticOrderIndex,
+        completedAt: nowIso,
+        ...(streakCalcOptimistic.wasRescued ? { wasRescued: true } : {}),
+        ...(streakCalcOptimistic.previousStreakBeforeRescue !== undefined
+          ? { previousStreakDays: streakCalcOptimistic.previousStreakBeforeRescue }
+          : {}),
+      };
+
+      if (options?.optimisticInstant) {
+        setIsCycleLoaded(true);
+        setStudentId(activeId);
+        setNicknameState(activeNick);
+        setProfile(optimisticProfile);
+        setTodayMySubmission(optimisticSubmission);
+        setMilestoneInfo(milestoneCalcOptimistic);
+        setWasShieldUsedInSubmission(Boolean(streakCalcOptimistic.shieldWasUsed));
+        setShieldsUsedInSubmission(
+          streakCalcOptimistic.shieldWasUsed ? streakCalcOptimistic.shieldsUsed || 1 : 0
         );
+        setEarnedNewShieldInSubmission(Boolean(streakCalcOptimistic.earnedNewShield));
+        setWasRescuedInSubmission(Boolean(streakCalcOptimistic.wasRescued));
+        setRescuedFromStreakInSubmission(streakCalcOptimistic.previousStreakBeforeRescue);
 
-        const prevTotal =
-          profile && profile.studentId === activeId && profile.totalSolved < res.profile.totalSolved
-            ? profile.totalSolved
-            : Math.max(0, res.profile.totalSolved - 1);
-
-        clearPendingSubmission();
-        setPendingSubmissionSync(false);
-        setProfile(res.profile);
-        setTodayMySubmission(res.submission);
-
-        // Atualiza a lista local do Mural imediatamente e busca a versão mais recente do servidor
-        const targetCycle = res.submission.cycleNumber ?? currentCycle.currentCycleNumber;
         setTodaySubmissions((prev) => {
-          const filtered = prev.filter((s) => s.studentId !== res.submission.studentId);
-          const next = [...filtered, res.submission].sort((a, b) => a.orderIndex - b.orderIndex);
-          saveCachedSubmissionsForCycle(targetCycle, next);
+          const filtered = prev.filter((s) => s.studentId !== activeId);
+          const next = [...filtered, optimisticSubmission].sort(
+            (a, b) => a.orderIndex - b.orderIndex
+          );
+          saveCachedSubmissionsForCycle(targetCycleNum, next);
           return next;
         });
-        refreshMural(targetCycle);
-
-        setWasShieldUsedInSubmission(Boolean(res.shieldWasUsed));
-        setShieldsUsedInSubmission(res.shieldWasUsed ? (res.shieldsUsed || 1) : 0);
-        setEarnedNewShieldInSubmission(Boolean(res.earnedNewShield));
-        setWasRescuedInSubmission(Boolean(res.wasRescued));
-        setRescuedFromStreakInSubmission(res.previousStreakDays);
-
-        const mInfo = calculateMilestone(res.profile.totalSolved, prevTotal);
-        setMilestoneInfo(mInfo);
-
-        return res;
-      } catch (err) {
-        console.error('Erro ao registrar conclusão diária (salvando na fila local):', err);
-        setPendingSubmission({
-          studentId: activeId,
-          nickname: activeNick,
-          questionId: currentQuestionId,
-          cycleNumber: isCycleLoaded ? currentCycle.currentCycleNumber : undefined,
-          storedAt: new Date().toISOString(),
-        });
-        setPendingSubmissionSync(true);
-        return null;
-      } finally {
-        isSubmittingRef.current = false;
-        setIsSubmitting(false);
       }
+
+      isSubmittingRef.current = true;
+      if (!options?.optimisticInstant) {
+        setIsSubmitting(true);
+      }
+
+      const syncInFirestore = async () => {
+        try {
+          const res = await registerDailySubmission(
+            activeId,
+            activeNick,
+            currentQuestionId,
+            isCycleLoaded ? currentCycle.currentCycleNumber : undefined,
+            referralInfo
+              ? { referrerName: referralInfo.referrerName, referrerId: referralInfo.referrerId }
+              : undefined,
+            {
+              knownExistingProfile,
+              isKnownNewStudent: Boolean(options?.isKnownNewStudent && !knownExistingProfile),
+            }
+          );
+
+          const prevTotal =
+            knownExistingProfile && knownExistingProfile.totalSolved < res.profile.totalSolved
+              ? knownExistingProfile.totalSolved
+              : Math.max(0, res.profile.totalSolved - 1);
+
+          clearPendingSubmission();
+          setPendingSubmissionSync(false);
+          setStudentId(activeId);
+          setNicknameState(activeNick);
+          setProfile(res.profile);
+          setTodayMySubmission(res.submission);
+
+          // Atualiza a lista local do Mural imediatamente e busca a versão mais recente do servidor
+          const targetCycle = res.submission.cycleNumber ?? currentCycle.currentCycleNumber;
+          setTodaySubmissions((prev) => {
+            const filtered = prev.filter((s) => s.studentId !== res.submission.studentId);
+            const next = [...filtered, res.submission].sort((a, b) => a.orderIndex - b.orderIndex);
+            saveCachedSubmissionsForCycle(targetCycle, next);
+            return next;
+          });
+          refreshMural(targetCycle, res.submission.studentId);
+
+          setWasShieldUsedInSubmission(Boolean(res.shieldWasUsed));
+          setShieldsUsedInSubmission(res.shieldWasUsed ? res.shieldsUsed || 1 : 0);
+          setEarnedNewShieldInSubmission(Boolean(res.earnedNewShield));
+          setWasRescuedInSubmission(Boolean(res.wasRescued));
+          setRescuedFromStreakInSubmission(res.previousStreakDays);
+
+          const mInfo = calculateMilestone(res.profile.totalSolved, prevTotal);
+          setMilestoneInfo(mInfo);
+
+          return res;
+        } catch (err) {
+          console.error('Erro ao registrar conclusão diária (salvando na fila local):', err);
+          setPendingSubmission({
+            studentId: activeId,
+            nickname: activeNick,
+            questionId: currentQuestionId,
+            cycleNumber: isCycleLoaded ? currentCycle.currentCycleNumber : undefined,
+            storedAt: new Date().toISOString(),
+          });
+          setPendingSubmissionSync(true);
+          return null;
+        } finally {
+          isSubmittingRef.current = false;
+          setIsSubmitting(false);
+        }
+      };
+
+      if (options?.optimisticInstant) {
+        // Dispara o registro oficial em segundo plano e retorna a projeção otimista imediatamente (0ms)
+        syncInFirestore();
+        return {
+          submission: optimisticSubmission,
+          profile: optimisticProfile,
+          milestoneUnlocked: milestoneCalcOptimistic.isMilestoneJustUnlocked
+            ? milestoneCalcOptimistic.unlockedTarget
+            : undefined,
+          isFirstQuestion: newTotalOptimistic === 1,
+          shieldWasUsed: streakCalcOptimistic.shieldWasUsed,
+          shieldsUsed: streakCalcOptimistic.shieldsUsed,
+          earnedNewShield: streakCalcOptimistic.earnedNewShield,
+          wasRescued: streakCalcOptimistic.wasRescued,
+          previousStreakDays: streakCalcOptimistic.previousStreakBeforeRescue,
+          referrerRewarded: null,
+        };
+      }
+
+      return await syncInFirestore();
     },
-    [studentId, nickname, currentQuestionId, isCycleLoaded, currentCycle.currentCycleNumber, profile, referralInfo, refreshMural]
+    [
+      studentId,
+      nickname,
+      currentQuestionId,
+      isCycleLoaded,
+      currentCycle.currentCycleNumber,
+      currentCycle?.isRescueDay,
+      profile,
+      todaySubmissions,
+      referralInfo,
+      refreshMural,
+    ]
   );
 
   // Reenvia submissão pendente da fila local (manual ou automático)

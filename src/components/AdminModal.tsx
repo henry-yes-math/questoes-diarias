@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { fetchWordPressPost, parseWordPressPost } from '../utils/wordpressParser';
 import { QuestionData, DailySubmission, DailyCycleConfig, RescueCandidateInfo } from '../types';
-import { generateWhatsAppMessages, DEFAULT_WHATSAPP_GROUP_URL } from '../utils/gamification';
+import { generateWhatsAppMessages, resolveWhatsappGroupUrl } from '../utils/gamification';
 import {
   getSubmissionsByCycle,
   advanceToNextCycle,
@@ -62,14 +62,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [loadingRescueCandidates, setLoadingRescueCandidates] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [whatsappLinkInput, setWhatsappLinkInput] = useState<string>(
-    currentCycle?.whatsappGroupUrl || DEFAULT_WHATSAPP_GROUP_URL
+    resolveWhatsappGroupUrl(currentCycle?.whatsappGroupUrl)
   );
   const [savingWhatsappLink, setSavingWhatsappLink] = useState(false);
   const [whatsappLinkSaved, setWhatsappLinkSaved] = useState(false);
 
   useEffect(() => {
     if (currentCycle?.whatsappGroupUrl) {
-      setWhatsappLinkInput(currentCycle.whatsappGroupUrl);
+      setWhatsappLinkInput(resolveWhatsappGroupUrl(currentCycle.whatsappGroupUrl));
     }
   }, [currentCycle?.whatsappGroupUrl]);
 
@@ -503,7 +503,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 </div>
 
                 <p className="text-xs text-stone-600 leading-relaxed">
-                  Este é o link que os alunos recebem no modal da <strong>1ª questão</strong> para entrar no grupo oficial e continuar o ritmo amanhã.
+                  Este é o link exibido no <strong>card de convite do grupo</strong> (na Comemoração, no Mural e no final da Resolução) para os alunos chamarem amigos.
                 </p>
 
                 <form onSubmit={handleSaveWhatsappLink} className="flex gap-2">
@@ -511,7 +511,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     type="url"
                     value={whatsappLinkInput}
                     onChange={(e) => setWhatsappLinkInput(e.target.value)}
-                    placeholder="https://chat.whatsapp.com/..."
+                    placeholder="https://tinyurl.com/enem-questoes-diarias"
                     className="flex-1 px-3 py-2 text-xs sm:text-sm bg-white border border-stone-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-emerald-600 text-stone-900 shadow-2xs"
                   />
                   <button

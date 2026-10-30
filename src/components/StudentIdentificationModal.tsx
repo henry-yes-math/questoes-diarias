@@ -6,7 +6,12 @@ import { StudentProfile } from '../types';
 interface Props {
   initialNickname?: string;
   currentStudentId?: string;
-  onSave: (nickname: string, adoptedStudentId?: string) => void;
+  onSave: (
+    nickname: string,
+    adoptedStudentId?: string,
+    isKnownNewStudent?: boolean,
+    adoptedProfile?: StudentProfile | null
+  ) => void | Promise<void>;
   isOpen: boolean;
   onClose?: () => void;
   isCompletingQuestion?: boolean;
@@ -26,6 +31,41 @@ export const StudentIdentificationModal: React.FC<Props> = ({
   const [existingProfile, setExistingProfile] = useState<StudentProfile | null>(null);
   const [mode, setMode] = useState<'input' | 'confirm' | 'differentiate'>('input');
 
+  // Cache em memória de resultados e Promises em andamento para evitar espera no clique
+  const resolvedCacheRef = React.useRef<Map<string, StudentProfile | null>>(new Map());
+  const inFlightCacheRef = React.useRef<Map<string, Promise<StudentProfile | null>>>(new Map());
+
+  const lookupNicknameWithCache = React.useCallback(
+    (rawNick: string): Promise<StudentProfile | null> => {
+      const cleanKey = rawNick.trim().toLowerCase();
+      if (!cleanKey) return Promise.resolve(null);
+
+      if (resolvedCacheRef.current.has(cleanKey)) {
+        return Promise.resolve(resolvedCacheRef.current.get(cleanKey) ?? null);
+      }
+
+      const existingPromise = inFlightCacheRef.current.get(cleanKey);
+      if (existingPromise) {
+        return existingPromise;
+      }
+
+      const promise = findExistingStudentByNickname(rawNick.trim(), currentStudentId)
+        .then((res) => {
+          resolvedCacheRef.current.set(cleanKey, res);
+          inFlightCacheRef.current.delete(cleanKey);
+          return res;
+        })
+        .catch((err) => {
+          inFlightCacheRef.current.delete(cleanKey);
+          throw err;
+        });
+
+      inFlightCacheRef.current.set(cleanKey, promise);
+      return promise;
+    },
+    [currentStudentId]
+  );
+
   useEffect(() => {
     if (isOpen) {
       setName(initialNickname);
@@ -33,8 +73,29 @@ export const StudentIdentificationModal: React.FC<Props> = ({
       setExistingProfile(null);
       setMode('input');
       setIsChecking(false);
+      resolvedCacheRef.current.clear();
+      inFlightCacheRef.current.clear();
     }
   }, [isOpen, initialNickname]);
+
+  // Pré-verificação silenciosa com debounce (300ms) enquanto o aluno digita
+  useEffect(() => {
+    if (!isOpen) return;
+    const trimmed = name.trim();
+    if (trimmed.length < 2 || trimmed.length > 25) return;
+    if (initialNickname && trimmed.toLowerCase() === initialNickname.trim().toLowerCase()) return;
+
+    const cleanKey = trimmed.toLowerCase();
+    if (resolvedCacheRef.current.has(cleanKey) || inFlightCacheRef.current.has(cleanKey)) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      lookupNicknameWithCache(trimmed).catch(() => {});
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [name, isOpen, initialNickname, lookupNicknameWithCache]);
 
   if (!isOpen) return null;
 
@@ -54,35 +115,45 @@ export const StudentIdentificationModal: React.FC<Props> = ({
 
     // Se é o mesmo apelido que ele já tinha, salva direto
     if (initialNickname && trimmed.toLowerCase() === initialNickname.trim().toLowerCase()) {
-      onSave(trimmed);
+      setIsChecking(true);
+      try {
+        await onSave(trimmed, undefined, false, null);
+      } finally {
+        setIsChecking(false);
+      }
       return;
     }
 
     setIsChecking(true);
     try {
-      // 2º Passo da diretriz: Fallback inteligente por Nickname
-      const found = await findExistingStudentByNickname(trimmed, currentStudentId);
+      // 2º Passo da diretriz: Fallback inteligente por Nickname (instantâneo se o debounce já resolveu)
+      const found = await lookupNicknameWithCache(trimmed);
       if (found && ((found.streakDays && found.streakDays > 0) || (found.totalSolved && found.totalSolved > 0))) {
         setExistingProfile(found);
         setMode('confirm');
         return;
       }
 
-      // Novo aluno direto
-      onSave(trimmed);
+      // Novo aluno direto (marca isKnownNewStudent = true para pular varredura de histórico)
+      await onSave(trimmed, undefined, true, null);
     } catch (err) {
       console.warn('Erro ao verificar nickname existente:', err);
-      onSave(trimmed);
+      await onSave(trimmed, undefined, false, null);
     } finally {
       setIsChecking(false);
     }
   };
 
-  const handleConfirmRestore = () => {
-    if (existingProfile) {
-      onSave(existingProfile.nickname, existingProfile.studentId);
-    } else {
-      onSave(name.trim());
+  const handleConfirmRestore = async () => {
+    setIsChecking(true);
+    try {
+      if (existingProfile) {
+        await onSave(existingProfile.nickname, existingProfile.studentId, false, existingProfile);
+      } else {
+        await onSave(name.trim(), undefined, false, null);
+      }
+    } finally {
+      setIsChecking(false);
     }
   };
 
@@ -105,15 +176,15 @@ export const StudentIdentificationModal: React.FC<Props> = ({
     setError('');
     setIsChecking(true);
     try {
-      const found = await findExistingStudentByNickname(trimmed, currentStudentId);
+      const found = await lookupNicknameWithCache(trimmed);
       if (found && ((found.streakDays && found.streakDays > 0) || (found.totalSolved && found.totalSolved > 0))) {
         setError(`Já existe um(a) "${found.nickname}" na turma! Escolha outra variação ou sobrenome.`);
         return;
       }
-      onSave(trimmed);
+      await onSave(trimmed, undefined, true, null);
     } catch (err) {
       console.warn('Erro ao verificar nickname diferenciado:', err);
-      onSave(trimmed);
+      await onSave(trimmed, undefined, false, null);
     } finally {
       setIsChecking(false);
     }
@@ -222,12 +293,13 @@ export const StudentIdentificationModal: React.FC<Props> = ({
             <div className="mt-5 space-y-2">
               <button
                 type="button"
+                disabled={isChecking}
                 onClick={handleConfirmRestore}
-                className="w-full py-3.5 px-5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer text-base"
+                className="w-full py-3.5 px-5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer text-base disabled:opacity-70"
                 autoFocus
               >
                 <Check className="w-5 h-5 stroke-[2.5]" />
-                <span>Sim, sou eu! Continuar minha ofensiva</span>
+                <span>{isChecking ? 'Restaurando ofensiva...' : 'Sim, sou eu! Continuar minha ofensiva'}</span>
               </button>
 
               <button

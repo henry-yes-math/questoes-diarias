@@ -477,22 +477,31 @@ export function calculateNewStreak(
   return 1;
 }
 
-export const DEFAULT_WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/G5qC4QhK64o4h3Y';
+export const DEFAULT_WHATSAPP_GROUP_URL = 'https://tinyurl.com/enem-questoes-diarias';
+const LEGACY_WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/EDd67eYyB8w8iQ414JgQhO';
 
 /**
- * Gera a mensagem oficial para o aluno recomendar o grupo do WhatsApp nos seus grupos de estudo
+ * Resolve o link oficial do grupo do WhatsApp, respeitando configurações personalizadas
+ * do Painel do Professor e atualizando automaticamente o link legado para o link curto oficial.
+ */
+export function resolveWhatsappGroupUrl(whatsappGroupUrl?: string): string {
+  const trimmed = whatsappGroupUrl?.trim();
+  if (!trimmed || trimmed === LEGACY_WHATSAPP_GROUP_URL) {
+    return DEFAULT_WHATSAPP_GROUP_URL;
+  }
+  return trimmed;
+}
+
+/**
+ * Gera a mensagem oficial para o aluno recomendar o grupo do WhatsApp para amigos e grupos de estudo
  */
 export function generateGroupShareWhatsAppUrl(whatsappGroupUrl?: string): string {
-  const cleanGroupUrl = (whatsappGroupUrl && whatsappGroupUrl.trim())
-    ? whatsappGroupUrl.trim()
-    : DEFAULT_WHATSAPP_GROUP_URL;
+  const cleanGroupUrl = resolveWhatsappGroupUrl(whatsappGroupUrl);
 
-  const text = `Gente, pra quem tá treinando matemática pro ENEM: tô usando esse grupo e achei muito bom. 
+  const text = `Tô participando desse grupo de Matemática pro ENEM e tá valendo muito a pena. Todo dia a gente resolve 1 questão que tem alto peso no TRI, com dicas passo a passo se precisar.
 
-Todo dia eles mandam 1 questão oficial que dá pra resolver em 3 minutos, com dicas passo a passo se você travar.
-
-Achei muito prático pra manter o ritmo todo dia sem tomar tempo:
-👉 ${cleanGroupUrl}`;
+Link para entrar:
+${cleanGroupUrl}`;
 
   return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
 }

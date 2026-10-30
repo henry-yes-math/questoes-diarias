@@ -15,6 +15,7 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import firebaseConfig from '../../firebase-applet-config.json';
 import {
   StudentProfile,
   DailySubmission,
@@ -171,16 +172,54 @@ export async function getActiveQuestionFromFirestore(): Promise<QuestionData | n
   return null;
 }
 
+async function fetchActiveQuestionRest(): Promise<QuestionData | null> {
+  if (typeof fetch === 'undefined' || !firebaseConfig.projectId || !firebaseConfig.apiKey) {
+    return null;
+  }
+  const dbId = firebaseConfig.firestoreDatabaseId || '(default)';
+  const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${dbId}/documents/${APP_SETTINGS_COLLECTION}/${ACTIVE_QUESTION_DOC_ID}?key=${firebaseConfig.apiKey}`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const docJson = await res.json();
+  const fields = docJson?.fields;
+  if (!fields) return null;
+  const parsed: Record<string, any> = {};
+  for (const [k, v] of Object.entries(fields)) {
+    parsed[k] = parseFirestoreRestValue(v);
+  }
+  if (parsed && parsed.id && Array.isArray(parsed.alternatives)) {
+    return parsed as QuestionData;
+  }
+  return null;
+}
+
 /**
- * Escuta em tempo real atualizações da questão ativa no Firestore
+ * Escuta em tempo real atualizações da questão ativa no Firestore.
+ * Inclui fallback rápido via REST API (700ms) para carregar instantaneamente no Safari Privado.
  */
 export function subscribeToActiveQuestion(
   callback: (question: QuestionData | null) => void
 ) {
+  let hasResolvedOnce = false;
   const docRef = doc(db, APP_SETTINGS_COLLECTION, ACTIVE_QUESTION_DOC_ID);
-  return onSnapshot(
+
+  const restTimer = setTimeout(() => {
+    if (hasResolvedOnce) return;
+    fetchActiveQuestionRest()
+      .then((restQuestion) => {
+        if (!hasResolvedOnce && restQuestion) {
+          hasResolvedOnce = true;
+          callback(restQuestion);
+        }
+      })
+      .catch(() => {});
+  }, 700);
+
+  const unsub = onSnapshot(
     docRef,
     (snap) => {
+      hasResolvedOnce = true;
+      clearTimeout(restTimer);
       if (snap.exists()) {
         callback(snap.data() as QuestionData);
       } else {
@@ -188,9 +227,15 @@ export function subscribeToActiveQuestion(
       }
     },
     (err) => {
+      clearTimeout(restTimer);
       console.warn('Erro ao escutar questão ativa:', err);
     }
   );
+
+  return () => {
+    clearTimeout(restTimer);
+    unsub();
+  };
 }
 
 /**
@@ -229,16 +274,63 @@ export async function getOrCreateDailyCycle(): Promise<DailyCycleConfig> {
   return initialCycle;
 }
 
+async function fetchDailyCycleRest(): Promise<DailyCycleConfig | null> {
+  if (typeof fetch === 'undefined' || !firebaseConfig.projectId || !firebaseConfig.apiKey) {
+    return null;
+  }
+  const dbId = firebaseConfig.firestoreDatabaseId || '(default)';
+  const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${dbId}/documents/${APP_SETTINGS_COLLECTION}/${DAILY_CYCLE_DOC_ID}?key=${firebaseConfig.apiKey}`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const docJson = await res.json();
+  const fields = docJson?.fields;
+  if (!fields) return null;
+  const parsed: Record<string, any> = {};
+  for (const [k, v] of Object.entries(fields)) {
+    parsed[k] = parseFirestoreRestValue(v);
+  }
+  if (typeof parsed.currentCycleNumber === 'number' && parsed.currentCycleNumber >= 1) {
+    return parsed as DailyCycleConfig;
+  }
+  return null;
+}
+
 /**
- * Escuta em tempo real o ciclo diário ativo (apenas 1 documento leve)
+ * Escuta em tempo real o ciclo diário ativo (apenas 1 documento leve).
+ * Inclui fallback rápido via REST API (700ms) caso o canal onSnapshot do SDK demore em Aba Privada do Safari.
  */
 export function subscribeToDailyCycle(
   callback: (cycle: DailyCycleConfig) => void
 ) {
+  let hasResolvedOnce = false;
   const cycleRef = doc(db, APP_SETTINGS_COLLECTION, DAILY_CYCLE_DOC_ID);
-  return onSnapshot(
+
+  const restTimer = setTimeout(() => {
+    if (hasResolvedOnce) return;
+    fetchDailyCycleRest()
+      .then((restCycle) => {
+        if (!hasResolvedOnce && restCycle) {
+          hasResolvedOnce = true;
+          saveCachedDailyCycle(restCycle);
+          callback(restCycle);
+        }
+      })
+      .catch(() => {
+        if (!hasResolvedOnce) {
+          const cached = getCachedDailyCycle();
+          if (cached) {
+            hasResolvedOnce = true;
+            callback(cached);
+          }
+        }
+      });
+  }, 700);
+
+  const unsub = onSnapshot(
     cycleRef,
     (snap) => {
+      hasResolvedOnce = true;
+      clearTimeout(restTimer);
       if (snap.exists()) {
         const data = snap.data() as DailyCycleConfig;
         saveCachedDailyCycle(data);
@@ -251,13 +343,20 @@ export function subscribeToDailyCycle(
       }
     },
     (err) => {
+      clearTimeout(restTimer);
       console.warn('Erro ao escutar ciclo diário:', err);
       const cached = getCachedDailyCycle();
       if (cached) {
+        hasResolvedOnce = true;
         callback(cached);
       }
     }
   );
+
+  return () => {
+    clearTimeout(restTimer);
+    unsub();
+  };
 }
 
 /**
@@ -370,9 +469,76 @@ export async function getStudentProfileById(
   return null;
 }
 
+function parseFirestoreRestValue(val: any): any {
+  if (!val || typeof val !== 'object') return undefined;
+  if ('stringValue' in val) return val.stringValue;
+  if ('integerValue' in val) return Number(val.integerValue);
+  if ('doubleValue' in val) return Number(val.doubleValue);
+  if ('booleanValue' in val) return Boolean(val.booleanValue);
+  if ('nullValue' in val) return null;
+  if ('timestampValue' in val) return val.timestampValue;
+  if ('arrayValue' in val) {
+    const values = val.arrayValue?.values;
+    return Array.isArray(values) ? values.map(parseFirestoreRestValue) : [];
+  }
+  if ('mapValue' in val) {
+    const fields = val.mapValue?.fields;
+    if (!fields || typeof fields !== 'object') return {};
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(fields)) {
+      out[k] = parseFirestoreRestValue(v);
+    }
+    return out;
+  }
+  return undefined;
+}
+
+async function queryStudentByNicknameRest(cleanLower: string): Promise<StudentProfile[]> {
+  if (typeof fetch === 'undefined' || !firebaseConfig.projectId || !firebaseConfig.apiKey) {
+    throw new Error('REST indisponível');
+  }
+  const dbId = firebaseConfig.firestoreDatabaseId || '(default)';
+  const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${dbId}/documents:runQuery?key=${firebaseConfig.apiKey}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: STUDENTS_COLLECTION }],
+        where: {
+          fieldFilter: {
+            field: { fieldPath: 'nicknameLower' },
+            op: 'EQUAL',
+            value: { stringValue: cleanLower },
+          },
+        },
+      },
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`REST status ${res.status}`);
+  }
+  const rows = await res.json();
+  if (!Array.isArray(rows)) return [];
+  const results: StudentProfile[] = [];
+  for (const row of rows) {
+    const fields = row?.document?.fields;
+    if (!fields) continue;
+    const parsed: Record<string, any> = {};
+    for (const [k, v] of Object.entries(fields)) {
+      parsed[k] = parseFirestoreRestValue(v);
+    }
+    if (parsed.studentId) {
+      results.push(parsed as StudentProfile);
+    }
+  }
+  return results;
+}
+
 /**
  * Busca se já existe um aluno cadastrado no Firestore com o mesmo apelido
  * Útil para recuperar ofensivas quando o aluno abre em outro navegador ou dispositivo.
+ * Possui corrida híbrida (SDK + REST API HTTP direta) para nunca travar no Safari em Aba Privada.
  */
 export async function findExistingStudentByNickname(
   nickname: string,
@@ -383,24 +549,44 @@ export async function findExistingStudentByNickname(
 
   try {
     const cleanLower = clean.toLowerCase();
-    const q = query(
-      collection(db, STUDENTS_COLLECTION),
-      where('nicknameLower', '==', cleanLower)
-    );
-    const studentsSnap = await getDocs(q);
-    const matching: StudentProfile[] = [];
 
-    studentsSnap.forEach((docSnap) => {
-      const p = docSnap.data() as StudentProfile;
+    const sdkPromise = (async (): Promise<StudentProfile[]> => {
+      const q = query(
+        collection(db, STUDENTS_COLLECTION),
+        where('nicknameLower', '==', cleanLower)
+      );
+      const studentsSnap = await getDocs(q);
+      const list: StudentProfile[] = [];
+      studentsSnap.forEach((docSnap) => {
+        list.push(docSnap.data() as StudentProfile);
+      });
+      return list;
+    })();
+
+    // Se o canal WebChannel do SDK não responder em 600ms (comum no Safari Anônimo / iCloud Private Relay),
+    // dispara um fetch() REST direto que ignora o WebChannel e responde em ~150ms.
+    const restFallbackPromise = new Promise<StudentProfile[]>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        queryStudentByNicknameRest(cleanLower).then(resolve).catch(reject);
+      }, 600);
+      sdkPromise.then(() => clearTimeout(timer)).catch(() => {});
+    });
+
+    let candidates: StudentProfile[] = [];
+    try {
+      candidates = await Promise.any([sdkPromise, restFallbackPromise]);
+    } catch {
+      candidates = [];
+    }
+
+    const matching = candidates.filter((p) => {
       if (excludeStudentId && p.studentId === excludeStudentId) {
-        return;
+        return false;
       }
-      if (
+      return (
         (p.nicknameLower && p.nicknameLower === cleanLower) ||
         (p.nickname && p.nickname.trim().toLowerCase() === cleanLower)
-      ) {
-        matching.push(p);
-      }
+      );
     });
 
     if (matching.length === 0) return null;
@@ -502,7 +688,8 @@ export async function registerDailySubmission(
   nickname: string,
   questionId: string,
   cycleNumber?: number,
-  referralContext?: { referrerName?: string; referrerId?: string }
+  referralContext?: { referrerName?: string; referrerId?: string },
+  options?: { knownExistingProfile?: StudentProfile | null; isKnownNewStudent?: boolean }
 ): Promise<{
   submission: DailySubmission;
   profile: StudentProfile;
@@ -518,37 +705,98 @@ export async function registerDailySubmission(
   const todayStr = getLocalDateString();
   const cycleRef = doc(db, APP_SETTINGS_COLLECTION, DAILY_CYCLE_DOC_ID);
   const studentRef = doc(db, STUDENTS_COLLECTION, studentId);
+  const cachedCycle = getCachedDailyCycle();
+  const initialCycleHint = cycleNumber || cachedCycle?.currentCycleNumber || 1;
 
-  // Pré-consulta leve para garantir o recorde histórico (maxStreakDays) a partir das submissões do aluno (por ID e apelido)
-  let precomputedHistoricalMax = 0;
-  try {
-    const cleanNick = (nickname || '').trim();
-    const queries = [
-      getDocs(query(collection(db, SUBMISSIONS_COLLECTION), where('studentId', '==', studentId))),
-    ];
-    if (cleanNick) {
-      queries.push(
-        getDocs(query(collection(db, SUBMISSIONS_COLLECTION), where('nickname', '==', cleanNick)))
+  // 1. Só executa pré-consulta de submissões antigas se o aluno NÃO for recém-criado
+  // e se o perfil conhecido ainda não tiver maxStreakDays sincronizado
+  const knownProfile = options?.knownExistingProfile;
+  const skipHistoricalScan =
+    Boolean(options?.isKnownNewStudent) ||
+    Boolean(knownProfile && typeof knownProfile.maxStreakDays === 'number' && knownProfile.maxStreakDays > 0);
+
+  const historicalMaxPromise = (async (): Promise<number> => {
+    if (skipHistoricalScan) {
+      return Math.max(knownProfile?.maxStreakDays || 0, knownProfile?.streakDays || 0);
+    }
+    let maxVal = Math.max(knownProfile?.maxStreakDays || 0, knownProfile?.streakDays || 0);
+    try {
+      const cleanNick = (nickname || '').trim();
+      const queries = [
+        getDocs(query(collection(db, SUBMISSIONS_COLLECTION), where('studentId', '==', studentId))),
+      ];
+      if (cleanNick) {
+        queries.push(
+          getDocs(query(collection(db, SUBMISSIONS_COLLECTION), where('nickname', '==', cleanNick)))
+        );
+      }
+      const snaps = await Promise.all(queries);
+      for (const subsSnap of snaps) {
+        subsSnap.forEach((d) => {
+          const sub = d.data() as DailySubmission;
+          if (sub.streakDays && sub.streakDays > maxVal) {
+            maxVal = sub.streakDays;
+          }
+        });
+      }
+    } catch {
+      // Fallback silencioso para o maxStreakDays já gravado no perfil
+    }
+    return maxVal;
+  })();
+
+  // 2. Pré-calcula em paralelo (fora do lock da transação) a contagem de submissões do ciclo com timeout curto
+  const precountedOrderPromise = (async (): Promise<{ cycle: number; count: number } | null> => {
+    try {
+      const qCycle = query(
+        collection(db, SUBMISSIONS_COLLECTION),
+        where('cycleNumber', '==', initialCycleHint)
       );
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500));
+      const countSnap = await Promise.race([getCountFromServer(qCycle), timeoutPromise]);
+      if (countSnap) {
+        return { cycle: initialCycleHint, count: countSnap.data().count };
+      }
+    } catch {
+      // Fallback imediato para o cache local do Mural
     }
-    const snaps = await Promise.all(queries);
-    for (const subsSnap of snaps) {
-      subsSnap.forEach((d) => {
-        const sub = d.data() as DailySubmission;
-        if (sub.streakDays && sub.streakDays > precomputedHistoricalMax) {
-          precomputedHistoricalMax = sub.streakDays;
-        }
-      });
+    return null;
+  })();
+
+  // 3. Se houver indicação (?convite=Nome) sem ID resolvido, resolve o ID via query indexada fora da transação (1 leitura em vez de 330)
+  const resolvedReferrerIdPromise = (async (): Promise<string | undefined> => {
+    if (referralContext?.referrerId && referralContext.referrerId !== studentId) {
+      return referralContext.referrerId;
     }
-  } catch {
-    // Fallback silencioso para o maxStreakDays já gravado no perfil
-  }
+    const rawRefName = referralContext?.referrerName?.trim();
+    if (!rawRefName) return undefined;
+    try {
+      const foundRef = await findExistingStudentByNickname(rawRefName, studentId);
+      if (foundRef && foundRef.studentId && foundRef.studentId !== studentId) {
+        return foundRef.studentId;
+      }
+    } catch {}
+    return undefined;
+  })();
+
+  const [precomputedHistoricalMax, precountedOrder, preResolvedReferrerId] = await Promise.all([
+    historicalMaxPromise,
+    precountedOrderPromise,
+    resolvedReferrerIdPromise,
+  ]);
 
   const result = await runTransaction(db, async (transaction) => {
-    // 1. Lê o ciclo diário oficial direto do servidor dentro da transação
-    const cycleSnap = await transaction.get(cycleRef);
-    const cachedCycle = getCachedDailyCycle();
-    let activeCycle = cycleNumber || cachedCycle?.currentCycleNumber || 1;
+    // Lê ciclo, perfil do aluno e eventual submissão do ciclo inicial em paralelo (1 único round-trip)
+    const initialSubmissionDocId = `cycle_${initialCycleHint}_${studentId}`;
+    const initialSubmissionRef = doc(db, SUBMISSIONS_COLLECTION, initialSubmissionDocId);
+
+    const [cycleSnap, studentSnap, initialSubSnap] = await Promise.all([
+      transaction.get(cycleRef),
+      transaction.get(studentRef),
+      transaction.get(initialSubmissionRef),
+    ]);
+
+    let activeCycle = initialCycleHint;
     let isRescueDay = Boolean(cachedCycle?.isRescueDay);
 
     if (cycleSnap.exists()) {
@@ -561,10 +809,15 @@ export async function registerDailySubmission(
     }
 
     const submissionDocId = `cycle_${activeCycle}_${studentId}`;
-    const submissionRef = doc(db, SUBMISSIONS_COLLECTION, submissionDocId);
+    const submissionRef =
+      activeCycle === initialCycleHint
+        ? initialSubmissionRef
+        : doc(db, SUBMISSIONS_COLLECTION, submissionDocId);
 
-    const studentSnap = await transaction.get(studentRef);
-    const existingSubmissionSnap = await transaction.get(submissionRef);
+    const existingSubmissionSnap =
+      activeCycle === initialCycleHint
+        ? initialSubSnap
+        : await transaction.get(submissionRef);
 
     let profile: StudentProfile;
     if (studentSnap.exists()) {
@@ -661,18 +914,13 @@ export async function registerDailySubmission(
       };
     }
 
-    // Contar quantas submissões já existem neste ciclo usando agregação leve (1 leitura em vez de N)
-    const qCycle = query(
-      collection(db, SUBMISSIONS_COLLECTION),
-      where('cycleNumber', '==', activeCycle)
-    );
+    // Determina o orderIndex usando a contagem prévia em paralelo ou o cache local (sem bloquear a transação)
     let orderIndex = 1;
-    try {
-      const countSnap = await getCountFromServer(qCycle);
-      orderIndex = countSnap.data().count + 1;
-    } catch {
-      const cycleSnaps = await getDocs(qCycle);
-      orderIndex = cycleSnaps.size + 1;
+    if (precountedOrder && precountedOrder.cycle === activeCycle) {
+      orderIndex = precountedOrder.count + 1;
+    } else {
+      const cachedSubs = getCachedSubmissionsForCycle(activeCycle);
+      orderIndex = (cachedSubs ? cachedSubs.length : 0) + 1;
     }
 
     // Calcular novo total e streak/protetor/resgate baseado no ciclo
@@ -709,35 +957,15 @@ export async function registerDailySubmission(
 
     // Processamento de indicação (apenas na 1ª questão concluída)
     let refRewardInfo: { friendName: string; referrerNick: string } | null = null;
-    let finalReferredByName = profile.referredByStudentName || referralContext?.referrerName;
-    let finalReferredById = profile.referredByStudentId || referralContext?.referrerId;
+    const finalReferredByName = profile.referredByStudentName || referralContext?.referrerName;
+    const finalReferredById = profile.referredByStudentId || preResolvedReferrerId;
 
-    if (newTotal === 1 && finalReferredByName && !profile.referredByStudentName) {
-      // Localiza o perfil do amigo que indicou (por nome ou ID, ignorando auto-indicação)
+    if (newTotal === 1 && finalReferredById && finalReferredById !== studentId && !profile.referredByStudentName) {
       try {
-        let referrerDocSnap: any = null;
-        let referrerRefDoc: any = null;
+        const referrerRefDoc = doc(db, STUDENTS_COLLECTION, finalReferredById);
+        const referrerDocSnap = await transaction.get(referrerRefDoc);
 
-        if (finalReferredById && finalReferredById !== studentId) {
-          referrerRefDoc = doc(db, STUDENTS_COLLECTION, finalReferredById);
-          referrerDocSnap = await transaction.get(referrerRefDoc);
-        }
-
-        if (!referrerDocSnap?.exists() && finalReferredByName) {
-          const cleanRefNick = finalReferredByName.trim().toLowerCase();
-          const allStudentsSnap = await getDocs(collection(db, STUDENTS_COLLECTION));
-          for (const sDoc of allStudentsSnap.docs) {
-            const data = sDoc.data() as StudentProfile;
-            if (sDoc.id !== studentId && data.nickname && data.nickname.trim().toLowerCase() === cleanRefNick) {
-              referrerRefDoc = doc(db, STUDENTS_COLLECTION, sDoc.id);
-              referrerDocSnap = await transaction.get(referrerRefDoc);
-              finalReferredById = sDoc.id;
-              break;
-            }
-          }
-        }
-
-        if (referrerDocSnap && referrerDocSnap.exists() && referrerRefDoc) {
+        if (referrerDocSnap.exists()) {
           const referrerData = referrerDocSnap.data() as StudentProfile;
           const referrerShields = referrerData.streakShields ?? 0;
           // Recompensa com +1 escudo apenas se o amigo tiver menos de 2 escudos
@@ -760,7 +988,7 @@ export async function registerDailySubmission(
           transaction.set(referrerRefDoc, cleanFirestoreData(updatedReferrerData));
           refRewardInfo = {
             friendName: nickname,
-            referrerNick: referrerData.nickname || finalReferredByName,
+            referrerNick: referrerData.nickname || finalReferredByName || 'Amigo',
           };
         }
       } catch (err) {
@@ -1201,22 +1429,76 @@ export function subscribeToTodaySubmissions(
   );
 }
 
+async function querySubmissionsByCycleRest(cycleNumber: number): Promise<DailySubmission[]> {
+  if (typeof fetch === 'undefined' || !firebaseConfig.projectId || !firebaseConfig.apiKey) {
+    throw new Error('REST indisponível');
+  }
+  const dbId = firebaseConfig.firestoreDatabaseId || '(default)';
+  const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${dbId}/documents:runQuery?key=${firebaseConfig.apiKey}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: SUBMISSIONS_COLLECTION }],
+        where: {
+          fieldFilter: {
+            field: { fieldPath: 'cycleNumber' },
+            op: 'EQUAL',
+            value: { integerValue: String(cycleNumber) },
+          },
+        },
+      },
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`REST status ${res.status}`);
+  }
+  const rows = await res.json();
+  if (!Array.isArray(rows)) return [];
+  const results: DailySubmission[] = [];
+  for (const row of rows) {
+    const fields = row?.document?.fields;
+    if (!fields) continue;
+    const parsed: Record<string, any> = {};
+    for (const [k, v] of Object.entries(fields)) {
+      parsed[k] = parseFirestoreRestValue(v);
+    }
+    if (parsed.studentId) {
+      results.push(parsed as DailySubmission);
+    }
+  }
+  return results;
+}
+
 /**
- * Busca as submissões de um ciclo específico com suporte a cache local e detecção de falha de rede
+ * Busca as submissões de um ciclo específico com suporte a cache local, fallback REST rápido e detecção de falha de rede
  */
 export async function fetchSubmissionsByCycleWithCache(
   cycleNumber: number
 ): Promise<{ submissions: DailySubmission[]; fromCache: boolean; error: boolean }> {
   try {
-    const q = query(
-      collection(db, SUBMISSIONS_COLLECTION),
-      where('cycleNumber', '==', cycleNumber)
-    );
-    const snap = await getDocs(q);
-    const list: DailySubmission[] = [];
-    snap.forEach((docSnap) => {
-      list.push(docSnap.data() as DailySubmission);
+    const sdkPromise = (async (): Promise<DailySubmission[]> => {
+      const q = query(
+        collection(db, SUBMISSIONS_COLLECTION),
+        where('cycleNumber', '==', cycleNumber)
+      );
+      const snap = await getDocs(q);
+      const list: DailySubmission[] = [];
+      snap.forEach((docSnap) => {
+        list.push(docSnap.data() as DailySubmission);
+      });
+      return list;
+    })();
+
+    const restFallbackPromise = new Promise<DailySubmission[]>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        querySubmissionsByCycleRest(cycleNumber).then(resolve).catch(reject);
+      }, 700);
+      sdkPromise.then(() => clearTimeout(timer)).catch(() => {});
     });
+
+    const list = await Promise.any([sdkPromise, restFallbackPromise]);
     list.sort((a, b) => a.orderIndex - b.orderIndex);
     saveCachedSubmissionsForCycle(cycleNumber, list);
     return { submissions: list, fromCache: false, error: false };

@@ -11,11 +11,9 @@ import {
   X,
   BookOpen,
   Shield,
-  ExternalLink,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MilestoneInfo } from '../types';
-import { DEFAULT_WHATSAPP_GROUP_URL } from '../utils/gamification';
 import { ShareChallengeCard } from './ShareChallengeCard';
 
 interface Props {
@@ -326,22 +324,6 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
                       />
                     </div>
                   </div>
-
-                  {/* Chamada para o Grupo Oficial do WhatsApp para receber a 2ª questão */}
-                  <div className="pt-1">
-                    <a
-                      href={whatsappGroupUrl || DEFAULT_WHATSAPP_GROUP_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs sm:text-sm text-center"
-                    >
-                      <svg className="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24">
-                        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zM12.04 20.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c.01 4.54-3.68 8.23-8.22 8.23z"/>
-                      </svg>
-                      <span>Entrar no Grupo para garantir a 2ª</span>
-                      <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-                    </a>
-                  </div>
                 </div>
               )}
 
@@ -422,10 +404,8 @@ export const CelebrationBottomSheet: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Card de Compartilhamento nos Grupos de Estudo */}
-            {!isFirstQuestion && (
-              <ShareChallengeCard whatsappGroupUrl={whatsappGroupUrl} />
-            )}
+            {/* Card de Compartilhamento nos Grupos de Estudo (exibido desde o 1º dia) */}
+            <ShareChallengeCard whatsappGroupUrl={whatsappGroupUrl} />
 
             {/* Ações Inferiores */}
             <div className="pt-1 flex flex-col sm:flex-row items-center gap-2.5">

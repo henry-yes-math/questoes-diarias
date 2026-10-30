@@ -407,7 +407,7 @@ export default function App() {
         isCompletingQuestion={Boolean(
           selectedLetter && selectedLetter === question.correctLetter && !hasCompletedToday
         )}
-        onSave={async (newNick, adoptedStudentId) => {
+        onSave={async (newNick, adoptedStudentId, isKnownNewStudent, adoptedProfile) => {
           const isCompleting = Boolean(
             selectedLetter && selectedLetter === question.correctLetter && !hasCompletedToday
           );
@@ -415,15 +415,21 @@ export default function App() {
             setIsPendingNickModal(true);
           }
           try {
-            const updated = await updateNickname(newNick, adoptedStudentId);
-            // Se o aluno já estava confirmando a resposta correta:
             if (isCompleting) {
-              const res = await completeQuestion(updated.studentId, updated.nickname);
+              const targetId = adoptedStudentId || studentId;
+              // 1. Aplica estado otimista instantâneo (0ms) e dispara gravação no Firestore em background
+              const res = await completeQuestion(targetId, newNick, {
+                isKnownNewStudent: Boolean(isKnownNewStudent && !adoptedStudentId),
+                adoptedProfile: adoptedProfile ?? null,
+                optimisticInstant: true,
+              });
+              // 2. Fecha o modal e abre a gaveta de celebração imediatamente (0ms)
+              setIsNickModalOpen(false);
               if (res) {
-                celebrationTimeoutRef.current = setTimeout(() => {
-                  setIsCelebrationOpen(true);
-                }, 400);
+                setIsCelebrationOpen(true);
               }
+            } else {
+              await updateNickname(newNick, adoptedStudentId);
             }
           } finally {
             setIsPendingNickModal(false);
